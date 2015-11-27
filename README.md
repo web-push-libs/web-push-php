@@ -25,7 +25,7 @@ $endpoints = array(
 // array of payloads which are strings or null (json_encode your arrays)
 $payloads = array(
     'hello !',
-    '{'msg': 'test'}',
+    '{"msg":"test"}',
     null,
     '',
 );
