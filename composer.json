@@ -1,0 +1,27 @@
+{
+  "name": "minishlink/web-push",
+  "type": "library",
+  "description": "Web Push library for PHP",
+  "keywords": ["push", "notifications", "web"],
+  "homepage": "https://github.com/Minishlink/web-push",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Louis Lagrange",
+      "email": "lagrange.louis@gmail.com",
+      "homepage": "https://github.com/Minishlink"
+    }
+  ],
+  "require": {
+    "php": ">=5.4",
+    "kriswallsmith/buzz": ">=0.6"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.8.*"
+  },
+  "autoload": {
+    "psr-4" : {
+      "Minishlink\\WebPush\\" : "src"
+    }
+  }
+}
