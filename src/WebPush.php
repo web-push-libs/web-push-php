@@ -16,6 +16,8 @@ use Buzz\Client\AbstractClient;
 use Buzz\Client\MultiCurl;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
+use Mdanter\Ecc\EccFactory;
+use Mdanter\Ecc\Message\MessageFactory;
 
 class WebPush
 {
@@ -126,20 +128,88 @@ class WebPush
             'success' => true,
         );
     }
+
+    /**
+     * @param string $userPublicKey base 64 encoded
+     * @param string $payload
+     *
+     * @return array
+     *
+     * @throws
+     */
+    private function encrypt($userPublicKey, $payload)
+    {
+        throw new \ErrorException('Encryption does not work yet.');
+
+        // get local curve
+        $localCurveGenerator = EccFactory::getNistCurves()->generator256();
+        $localPrivateKey = $localCurveGenerator->createPrivateKey();
+        $localPublicKey = $localPrivateKey->getPublicKey();
+        // var sharedSecret = localCurve.computeSecret(userPublicKey);
+
+        //var salt = crypto.randomBytes(16);
+
+        //ece.saveKey('webpushKey', sharedSecret);
+
+        /*var cipherText = ece.encrypt(payload, {
+            keyid: 'webpushKey',
+            salt: urlBase64.encode(salt),
+        });*/
+
+        $messages = new MessageFactory(EccFactory::getAdapter());
+        $message = $messages->plaintext($payload, 'sha256');
+
+        $dh = $localPrivateKey->createExchange($messages, $userPublicKey);
+        $salt = hash('sha256', $dh->calculateSharedKey(), true);
+
+        $cipherText = $dh->encrypt($message)->getContent();
+
+        return array(
+            'localPublicKey' => base64_encode($localPublicKey),
+            'salt' => base64_encode($salt),
+            'cipherText' => base64_encode($cipherText),
+        );
+    }
+
+    /**
+     * @param array      $endpoints
+     * @param array|null $payloads
+     * @param array|null $userPublicKeys
+     *
+     * @return array
+     *
+     * @throws \ErrorException
+     */
     private function sendToStandardEndpoints(array $endpoints, array $payloads = null, array $userPublicKeys = null)
     {
-        $headers = array(
-            'Content-Length' => 0,
-        );
-
-        $content = '';
-
-        if (isset($this->TTL)) {
-            $headers['TTL'] = $this->TTL;
-        }
-
         $responses = array();
         foreach ($endpoints as $i => $endpoint) {
+            $payload = $payloads[$i];
+
+            if (isset($payload)) {
+                $encrypted = $this->encrypt($userPublicKeys[$i], $payload);
+
+                $headers = array(
+                    'Content-Length' => strlen($encrypted['cipherText']),
+                    'Content-Type' => 'application/octet-stream',
+                    'Encryption-Key' => 'keyid=p256dh;dh='.$encrypted['localPublicKey'],
+                    'Encryption' => 'keyid=p256dh;salt='.$encrypted['salt'],
+                    'Content-Encoding' => 'aesgcm128',
+                );
+
+                $content = $encrypted['cipherText'];
+            } else {
+                $headers = array(
+                    'Content-Length' => 0,
+                );
+
+                $content = '';
+            }
+
+            if (isset($this->TTL)) {
+                $headers['TTL'] = $this->TTL;
+            }
+
             $responses[] = $this->sendRequest($endpoint, $headers, $content);
         }
 
