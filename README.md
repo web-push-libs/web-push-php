@@ -60,7 +60,8 @@ Timeout is configurable in the constructor.
 use Minishlink\WebPush\WebPush;
 
 $client = new \Buzz\Client\Curl();
-$webPush = new WebPush(array(), null, null, $client);
+$timeout = 20; // seconds
+$webPush = new WebPush(array(), null, $timeout, $client);
 ```
 
 You have access to the inner browser if you want to configure it further.
