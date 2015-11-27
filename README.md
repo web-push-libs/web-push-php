@@ -9,7 +9,7 @@ WebPush can be used to send notifications to endpoints which server delivers web
 the [Web Push API specification](http://www.w3.org/TR/push-api/).
 As it is standardized, you don't have to worry about what server type it relies on.
 __*Currently, WebPush doesn't support payloads at all.
-It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload).*__
+It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload)).*__
 
 ```php
 <?php
@@ -46,8 +46,7 @@ $apiKeys = array(
 );
 
 $webPush = new WebPush($apiKeys);
-$webPush->sendNotification($endpoints[0]); // send one notification
-$webPush->sendNotifications($endpoints); // send multiple notifications
+$webPush->sendNotification($endpoint);
 ```
 
 ### Changing the browser client
@@ -60,6 +59,7 @@ Timeout is configurable in the constructor.
 
 use Minishlink\WebPush\WebPush;
 
+$client = new \Buzz\Client\Curl();
 $webPush = new WebPush(array(), null, null, $client);
 ```
 
@@ -79,9 +79,6 @@ $browser = $webPush->getBrowser();
 
 ### Is the API stable?
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
-
-### What about security?
-Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate" ?
 Your installation lacks some certificates.
