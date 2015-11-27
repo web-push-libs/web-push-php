@@ -1,4 +1,4 @@
-# WebPush
+# WebPush [![Build Status](https://travis-ci.org/Minishlink/web-push.svg?branch=master)](https://travis-ci.org/Minishlink/web-push)
 > Web Push library for PHP
 
 ## Installation
