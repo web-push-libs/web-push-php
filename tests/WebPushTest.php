@@ -42,6 +42,18 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(true, $res['success']);
     }
 
+    public function testSendNotificationWithPayload()
+    {
+        $res = $this->webPush->sendNotification(
+            $this->endpoints['standard'],
+            'test',
+            $this->keys['standard']
+        );
+
+        $this->assertArrayHasKey('success', $res);
+        $this->assertEquals(true, $res['success']);
+    }
+
     public function testSendGCMNotification()
     {
         $res = $this->webPush->sendNotification($this->endpoints['GCM']);
@@ -70,5 +82,26 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(401, $res['statusCode']);
 
         $this->assertArrayHasKey('headers', $res);
+    }
+
+    public function testEncrypt()
+    {
+        // encrypt is a private method
+        $class = new ReflectionClass(get_class($this->webPush));
+        $encrypt = $class->getMethod('encrypt');
+        $encrypt->setAccessible(true);
+
+        $expected = array(
+            'localPublicKey' => 'BH_1HZcs53fCIMW7Q6ePJqCqc4JIzSeCTjcNBmoet2eMObvQTpiBHH0EnDYZ0kTqk5f2b6wruq7US1vewtngt6o',
+            'salt' => '0HK6QfkQmcQKFVAgG2iOTw',
+            'cipherText' => 'ivmuewrVd-7qkRgxRcu972JyrSvXJzbLeWhTXx1FRZndeP5PVS3fnLQhmK077PgW7C5MLAA_wzDpIN_oB9vo',
+        );
+
+        $actualUserPublicKey = 'BDFsuXPNuJ4SxoYcVVvRagonMcSKHXjsif4qmzpXTDyy29ZKqbwtVAgHCLJGP0HgQ0hpkg6H5-fPBvDjBQxjYfc';
+        $actualPayload = '{"action":"chatMsg","name":"Bob","msg":"test"}';
+
+        $actual = $encrypt->invokeArgs($this->webPush, array($actualUserPublicKey, $actualPayload));
+
+        $this->assertEquals($expected, $actual);
     }
 }
