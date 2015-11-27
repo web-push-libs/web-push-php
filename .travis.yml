@@ -7,7 +7,6 @@ php:
   - hhvm
 
 before_script:
-  - composer self-update
-  - composer install --prefer-source --no-interaction --dev
+  - composer install --prefer-source -n
 
-script: phpunit
+script: phpunit -c phpunit.travis.xml
