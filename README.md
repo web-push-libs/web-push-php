@@ -8,6 +8,7 @@
 WebPush can be used to send notifications to endpoints which server delivers web push notifications as described in 
 the [Web Push API specification](http://www.w3.org/TR/push-api/).
 As it is standardized, you don't have to worry about what server type it relies on.
+
 __*Currently, WebPush doesn't support payloads at all.
 It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload)).*__
 
