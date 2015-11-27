@@ -9,9 +9,6 @@ WebPush can be used to send notifications to endpoints which server delivers web
 the [Web Push API specification](http://www.w3.org/TR/push-api/).
 As it is standardized, you don't have to worry about what server type it relies on.
 
-__*Currently, WebPush doesn't support payloads at all.
-It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload)).*__
-
 ```php
 <?php
 
@@ -19,14 +16,34 @@ use Minishlink\WebPush\WebPush;
 
 // array of endpoints
 $endpoints = array(
-    'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
-    'https://updates.push.services.mozilla.com/push/adcdef...', // Firefox 43+
-    'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+    'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
+    'https://updates.push.services.mozilla.com/push/def...',
+    'https://example.com/other/endpoint/of/another/vendor/abc...',
+    'https://example.com/other/endpoint/of/another/vendor/abc...',
+);
+
+// array of payloads which are strings or null (json_encode your arrays)
+$payloads = array(
+    'hello !',
+    '{'msg': 'test'}',
+    null,
+    '',
+);
+
+// array of the public keys of each users
+$userPublicKeys = array(
+    'thePublicKeysCorrespondingToFirstEndpoint',
+    'thePublicKeysCorrespondingToSecondEndpoint',
+    'thePublicKeysCorrespondingToThirdEndpoint',
+    'thePublicKeysCorrespondingToFourthEndpoint',
 );
 
 $webPush = new WebPush();
-$webPush->sendNotification($endpoints[0]); // send one notification
-$webPush->sendNotifications($endpoints); // send multiple notifications
+$webPush->sendNotification($endpoints[0]); // send one notification without payload
+$webPush->sendNotifications($endpoints); // send multiple notifications without payloads
+
+$webPush->sendNotification($endpoints[0], $payloads[0], $userPublicKeys[0]); // send one notification with payload
+$webPush->sendNotifications($endpoints, $payloads, $userPublicKeys); // send multiple notifications with payloads
 ```
 
 ### GCM servers notes (Chrome)
@@ -81,6 +98,9 @@ $browser = $webPush->getBrowser();
 
 ### Is the API stable?
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
+
+### What about security?
+Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate" ?
 Your installation lacks some certificates.
