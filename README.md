@@ -79,6 +79,13 @@ $browser = $webPush->getBrowser();
 
 ## Common questions
 
+### Is there any plugin/bundle/extension for my favorite PHP framework?
+The following are available:
+
+- Symfony: [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
+
+Feel free to add your own!
+
 ### Is the API stable?
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
 
