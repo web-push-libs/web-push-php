@@ -91,17 +91,13 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $encrypt = $class->getMethod('encrypt');
         $encrypt->setAccessible(true);
 
-        $expected = array(
-            'localPublicKey' => 'BH_1HZcs53fCIMW7Q6ePJqCqc4JIzSeCTjcNBmoet2eMObvQTpiBHH0EnDYZ0kTqk5f2b6wruq7US1vewtngt6o',
-            'salt' => '0HK6QfkQmcQKFVAgG2iOTw',
-            'cipherText' => 'ivmuewrVd-7qkRgxRcu972JyrSvXJzbLeWhTXx1FRZndeP5PVS3fnLQhmK077PgW7C5MLAA_wzDpIN_oB9vo',
-        );
+        $res = $encrypt->invokeArgs($this->webPush, array($this->keys['standard'], 'test'));
 
-        $actualUserPublicKey = 'BDFsuXPNuJ4SxoYcVVvRagonMcSKHXjsif4qmzpXTDyy29ZKqbwtVAgHCLJGP0HgQ0hpkg6H5-fPBvDjBQxjYfc';
-        $actualPayload = '{"action":"chatMsg","name":"Bob","msg":"test"}';
-
-        $actual = $encrypt->invokeArgs($this->webPush, array($actualUserPublicKey, $actualPayload));
-
-        $this->assertEquals($expected, $actual);
+        // I can't really test encryption since I don't have the user private key.
+        // I can only test if the function executes.
+        $this->assertArrayHasKey('cipherText', $res);
+        $this->assertArrayHasKey('salt', $res);
+        $this->assertArrayHasKey('localPublicKey', $res);
+        $this->assertEquals(16, strlen(base64_decode($res['salt']))); // should be 16 bytes
     }
 }
