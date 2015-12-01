@@ -15,7 +15,8 @@
   "require": {
     "php": ">=5.4",
     "kriswallsmith/buzz": ">=0.6",
-    "mdanter/ecc": "^0.3.0"
+    "mdanter/ecc": "^0.3.0",
+    "lib-openssl": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "4.8.*"
