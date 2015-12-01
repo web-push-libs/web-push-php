@@ -135,8 +135,6 @@ class WebPush
      * @param string $payload
      *
      * @return array
-     *
-     * @throws
      */
     private function encrypt($userPublicKey, $payload)
     {
@@ -158,7 +156,7 @@ class WebPush
         $sharedSecret = $userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX();
 
         // generate salt
-        $salt = base64_encode(openssl_random_pseudo_bytes(16));
+        $salt = openssl_random_pseudo_bytes(16);
 
         // get encryption key
         $encryptionKey = hash_hmac('sha256', $salt, $sharedSecret);
@@ -169,7 +167,7 @@ class WebPush
 
         return array(
             'localPublicKey' => $localPublicKey,
-            'salt' => $salt,
+            'salt' => base64_encode($salt),
             'cipherText' => $cipherText,
         );
     }
