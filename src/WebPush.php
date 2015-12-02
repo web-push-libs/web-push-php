@@ -16,8 +16,9 @@ use Buzz\Client\AbstractClient;
 use Buzz\Client\MultiCurl;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
+use Mdanter\Ecc\Crypto\Key\PublicKey;
 use Mdanter\Ecc\EccFactory;
-use Mdanter\Ecc\Message\MessageFactory;
+use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 
 class WebPush
 {
@@ -134,40 +135,40 @@ class WebPush
      * @param string $payload
      *
      * @return array
-     *
-     * @throws
      */
     private function encrypt($userPublicKey, $payload)
     {
-        throw new \ErrorException('Encryption does not work yet.');
+        // initialize utilities
+        $math = EccFactory::getAdapter();
+        $keySerializer = new UncompressedPointSerializer($math);
+        $curveGenerator = EccFactory::getNistCurves()->generator256();
+        $curve = EccFactory::getNistCurves()->curve256();
 
-        // get local curve
-        $localCurveGenerator = EccFactory::getNistCurves()->generator256();
-        $localPrivateKey = $localCurveGenerator->createPrivateKey();
-        $localPublicKey = $localPrivateKey->getPublicKey();
-        // var sharedSecret = localCurve.computeSecret(userPublicKey);
+        // get local key pair
+        $localPrivateKeyObject = $curveGenerator->createPrivateKey();
+        $localPublicKeyObject = $localPrivateKeyObject->getPublicKey();
+        $localPublicKey = base64_encode(hex2bin($keySerializer->serialize($localPublicKeyObject->getPoint())));
 
-        //var salt = crypto.randomBytes(16);
+        // get user public key object
+        $userPublicKeyObject = new PublicKey($math, $curveGenerator, $keySerializer->unserialize($curve, bin2hex(base64_decode($userPublicKey))));
 
-        //ece.saveKey('webpushKey', sharedSecret);
+        // get shared secret from user public key and local private key
+        $sharedSecret = $userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX();
 
-        /*var cipherText = ece.encrypt(payload, {
-            keyid: 'webpushKey',
-            salt: urlBase64.encode(salt),
-        });*/
+        // generate salt
+        $salt = openssl_random_pseudo_bytes(16);
 
-        $messages = new MessageFactory(EccFactory::getAdapter());
-        $message = $messages->plaintext($payload, 'sha256');
+        // get encryption key
+        $encryptionKey = hash_hmac('sha256', $salt, $sharedSecret);
 
-        $dh = $localPrivateKey->createExchange($messages, $userPublicKey);
-        $salt = hash('sha256', $dh->calculateSharedKey(), true);
-
-        $cipherText = $dh->encrypt($message)->getContent();
+        // encrypt
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-128-gcm'));
+        $cipherText = openssl_encrypt($payload, 'aes-128-gcm', $encryptionKey, false, $iv); // base 64 encoded
 
         return array(
-            'localPublicKey' => base64_encode($localPublicKey),
+            'localPublicKey' => $localPublicKey,
             'salt' => base64_encode($salt),
-            'cipherText' => base64_encode($cipherText),
+            'cipherText' => $cipherText,
         );
     }
 

@@ -100,7 +100,9 @@ $browser = $webPush->getBrowser();
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
 
 ### What about security?
-Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library.
+Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library to create 
+local public and private keys and compute the shared secret. 
+Then, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate" ?
 Your installation lacks some certificates.
