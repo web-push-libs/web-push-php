@@ -28,6 +28,14 @@ class WebPush
     /** @var array Key is push server type and value is the API key */
     protected $apiKeys;
 
+    /** @var array Array of array of Notifications by server type */
+    private $notificationsByServerType;
+
+    /** @var array Array of not standard endpoint sources */
+    private $urlByServerType = array(
+        'GCM' => 'https://android.googleapis.com/gcm/send',
+    );
+
     /**
      * WebPush constructor.
      *
@@ -48,43 +56,42 @@ class WebPush
     }
 
     /**
-     * Send one notification.
+     * Send a notification.
      *
      * @param string      $endpoint
-     * @param string|null $payload       If you want to send an array, json_encode it.
+     * @param string|null $payload If you want to send an array, json_encode it.
      * @param string|null $userPublicKey
+     * @param bool        $flush If you want to flush directly (usually when you send only one notification)
      *
-     * @return array
-     *
+     * @return bool|array Return an array of information if $flush is set to true and the request has failed. Else return true.
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null)
+    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $flush = false)
     {
-        $endpoints = array($endpoint);
-        $payloads = isset($payload) ? array($payload) : null;
-        $userPublicKeys = isset($userPublicKey) ? array($userPublicKey) : null;
+        // sort notification by server type
+        $type = $this->sortEndpoint($endpoint);
+        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey);
 
-        return $this->sendNotifications($endpoints, $payloads, $userPublicKeys);
+        if ($flush) {
+            $res = $this->flush();
+            return is_array($res) ? $res[0] : true;
+        }
+
+        return true;
     }
 
     /**
-     * Send multiple notifications.
+     * Flush notifications. Triggers the requests.
      *
-     * @param array      $endpoints
-     * @param array|null $payloads
-     * @param array|null $userPublicKeys
-     *
-     * @return array
+     * @return array|bool If there are no errors, return true.
+     * Else return an array of information for each notification sent (success, statusCode, headers).
      *
      * @throws \ErrorException
      */
-    public function sendNotifications(array $endpoints, array $payloads = null, array $userPublicKeys = null)
+    public function flush()
     {
-        // sort endpoints by server type
-        $endpointsByServerType = $this->sortEndpoints($endpoints);
-
-        // if GCM we should check for the API key
-        if (array_key_exists('GCM', $endpointsByServerType)) {
+        // if GCM is present, we should check for the API key
+        if (array_key_exists('GCM', $this->notificationsByServerType)) {
             if (empty($this->apiKeys['GCM'])) {
                 throw new \ErrorException('No GCM API Key specified.');
             }
@@ -92,13 +99,13 @@ class WebPush
 
         // for each endpoint server type
         $responses = array();
-        foreach ($endpointsByServerType as $serverType => $endpoints) {
+        foreach ($this->notificationsByServerType as $serverType => $notifications) {
             switch ($serverType) {
                 case 'GCM':
-                    $responses += $this->sendToGCMEndpoints($endpoints);
+                    $responses += $this->sendToGCMEndpoints($notifications);
                     break;
                 case 'standard':
-                    $responses += $this->sendToStandardEndpoints($endpoints, $payloads, $userPublicKeys);
+                    $responses += $this->sendToStandardEndpoints($notifications);
                     break;
             }
         }
@@ -111,23 +118,31 @@ class WebPush
         }
 
         /** @var Response|null $response */
+        $return = array();
+        $completeSuccess = true;
         foreach ($responses as $response) {
             if (!isset($response)) {
-                return array(
+                $return[] = array(
                     'success' => false,
                 );
+
+                $completeSuccess = false;
             } elseif (!$response->isSuccessful()) {
-                return array(
+                $return[] = array(
                     'success' => false,
                     'statusCode' => $response->getStatusCode(),
                     'headers' => $response->getHeaders(),
                 );
+
+                $completeSuccess = false;
+            } else {
+                $return[] = array(
+                    'success' => true,
+                );
             }
         }
 
-        return array(
-            'success' => true,
-        );
+        return $completeSuccess ? true : $return;
     }
 
     /**
@@ -181,7 +196,7 @@ class WebPush
      *
      * @throws \ErrorException
      */
-    private function sendToStandardEndpoints(array $endpoints, array $payloads = null, array $userPublicKeys = null)
+    private function sendToStandardEndpoints(array $notifications)
     {
         $responses = array();
         foreach ($endpoints as $i => $endpoint) {
@@ -211,29 +226,28 @@ class WebPush
                 $headers['TTL'] = $this->TTL;
             }
 
-            $responses[] = $this->sendRequest($endpoint, $headers, $content);
+        $responses = array();
+        /** @var Notification $notification */
+        foreach ($notifications as $notification) {
+            $responses[] = $this->sendRequest($notification->getEndpoint(), $headers, $content);
         }
 
         return $responses;
     }
 
-    /**
-     * @param array $endpoints
-     *
-     * @return array
-     */
-    private function sendToGCMEndpoints(array $endpoints)
+    private function sendToGCMEndpoints(array $notifications)
     {
         $maxBatchSubscriptionIds = 1000;
-        $url = 'https://android.googleapis.com/gcm/send';
+        $url = $this->urlByServerType['GCM'];
 
         $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
         $headers['Content-Type'] = 'application/json';
 
         $subscriptionIds = array();
-        foreach ($endpoints as $endpoint) {
+        /** @var Notification $notification */
+        foreach ($notifications as $notification) {
             // get all subscriptions ids
-            $endpointsSections = explode('/', $endpoint);
+            $endpointsSections = explode('/', $notification->getEndpoint());
             $subscriptionIds[] = $endpointsSections[count($endpointsSections) - 1];
         }
 
@@ -273,35 +287,19 @@ class WebPush
     }
 
     /**
-     * @param array $endpoints
+     * @param string $endpoint
      *
-     * @return array
+     * @return string
      */
-    private function sortEndpoints(array $endpoints)
+    private function sortEndpoint($endpoint)
     {
-        $sortedEndpoints = array();
-
-        $serverTypesByUrl = array(
-            'GCM' => 'https://android.googleapis.com/gcm/send',
-        );
-
-        foreach ($endpoints as $endpoint) {
-            $standard = true;
-
-            foreach ($serverTypesByUrl as $type => $url) {
-                if (substr($endpoint, 0, strlen($url)) === $url) {
-                    $sortedEndpoints[$type][] = $endpoint;
-                    $standard = false;
-                    break;
-                }
-            }
-
-            if ($standard) {
-                $sortedEndpoints['standard'][] = $endpoint;
+        foreach ($this->urlByServerType as $type => $url) {
+            if (substr($endpoint, 0, strlen($url)) === $url) {
+                return $type;
             }
         }
 
-        return $sortedEndpoints;
+        return 'standard';
     }
 
     /**
