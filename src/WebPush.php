@@ -187,23 +187,16 @@ class WebPush
         );
     }
 
-    /**
-     * @param array      $endpoints
-     * @param array|null $payloads
-     * @param array|null $userPublicKeys
-     *
-     * @return array
-     *
-     * @throws \ErrorException
-     */
     private function sendToStandardEndpoints(array $notifications)
     {
         $responses = array();
-        foreach ($endpoints as $i => $endpoint) {
-            $payload = $payloads[$i];
+        /** @var Notification $notification */
+        foreach ($notifications as $notification) {
+            $payload = $notification->getPayload();
+            $userPublicKey = $notification->getUserPublicKey();
 
-            if (isset($payload)) {
-                $encrypted = $this->encrypt($userPublicKeys[$i], $payload);
+            if (isset($payload) && isset($userPublicKey)) {
+                $encrypted = $this->encrypt($userPublicKey, $payload);
 
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
@@ -226,9 +219,6 @@ class WebPush
                 $headers['TTL'] = $this->TTL;
             }
 
-        $responses = array();
-        /** @var Notification $notification */
-        foreach ($notifications as $notification) {
             $responses[] = $this->sendRequest($notification->getEndpoint(), $headers, $content);
         }
 

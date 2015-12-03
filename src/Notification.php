@@ -26,7 +26,7 @@ class Notification
     {
         $this->endpoint = $endpoint;
         $this->payload = $payload;
-        $this->userPublicKey = $payload;
+        $this->userPublicKey = $userPublicKey;
     }
 
     /**
@@ -35,5 +35,21 @@ class Notification
     public function getEndpoint()
     {
         return $this->endpoint;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getPayload()
+    {
+        return $this->payload;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getUserPublicKey()
+    {
+        return $this->userPublicKey;
     }
 }
