@@ -36,18 +36,20 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     public function testSendNotification()
     {
-        $res = $this->webPush->sendNotification($this->endpoints['standard']);
+        $res = $this->webPush->sendNotification($this->endpoints['standard'], null, null, true);
 
-        $this->assertArrayHasKey('success', $res);
-        $this->assertEquals(true, $res['success']);
+        $this->assertTrue($res);
     }
 
-    public function testSendGCMNotification()
+    public function testSendNotifications()
     {
-        $res = $this->webPush->sendNotification($this->endpoints['GCM']);
+        foreach($this->endpoints as $endpoint) {
+            $this->webPush->sendNotification($endpoint);
+        }
 
-        $this->assertArrayHasKey('success', $res);
-        $this->assertEquals(true, $res['success']);
+        $res = $this->webPush->flush();
+
+        $this->assertTrue($res);
     }
 
     public function testSendGCMNotificationWithoutGCMApiKey()
@@ -55,14 +57,16 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush = new WebPush();
 
         $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
-        $webPush->sendNotification($this->endpoints['GCM']);
+        $webPush->sendNotification($this->endpoints['GCM'], null, null, true);
     }
 
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         $webPush = new WebPush(array('GCM' => 'bar'));
 
-        $res = $webPush->sendNotification($this->endpoints['GCM']);
+        $res = $webPush->sendNotification($this->endpoints['GCM'], null, null, true);
+
+        $this->assertTrue(is_array($res)); // there has been an error
         $this->assertArrayHasKey('success', $res);
         $this->assertEquals(false, $res['success']);
 
