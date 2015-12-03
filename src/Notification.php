@@ -26,7 +26,7 @@ class Notification
     {
         $this->endpoint = $endpoint;
         $this->payload = $payload;
-        $this->userPublicKey = $payload;
+        $this->userPublicKey = $userPublicKey;
     }
 
     /**
