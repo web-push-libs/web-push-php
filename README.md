@@ -36,7 +36,7 @@ foreach ($endpoints as $endpoint) {
 $webPush->flush();
 
 // send one notification and flush directly
-$webPush->sendNotification($endpoints[0], true);
+$webPush->sendNotification($endpoints[0], null, null, true);
 ```
 
 ### GCM servers notes (Chrome)
@@ -57,7 +57,7 @@ $apiKeys = array(
 );
 
 $webPush = new WebPush($apiKeys);
-$webPush->sendNotification($endpoint, true);
+$webPush->sendNotification($endpoint, null, null, true);
 ```
 
 ### Changing the browser client
