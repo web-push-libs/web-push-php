@@ -38,7 +38,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
     {
         $res = $this->webPush->sendNotification($this->endpoints['standard'], null, null, true);
 
-        $this->assertTrue($res);
+        $this->assertEquals($res, true);
     }
 
     public function testSendNotifications()
@@ -49,7 +49,19 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
         $res = $this->webPush->flush();
 
-        $this->assertTrue($res);
+        $this->assertEquals(true, $res);
+    }
+
+    public function testFlush()
+    {
+        $this->webPush->sendNotification($this->endpoints['standard']);
+        $this->assertEquals(true, $this->webPush->flush());
+
+        // queue has been reset
+        $this->assertEquals(false, $this->webPush->flush());
+
+        $this->webPush->sendNotification($this->endpoints['standard']);
+        $this->assertEquals(true, $this->webPush->flush());
     }
 
     public function testSendGCMNotificationWithoutGCMApiKey()

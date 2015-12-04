@@ -60,7 +60,8 @@ class WebPush
      * @param string|null $userPublicKey
      * @param bool        $flush If you want to flush directly (usually when you send only one notification)
      *
-     * @return bool|array Return an array of information if $flush is set to true and the request has failed. Else return true.
+     * @return bool|array Return an array of information if $flush is set to true and the request has failed.
+     *                    Else return true.
      * @throws \ErrorException
      */
     public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $flush = false)
@@ -81,12 +82,17 @@ class WebPush
      * Flush notifications. Triggers the requests.
      *
      * @return array|bool If there are no errors, return true.
-     * Else return an array of information for each notification sent (success, statusCode, headers).
+     *                    If there were no notifications in the queue, return false.
+     *                    Else return an array of information for each notification sent (success, statusCode, headers).
      *
      * @throws \ErrorException
      */
     public function flush()
     {
+        if (empty($this->notificationsByServerType)) {
+            return false;
+        }
+
         // if GCM is present, we should check for the API key
         if (array_key_exists('GCM', $this->notificationsByServerType)) {
             if (empty($this->apiKeys['GCM'])) {
@@ -138,6 +144,9 @@ class WebPush
                 );
             }
         }
+
+        // reset queue
+        $this->notificationsByServerType = null;
 
         return $completeSuccess ? true : $return;
     }
