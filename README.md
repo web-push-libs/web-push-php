@@ -14,36 +14,42 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 use Minishlink\WebPush\WebPush;
 
-// array of endpoints
-$endpoints = array(
-    'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
-    'https://updates.push.services.mozilla.com/push/def...',
-    'https://example.com/other/endpoint/of/another/vendor/abc...',
-    'https://example.com/other/endpoint/of/another/vendor/abc...',
-);
-
-// array of payloads which are strings or null (json_encode your arrays)
-$payloads = array(
-    'hello !',
-    '{"msg":"test"}',
-    null,
-    '',
-);
-
-// array of the public keys of each users
-$userPublicKeys = array(
-    'thePublicKeysCorrespondingToFirstEndpoint',
-    'thePublicKeysCorrespondingToSecondEndpoint',
-    'thePublicKeysCorrespondingToThirdEndpoint',
-    'thePublicKeysCorrespondingToFourthEndpoint',
+// array of notifications
+$notifications = array(
+    array(
+        'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
+        'payload' => 'hello !',
+        'userPublicKey' => 'dahaj5365sq',
+    ), array(
+        'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
+        'payload' => null,
+        'userPublicKey' => null,
+    ), array(
+        'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+        'payload' => '{"msg":"test"}',
+        'userPublicKey' => 'fsqdjknadsanlk',
+    ),
 );
 
 $webPush = new WebPush();
-$webPush->sendNotification($endpoints[0]); // send one notification without payload
-$webPush->sendNotifications($endpoints); // send multiple notifications without payloads
 
-$webPush->sendNotification($endpoints[0], $payloads[0], $userPublicKeys[0]); // send one notification with payload
-$webPush->sendNotifications($endpoints, $payloads, $userPublicKeys); // send multiple notifications with payloads
+// send multiple notifications with payload
+foreach ($notifications as $notification) {
+    $webPush->sendNotification(
+        $notification['endpoint'],
+        $notification['payload'], // optional (defaults null)
+        $notification['userPublicKey'] // optional (defaults null)
+    );
+}
+$webPush->flush();
+
+// send one notification and flush directly
+$webPush->sendNotification(
+    $notifications[0]['endpoint'],
+    $notifications[0]['payload'], // optional (defaults null)
+    $notifications[0]['userPublicKey'], // optional (defaults null)
+    true // optional (defaults false)
+);
 ```
 
 ### GCM servers notes (Chrome)
@@ -64,7 +70,7 @@ $apiKeys = array(
 );
 
 $webPush = new WebPush($apiKeys);
-$webPush->sendNotification($endpoint);
+$webPush->sendNotification($endpoint, null, null, true);
 ```
 
 ### Changing the browser client
@@ -95,6 +101,13 @@ $browser = $webPush->getBrowser();
 ```
 
 ## Common questions
+
+### Is there any plugin/bundle/extension for my favorite PHP framework?
+The following are available:
+
+- Symfony: [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
+
+Feel free to add your own!
 
 ### Is the API stable?
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
