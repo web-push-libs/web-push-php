@@ -10,7 +10,8 @@ the [Web Push API specification](http://www.w3.org/TR/push-api/).
 As it is standardized, you don't have to worry about what server type it relies on.
 
 __*Currently, WebPush doesn't support payloads at all.
-It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload)).*__
+It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload)).
+PHP 7.1 will be needed for some encryption features.*__
 Development of payload support is stopped until [this PHP bug](https://bugs.php.net/bug.php?id=67304) is fixed.
 If you need to show custom info in your notifications, you will have to fetch this info from your server in your Service
 Worker when displaying the notification (see [this example](https://github.com/Minishlink/physbook/blob/e98ac7c3b7dd346eee1f315b8723060e8a3fc5cb/web/service-worker.js#L75)).
