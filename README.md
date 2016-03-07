@@ -1,5 +1,8 @@
-# WebPush [![Build Status](https://travis-ci.org/Minishlink/web-push.svg?branch=master)](https://travis-ci.org/Minishlink/web-push)
+# WebPush
 > Web Push library for PHP
+
+[![Build Status](https://travis-ci.org/Minishlink/web-push.svg?branch=master)](https://travis-ci.org/Minishlink/web-push)
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf/mini.png)](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf)
 
 ## Installation
 `composer require minishlink/web-push`
@@ -71,6 +74,28 @@ $apiKeys = array(
 
 $webPush = new WebPush($apiKeys);
 $webPush->sendNotification($endpoint, null, null, true);
+```
+
+### Time To Live
+Time To Live (TTL, in seconds) is how long a push message is retained by the push service (eg. Mozilla) in case the user browser 
+is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks. 
+However, if you send multiple nonessential notifications, set a TTL of 0: the push notification will be delivered only 
+if the user is currently connected. For other cases, you should use a minimum of one day if your users have multiple time 
+zones, and if you don't several hours will suffice.
+
+```php
+<?php
+
+use Minishlink\WebPush\WebPush;
+
+$webPush = new WebPush(); // default TTL is 4 weeks
+// send some important notifications...
+
+$webPush->setTTL(3600);
+// send some not so important notifications
+
+$webPush->setTTL(0);
+// send some trivial notifications
 ```
 
 ### Changing the browser client

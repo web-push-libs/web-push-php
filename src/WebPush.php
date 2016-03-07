@@ -36,21 +36,23 @@ class WebPush
         'GCM' => 'https://android.googleapis.com/gcm/send',
     );
 
+    /** @var int Time To Live of notifications */
+    private $TTL;
+
     /**
      * WebPush constructor.
      *
      * @param array               $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
-     * @param int|null            $TTL     Time to live of notifications
+     * @param int|null            $TTL     Time To Live of notifications, default being 4 weeks.
      * @param int|null            $timeout Timeout of POST request
      * @param AbstractClient|null $client
      */
-    public function __construct(array $apiKeys = array(), $TTL = null, $timeout = null, AbstractClient $client = null)
+    public function __construct(array $apiKeys = array(), $TTL = 2419200, $timeout = 30, AbstractClient $client = null)
     {
         $this->apiKeys = $apiKeys;
         $this->TTL = $TTL;
 
         $client = isset($client) ? $client : new MultiCurl();
-        $timeout = isset($timeout) ? $timeout : 30;
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
     }
@@ -213,19 +215,17 @@ class WebPush
                     'Encryption-Key' => 'keyid=p256dh;dh='.$encrypted['localPublicKey'],
                     'Encryption' => 'keyid=p256dh;salt='.$encrypted['salt'],
                     'Content-Encoding' => 'aesgcm128',
+                    'TTL' => $this->TTL,
                 );
 
                 $content = $encrypted['cipherText'];
             } else {
                 $headers = array(
                     'Content-Length' => 0,
+                    'TTL' => $this->TTL,
                 );
 
                 $content = '';
-            }
-
-            if (isset($this->TTL)) {
-                $headers['TTL'] = $this->TTL;
             }
 
             $responses[] = $this->sendRequest($notification->getEndpoint(), $headers, $content);
@@ -239,8 +239,11 @@ class WebPush
         $maxBatchSubscriptionIds = 1000;
         $url = $this->urlByServerType['GCM'];
 
-        $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
-        $headers['Content-Type'] = 'application/json';
+        $headers = array(
+            'Authorization' => 'key='.$this->apiKeys['GCM'],
+            'Content-Type' => 'application/json',
+            'TTL' => $this->TTL,
+        );
 
         $subscriptionIds = array();
         /** @var Notification $notification */
@@ -315,5 +318,21 @@ class WebPush
     public function setBrowser($browser)
     {
         $this->browser = $browser;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTTL()
+    {
+        return $this->TTL;
+    }
+
+    /**
+     * @param int $TTL
+     */
+    public function setTTL($TTL)
+    {
+        $this->TTL = $TTL;
     }
 }

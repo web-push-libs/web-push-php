@@ -16,12 +16,6 @@ class Notification
     /** @var string */
     private $endpoint;
 
-    /** @var string|null */
-    private $payload;
-
-    /** @var string|null Base64 encoded */
-    private $userPublicKey;
-
     public function __construct($endpoint, $payload, $userPublicKey)
     {
         $this->endpoint = $endpoint;
