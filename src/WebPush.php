@@ -62,7 +62,7 @@ class WebPush
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
 
-        $this->payloadEncryptionSupport = version_compare(phpversion(), '5.5.9', '>=');
+        $this->payloadEncryptionSupport = version_compare(phpversion(), '5.5.9', '>=') && class_exists("\\Jose\\Util\\GCM");
         $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
@@ -220,7 +220,7 @@ class WebPush
             $payload = $notification->getPayload();
             $userPublicKey = $notification->getUserPublicKey();
 
-            if (isset($payload) && isset($userPublicKey) && $this->payloadEncryptionSupport) {
+            if (isset($payload) && isset($userPublicKey) && ($this->payloadEncryptionSupport || $this->nativePayloadEncryptionSupport)) {
                 $encrypted = $this->encrypt($userPublicKey, $payload);
 
                 $headers = array(
