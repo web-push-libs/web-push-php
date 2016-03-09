@@ -19,7 +19,6 @@ use Buzz\Message\Response;
 use Mdanter\Ecc\Crypto\Key\PublicKey;
 use Mdanter\Ecc\EccFactory;
 use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
-use Jose\Util\GCM;
 
 class WebPush
 {
@@ -200,7 +199,7 @@ class WebPush
         // encrypt
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-128-gcm'));
         if (!$this->nativePayloadEncryptionSupport) {
-            list($encryptedText, $tag) = GCM::encrypt($encryptionKey, $iv, $payload, "");
+            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($encryptionKey, $iv, $payload, "");
             $cipherText = $encryptedText.$tag;
         } else {
             $cipherText = openssl_encrypt($payload, 'aes-128-gcm', $encryptionKey, false, $iv); // base 64 encoded
