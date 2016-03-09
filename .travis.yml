@@ -8,5 +8,6 @@ php:
 
 before_script:
   - composer install --prefer-source -n --no-dev
+  - composer require spomky-labs/jose:2.0.x-dev
 
 script: phpunit -c phpunit.travis.xml
