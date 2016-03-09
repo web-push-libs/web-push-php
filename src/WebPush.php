@@ -40,6 +40,12 @@ class WebPush
     /** @var int Time To Live of notifications */
     private $TTL;
 
+    /** @var boolean */
+    private $payloadEncryptionSupport;
+
+    /** @var boolean */
+    private $nativePayloadEncryptionSupport;
+
     /**
      * WebPush constructor.
      *
@@ -56,6 +62,9 @@ class WebPush
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
+
+        $this->payloadEncryptionSupport = version_compare(phpversion(), '5.5.9', '>=');
+        $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
     /**
@@ -186,11 +195,11 @@ class WebPush
         $salt = openssl_random_pseudo_bytes(16);
 
         // get encryption key
-        $encryptionKey = hash_hmac('sha256', $salt, $sharedSecret);
+        $encryptionKey = hash_hmac('sha256', $salt, $sharedSecret, true);
 
         // encrypt
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-128-gcm'));
-        if (phpversion() < 7.1) {
+        if (!$this->nativePayloadEncryptionSupport) {
             list($encryptedText, $tag) = GCM::encrypt($encryptionKey, $iv, $payload, "");
             $cipherText = $encryptedText.$tag;
         } else {
@@ -200,7 +209,7 @@ class WebPush
         return array(
             'localPublicKey' => $localPublicKey,
             'salt' => base64_encode($salt),
-            'cipherText' => $cipherText,
+            'cipherText' => base64_encode($cipherText),
         );
     }
 
@@ -212,15 +221,15 @@ class WebPush
             $payload = $notification->getPayload();
             $userPublicKey = $notification->getUserPublicKey();
 
-            if (isset($payload) && isset($userPublicKey)) {
+            if (isset($payload) && isset($userPublicKey) && $this->payloadEncryptionSupport) {
                 $encrypted = $this->encrypt($userPublicKey, $payload);
 
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
-                    'Encryption-Key' => 'keyid=p256dh;dh='.$encrypted['localPublicKey'],
-                    'Encryption' => 'keyid=p256dh;salt='.$encrypted['salt'],
-                    'Content-Encoding' => 'aesgcm128',
+                    'Content-Encoding' => 'aesgcm-128',
+                    'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
+                    'Encryption-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
                     'TTL' => $this->TTL,
                 );
 

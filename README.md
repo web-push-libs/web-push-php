@@ -7,6 +7,11 @@
 ## Installation
 `composer require minishlink/web-push`
 
+If you have a PHP version smaller than 5.5.9, you will not be able to send any payload.
+
+If you have a PHP version smaller than 7.1, you will have to `composer require spomky-labs/jose:2.0.x-dev`,
+and if you want to speed things up, install the [PHP Crypto](https://github.com/bukka/php-crypto) extension.
+
 ## Usage
 WebPush can be used to send notifications to endpoints which server delivers web push notifications as described in 
 the [Web Push API specification](http://www.w3.org/TR/push-api/).
@@ -140,7 +145,8 @@ Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
 ### What about security?
 Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library to create 
 local public and private keys and compute the shared secret. 
-Then, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
+Then, if you have a PHP >= 7.1, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
+It uses [jose](https://github.com/Spomky-Labs/jose) if you have PHP < 7.1, which is slower.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate" ?
 Your installation lacks some certificates.
