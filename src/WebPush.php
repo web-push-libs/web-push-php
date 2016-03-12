@@ -209,7 +209,7 @@ class WebPush
 
         // encrypt
         $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-128-gcm'));
-        if (!$this->nativePayloadEncryptionSupport) {
+        if (!$this->nativePayloadEncryptionSupport && $this->payloadEncryptionSupport) {
             list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($encryptionKey, $iv, $payload, "");
             $cipherText = $encryptedText.$tag;
         } else {
