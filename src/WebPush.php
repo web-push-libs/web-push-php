@@ -74,7 +74,7 @@ class WebPush
      * @param string|null $userPublicKey
      * @param bool        $flush If you want to flush directly (usually when you send only one notification)
      *
-     * @return bool|array Return an array of information if $flush is set to true and the request has failed.
+     * @return bool|array Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true.
      * @throws \ErrorException
      */
@@ -86,7 +86,18 @@ class WebPush
 
         if ($flush) {
             $res = $this->flush();
-            return is_array($res) ? $res[0] : true;
+
+            // if there has been a problem with at least one notification
+            if (is_array($res)) {
+                // if there was only one notification, return the informations directly
+                if (count($res) === 1) {
+                    return $res[0];
+                }
+
+                return $res;
+            }
+
+            return true;
         }
 
         return true;
