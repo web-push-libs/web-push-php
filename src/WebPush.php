@@ -11,6 +11,7 @@
 
 namespace Minishlink\WebPush;
 
+use Base64Url\Base64Url;
 use Buzz\Browser;
 use Buzz\Client\AbstractClient;
 use Buzz\Client\MultiCurl;
@@ -177,7 +178,7 @@ class WebPush
     }
 
     /**
-     * @param string $userPublicKey base 64 encoded
+     * @param string $userPublicKey MIME base 64 encoded
      * @param string $payload
      *
      * @return array
@@ -193,7 +194,7 @@ class WebPush
         // get local key pair
         $localPrivateKeyObject = $curveGenerator->createPrivateKey();
         $localPublicKeyObject = $localPrivateKeyObject->getPublicKey();
-        $localPublicKey = base64_encode(hex2bin($keySerializer->serialize($localPublicKeyObject->getPoint())));
+        $localPublicKey = hex2bin($keySerializer->serialize($localPublicKeyObject->getPoint()));
 
         // get user public key object
         $userPublicKeyObject = new PublicKey($math, $curveGenerator, $keySerializer->unserialize($curve, bin2hex(base64_decode($userPublicKey))));
@@ -216,10 +217,11 @@ class WebPush
             $cipherText = openssl_encrypt($payload, 'aes-128-gcm', $encryptionKey, false, $iv); // base 64 encoded
         }
 
+        // return values in url safe base64
         return array(
-            'localPublicKey' => $localPublicKey,
-            'salt' => base64_encode($salt),
-            'cipherText' => base64_encode($cipherText),
+            'localPublicKey' => Base64Url::encode($localPublicKey),
+            'salt' => Base64Url::encode($salt),
+            'cipherText' => Base64Url::encode($cipherText),
         );
     }
 
@@ -237,9 +239,9 @@ class WebPush
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => 'aesgcm-128',
+                    'Content-Encoding' => 'aesgcm128',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
-                    'Encryption-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
+                    'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
                     'TTL' => $this->TTL,
                 );
 
