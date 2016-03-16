@@ -11,15 +11,11 @@
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use Buzz\Browser;
 use Buzz\Client\AbstractClient;
 use Buzz\Client\MultiCurl;
 use Buzz\Exception\RequestException;
 use Buzz\Message\Response;
-use Mdanter\Ecc\Crypto\Key\PublicKey;
-use Mdanter\Ecc\EccFactory;
-use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 
 class WebPush
 {
@@ -177,54 +173,6 @@ class WebPush
         return $completeSuccess ? true : $return;
     }
 
-    /**
-     * @param string $userPublicKey MIME base 64 encoded
-     * @param string $payload
-     *
-     * @return array
-     */
-    private function encrypt($userPublicKey, $payload)
-    {
-        // initialize utilities
-        $math = EccFactory::getAdapter();
-        $keySerializer = new UncompressedPointSerializer($math);
-        $curveGenerator = EccFactory::getNistCurves()->generator256();
-        $curve = EccFactory::getNistCurves()->curve256();
-
-        // get local key pair
-        $localPrivateKeyObject = $curveGenerator->createPrivateKey();
-        $localPublicKeyObject = $localPrivateKeyObject->getPublicKey();
-        $localPublicKey = hex2bin($keySerializer->serialize($localPublicKeyObject->getPoint()));
-
-        // get user public key object
-        $userPublicKeyObject = new PublicKey($math, $curveGenerator, $keySerializer->unserialize($curve, bin2hex(base64_decode($userPublicKey))));
-
-        // get shared secret from user public key and local private key
-        $sharedSecret = $userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX();
-
-        // generate salt
-        $salt = openssl_random_pseudo_bytes(16);
-
-        // get encryption key
-        $encryptionKey = hash_hmac('sha256', $salt, $sharedSecret, true);
-
-        // encrypt
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-128-gcm'));
-        if (!$this->nativePayloadEncryptionSupport && $this->payloadEncryptionSupport) {
-            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($encryptionKey, $iv, $payload, "");
-            $cipherText = $encryptedText.$tag;
-        } else {
-            $cipherText = openssl_encrypt($payload, 'aes-128-gcm', $encryptionKey, false, $iv); // base 64 encoded
-        }
-
-        // return values in url safe base64
-        return array(
-            'localPublicKey' => Base64Url::encode($localPublicKey),
-            'salt' => Base64Url::encode($salt),
-            'cipherText' => Base64Url::encode($cipherText),
-        );
-    }
-
     private function sendToStandardEndpoints(array $notifications)
     {
         $responses = array();
@@ -234,12 +182,12 @@ class WebPush
             $userPublicKey = $notification->getUserPublicKey();
 
             if (isset($payload) && isset($userPublicKey) && ($this->payloadEncryptionSupport || $this->nativePayloadEncryptionSupport)) {
-                $encrypted = $this->encrypt($userPublicKey, $payload);
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, null, $this->nativePayloadEncryptionSupport);
 
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => 'aesgcm128',
+                    'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
                     'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
                     'TTL' => $this->TTL,
