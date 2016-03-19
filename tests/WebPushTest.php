@@ -129,21 +129,4 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
         $this->assertArrayHasKey('headers', $res);
     }
-
-    public function testEncrypt()
-    {
-        // encrypt is a private method
-        $class = new ReflectionClass(get_class($this->webPush));
-        $encrypt = $class->getMethod('encrypt');
-        $encrypt->setAccessible(true);
-
-        $res = $encrypt->invokeArgs($this->webPush, array($this->keys['standard'], 'test'));
-
-        // I can't really test encryption since I don't have the user private key.
-        // I can only test if the function executes.
-        $this->assertArrayHasKey('cipherText', $res);
-        $this->assertArrayHasKey('salt', $res);
-        $this->assertArrayHasKey('localPublicKey', $res);
-        $this->assertEquals(16, strlen(base64_decode($res['salt']))); // should be 16 bytes
-    }
 }
