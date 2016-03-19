@@ -81,6 +81,25 @@ $webPush = new WebPush($apiKeys);
 $webPush->sendNotification($endpoint, null, null, true);
 ```
 
+### Payload length and security
+As previously stated, payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
+
+However, when you encrypt a string of a certain length, the resulting string will always have the same length,
+no matter how many times you encrypt the initial string. This can make attackers guess the content of the payload.
+In order to circumvent this, this library can add some null padding to the initial payload, so that all the input of the encryption process
+will have the same length. This way, all the output of the encryption process will also have the same length and attackers won't be able to 
+guess the content of your payload. The downside of this approach is that you will use more bandwidth than if you didn't pad the string.
+That's why the library provides the option to disable this security measure:
+
+```php
+<?php
+
+use Minishlink\WebPush\WebPush;
+
+$webPush = new WebPush();
+$webPush->setAutomaticPadding(false); // disable automatic padding
+```
+
 ### Time To Live
 Time To Live (TTL, in seconds) is how long a push message is retained by the push service (eg. Mozilla) in case the user browser 
 is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks. 

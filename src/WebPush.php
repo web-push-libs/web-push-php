@@ -36,6 +36,9 @@ class WebPush
     /** @var int Time To Live of notifications */
     private $TTL;
 
+    /** @var bool Automatic padding of payloads, if disabled, trade security for bandwidth */
+    private $automaticPadding = true;
+
     /** @var boolean */
     private $payloadEncryptionSupport;
 
@@ -45,9 +48,9 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array               $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
-     * @param int|null            $TTL     Time To Live of notifications, default being 4 weeks.
-     * @param int|null            $timeout Timeout of POST request
+     * @param array $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
+     * @param int|null $TTL Time To Live of notifications, default being 4 weeks.
+     * @param int|null $timeout Timeout of POST request
      * @param AbstractClient|null $client
      */
     public function __construct(array $apiKeys = array(), $TTL = 2419200, $timeout = 30, AbstractClient $client = null)
@@ -82,8 +85,14 @@ class WebPush
             throw new \ErrorException('The API has changed: sendNotification now takes the optional user auth token as parameter.');
         }
 
-        if(isset($payload) && strlen($payload) > 4078) {
-            throw new \ErrorException('Size of payload must not be greater than 4078 octets.');
+        if(isset($payload)) {
+            if (strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
+                throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
+            }
+
+            if ($this->automaticPadding) {
+                $payload = Encryption::automaticPadding($payload);
+            }
         }
 
         // sort notification by server type
@@ -298,10 +307,14 @@ class WebPush
 
     /**
      * @param Browser $browser
+     *
+     * @return WebPush
      */
     public function setBrowser($browser)
     {
         $this->browser = $browser;
+
+        return $this;
     }
 
     /**
@@ -314,9 +327,33 @@ class WebPush
 
     /**
      * @param int $TTL
+     *
+     * @return WebPush
      */
     public function setTTL($TTL)
     {
         $this->TTL = $TTL;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isAutomaticPadding()
+    {
+        return $this->automaticPadding;
+    }
+
+    /**
+     * @param boolean $automaticPadding
+     *
+     * @return WebPush
+     */
+    public function setAutomaticPadding($automaticPadding)
+    {
+        $this->automaticPadding = $automaticPadding;
+
+        return $this;
     }
 }

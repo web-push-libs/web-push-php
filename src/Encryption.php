@@ -18,6 +18,17 @@ use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 
 final class Encryption
 {
+    const MAX_PAYLOAD_LENGTH = 4078;
+
+    /**
+     * @param $payload
+     * @return string
+     */
+    public static function automaticPadding($payload)
+    {
+        return str_pad($payload, self::MAX_PAYLOAD_LENGTH, chr(0), STR_PAD_LEFT);
+    }
+
     /**
      * @param string $payload
      * @param string $userPublicKey MIME base 64 encoded
