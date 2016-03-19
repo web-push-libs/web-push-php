@@ -105,7 +105,7 @@ Time To Live (TTL, in seconds) is how long a push message is retained by the pus
 is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks. 
 However, if you send multiple nonessential notifications, set a TTL of 0: the push notification will be delivered only 
 if the user is currently connected. For other cases, you should use a minimum of one day if your users have multiple time 
-zones, and if you don't several hours will suffice.
+zones, and if they don't several hours will suffice.
 
 ```php
 <?php
