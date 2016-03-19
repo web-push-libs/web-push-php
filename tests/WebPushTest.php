@@ -37,6 +37,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         );
 
         $this->webPush = new WebPush($this->keys);
+        $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
     public function testSendNotification()
@@ -63,7 +64,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
     {
         $res = $this->webPush->sendNotification(
             $this->endpoints['standard'],
-            'test',
+            '{message: "Plop", tag: "general"}',
             $this->keys['standard'],
             null,
             true
