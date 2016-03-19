@@ -66,20 +66,25 @@ class WebPush
     /**
      * Send a notification.
      *
-     * @param string      $endpoint
+     * @param string $endpoint
      * @param string|null $payload If you want to send an array, json_encode it.
      * @param string|null $userPublicKey
-     * @param bool        $flush If you want to flush directly (usually when you send only one notification)
+     * @param string|null $userAuthToken
+     * @param bool $flush If you want to flush directly (usually when you send only one notification)
      *
-     * @return bool|array Return an array of information if $flush is set to true and the queued requests has failed.
+     * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true.
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $flush = false)
+    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false)
     {
+        if (isset($userAuthToken) && is_bool($userAuthToken)) {
+            throw new \ErrorException('The API has changed: sendNotification now takes the optional user auth token as parameter.');
+        }
+
         // sort notification by server type
         $type = $this->sortEndpoint($endpoint);
-        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey);
+        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken);
 
         if ($flush) {
             $res = $this->flush();
@@ -182,7 +187,7 @@ class WebPush
             $userPublicKey = $notification->getUserPublicKey();
 
             if (isset($payload) && isset($userPublicKey) && ($this->payloadEncryptionSupport || $this->nativePayloadEncryptionSupport)) {
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, null, $this->nativePayloadEncryptionSupport);
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $notification->getUserAuthToken(), $this->nativePayloadEncryptionSupport);
 
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),

@@ -15,6 +15,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 {
     private $endpoints;
     private $keys;
+    private $tokens;
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
@@ -31,12 +32,16 @@ class WebPushTest extends PHPUnit_Framework_TestCase
             'GCM' => getenv('GCM_API_KEY'),
         );
 
+        $this->tokens = array(
+            'standard' => getenv('USER_AUTH_TOKEN'),
+        );
+
         $this->webPush = new WebPush($this->keys);
     }
 
     public function testSendNotification()
     {
-        $res = $this->webPush->sendNotification($this->endpoints['standard'], null, null, true);
+        $res = $this->webPush->sendNotification($this->endpoints['standard'], null, null, null, true);
 
         $this->assertEquals($res, true);
     }
@@ -47,10 +52,35 @@ class WebPushTest extends PHPUnit_Framework_TestCase
             $this->endpoints['standard'],
             'test',
             $this->keys['standard'],
+            $this->tokens['standard'],
             true
         );
 
         $this->assertTrue($res);
+    }
+
+    public function testSendNotificationWithPayloadWithoutAuthToken()
+    {
+        $res = $this->webPush->sendNotification(
+            $this->endpoints['standard'],
+            'test',
+            $this->keys['standard'],
+            null,
+            true
+        );
+
+        $this->assertTrue($res);
+    }
+
+    public function testSendNotificationWithOldAPI()
+    {
+        $this->setExpectedException('ErrorException', 'The API has changed: sendNotification now takes the optional user auth token as parameter.');
+        $this->webPush->sendNotification(
+            $this->endpoints['standard'],
+            'test',
+            $this->keys['standard'],
+            true
+        );
     }
 
     public function testSendNotifications()
@@ -81,14 +111,14 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush = new WebPush();
 
         $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
-        $webPush->sendNotification($this->endpoints['GCM'], null, null, true);
+        $webPush->sendNotification($this->endpoints['GCM'], null, null, null, true);
     }
 
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         $webPush = new WebPush(array('GCM' => 'bar'));
 
-        $res = $webPush->sendNotification($this->endpoints['GCM'], null, null, true);
+        $res = $webPush->sendNotification($this->endpoints['GCM'], null, null, null, true);
 
         $this->assertTrue(is_array($res)); // there has been an error
         $this->assertArrayHasKey('success', $res);
