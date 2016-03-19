@@ -27,15 +27,18 @@ $notifications = array(
     array(
         'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
         'payload' => 'hello !',
-        'userPublicKey' => 'dahaj5365sq',
+        'userPublicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
+        'userAuthToken' => 'RMpCEzkgBaVj0Zj0', // base 64 encoded, should be 16 chars
     ), array(
         'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
         'payload' => null,
         'userPublicKey' => null,
+        'userAuthToken' => null,
     ), array(
         'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
         'payload' => '{"msg":"test"}',
-        'userPublicKey' => 'fsqdjknadsanlk',
+        'userPublicKey' => '(stringOf88Chars)', 
+        'userAuthToken' => '(stringOf16Chars)',
     ),
 );
 
@@ -46,7 +49,8 @@ foreach ($notifications as $notification) {
     $webPush->sendNotification(
         $notification['endpoint'],
         $notification['payload'], // optional (defaults null)
-        $notification['userPublicKey'] // optional (defaults null)
+        $notification['userPublicKey'], // optional (defaults null)
+        $notification['userAuthToken'] // optional (defaults null)
     );
 }
 $webPush->flush();
@@ -56,6 +60,7 @@ $webPush->sendNotification(
     $notifications[0]['endpoint'],
     $notifications[0]['payload'], // optional (defaults null)
     $notifications[0]['userPublicKey'], // optional (defaults null)
+    $notifications[0]['userAuthToken'], // optional (defaults null)
     true // optional (defaults false)
 );
 ```
@@ -78,7 +83,7 @@ $apiKeys = array(
 );
 
 $webPush = new WebPush($apiKeys);
-$webPush->sendNotification($endpoint, null, null, true);
+$webPush->sendNotification($endpoint, null, null, null, true);
 ```
 
 ### Payload length and security
