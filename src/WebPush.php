@@ -82,6 +82,10 @@ class WebPush
             throw new \ErrorException('The API has changed: sendNotification now takes the optional user auth token as parameter.');
         }
 
+        if(isset($payload) && strlen($payload) > 4078) {
+            throw new \ErrorException('Size of payload must not be greater than 4078 octets.');
+        }
+
         // sort notification by server type
         $type = $this->sortEndpoint($endpoint);
         $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken);

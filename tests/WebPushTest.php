@@ -83,6 +83,18 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testSendNotificationWithTooBigPayload()
+    {
+        $this->setExpectedException('ErrorException', 'Size of payload must not be greater than 4078 octets.');
+        $this->webPush->sendNotification(
+            $this->endpoints['standard'],
+            str_repeat('test', 1020),
+            $this->keys['standard'],
+            null,
+            true
+        );
+    }
+
     public function testSendNotifications()
     {
         foreach($this->endpoints as $endpoint) {
