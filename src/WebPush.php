@@ -196,7 +196,7 @@ class WebPush
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => 'aesgcm',
+                    'Content-Encoding' => 'aesgcm128',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
                     'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
                     'TTL' => $this->TTL,

@@ -52,23 +52,27 @@ final class Encryption
         // generate salt
         $salt = openssl_random_pseudo_bytes(16);
 
-        $prk = !empty($userAuthToken) ?
-            self::hkdf($userAuthToken, $sharedSecret, utf8_decode('Content-Encoding: auth\0'), 32) :
+        // section 4.3
+        $ikm = !empty($userAuthToken) ?
+            self::hkdf($userAuthToken, $sharedSecret, 'Content-Encoding: auth'.chr(0), 32) :
             $sharedSecret;
 
+        // section 4.2
         $context = self::createContext($userPublicKey, $localPublicKey);
 
         // derive the Content Encryption Key
-        $contentEncryptionKeyInfo = self::createInfo('aesgcm', $context);
-        $contentEncryptionKey = self::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
+        // TODO Chrome GCM wants 'aesgcm'?
+        $contentEncryptionKeyInfo = self::createInfo('aesgcm128', $context);
+        $contentEncryptionKey = self::hkdf($salt, $ikm, $contentEncryptionKeyInfo, 16);
 
-        // derive the Nonce
+        // section 3.3, derive the nonce
         $nonceInfo = self::createInfo('nonce', $context);
-        $nonce = self::hkdf($salt, $prk, $nonceInfo, 12);
+        $nonce = self::hkdf($salt, $ikm, $nonceInfo, 12);
 
         // encrypt
+        // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
         if (!$nativeEncryption) {
-            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $plaintext, "");
+            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $plaintext, null);
             $cipherText = $encryptedText.$tag;
         } else {
             $cipherText = openssl_encrypt($plaintext, 'aes-128-gcm', $contentEncryptionKey, false, $nonce); // base 64 encoded
@@ -150,6 +154,7 @@ final class Encryption
             throw new \ErrorException('Context argument has invalid size');
         }
 
+        // TODO Why 'P-256'?
         return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
     }
 }
