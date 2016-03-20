@@ -28,7 +28,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
             return;
         }
 
-        if (getenv('TRAVIS') === true) {
+        if (getenv('TRAVIS') || getenv('CI')) {
             $this->markTestSkipped('This test does not run on Travis.');
         }
     }
