@@ -111,7 +111,7 @@ final class Encryption
      *
      * @param $salt string A non-secret random value
      * @param $ikm string Input keying material
-     * @param $info string Application-specfic context
+     * @param $info string Application-specific context
      * @param $length int The length (in bytes) of the required output key
      * @return string
      */
@@ -143,7 +143,7 @@ final class Encryption
 
         // This one should never happen, because it's our code that generates the key
         if (strlen($serverPublicKey) !== 65) {
-        throw new \ErrorException('Invalid server public key length');
+            throw new \ErrorException('Invalid server public key length');
         }
 
         return chr(0).strlen($clientPublicKey).$clientPublicKey.strlen($serverPublicKey).$serverPublicKey;
