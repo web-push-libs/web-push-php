@@ -28,7 +28,7 @@ $notifications = array(
         'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
         'payload' => 'hello !',
         'userPublicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
-        'userAuthToken' => 'RMpCEzkgBaVj0Zj0', // base 64 encoded, should be 16 chars
+        'userAuthToken' => 'CxVX6QsVToEGEcjfYPqXQw==', // base 64 encoded, should be 24 chars
     ), array(
         'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
         'payload' => null,
@@ -36,9 +36,9 @@ $notifications = array(
         'userAuthToken' => null,
     ), array(
         'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
-        'payload' => '{"msg":"test"}',
+        'payload' => '{msg:"test"}',
         'userPublicKey' => '(stringOf88Chars)', 
-        'userAuthToken' => '(stringOf16Chars)',
+        'userAuthToken' => '(stringOf24Chars)',
     ),
 );
 
@@ -67,9 +67,6 @@ $webPush->sendNotification(
 
 ### GCM servers notes (Chrome)
 For compatibility reasons, this library detects if the server is a GCM server and appropriately sends the notification.
-GCM servers don't support encrypted payloads yet so WebPush will skip the payload.
-If you still want to show that payload on your notification, you should get that data on client-side from your server 
-where you will have to store somewhere the history of notifications.
 
 You will need to specify your GCM api key when instantiating WebPush:
 ```php
@@ -87,7 +84,7 @@ $webPush->sendNotification($endpoint, null, null, null, true);
 ```
 
 ### Payload length and security
-As previously stated, payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
+Payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
 
 However, when you encrypt a string of a certain length, the resulting string will always have the same length,
 no matter how many times you encrypt the initial string. This can make attackers guess the content of the payload.
