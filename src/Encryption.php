@@ -82,17 +82,16 @@ final class Encryption
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
         if (!$nativeEncryption) {
-            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $plaintext, null);
-            $cipherText = $encryptedText.$tag;
+            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $plaintext, "");
         } else {
-            $cipherText = openssl_encrypt($plaintext, 'aes-128-gcm', $contentEncryptionKey, false, $nonce); // base 64 encoded
+            $encryptedText = openssl_encrypt($plaintext, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag); // base 64 encoded
         }
 
         // return values in url safe base64
         return array(
             'localPublicKey' => Base64Url::encode($localPublicKey),
             'salt' => Base64Url::encode($salt),
-            'cipherText' => $cipherText,
+            'cipherText' => $encryptedText.$tag,
         );
     }
 
