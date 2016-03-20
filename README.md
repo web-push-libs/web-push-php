@@ -9,13 +9,14 @@
 
 If you have a PHP version smaller than 5.5.9, you will not be able to send any payload.
 
-If you have a PHP version smaller than 7.1, you will have to `composer require spomky-labs/jose:2.0.x-dev`,
-and if you want to speed things up, install the [PHP Crypto](https://github.com/bukka/php-crypto) extension.
+If you have a PHP version smaller than 7.1, you will have to `composer require spomky-labs/jose:2.0.x-dev`.
 
 ## Usage
 WebPush can be used to send notifications to endpoints which server delivers web push notifications as described in 
-the [Web Push API specification](http://www.w3.org/TR/push-api/).
+the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protocol-00).
 As it is standardized, you don't have to worry about what server type it relies on.
+
+Notifications with payloads are supported with this library on Firefox 47+ and Chrome 50+.
 
 ```php
 <?php
@@ -64,6 +65,12 @@ $webPush->sendNotification(
     true // optional (defaults false)
 );
 ```
+
+### Client side implementation of Web Push
+There are several good examples and tutorials on the web:
+* Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload.html) (outdated as of 03-20-2016, because it does not take into account the user auth secret)
+* Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
+* you may take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/07433bdb5fe4e3c7a6e4465c74e3b07c5a12886c/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/2a468273665a241ddc9aa2e12c57d18cd842d965/app/Resources/public/js/app.js) (payload sent indirectly)
 
 ### GCM servers notes (Chrome)
 For compatibility reasons, this library detects if the server is a GCM server and appropriately sends the notification.
@@ -164,8 +171,11 @@ Feel free to add your own!
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
 
 ### What about security?
+Payload is encrypted according to the [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption-01) standard,
+using the user public key and authentication secret that you can get by following the [Web Push API](http://www.w3.org/TR/push-api/) specification.
+
 Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library to create 
-local public and private keys and compute the shared secret. 
+local public and private keys and compute the shared secret.
 Then, if you have a PHP >= 7.1, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
 It uses [jose](https://github.com/Spomky-Labs/jose) if you have PHP < 7.1, which is slower.
 
