@@ -195,9 +195,10 @@ class WebPush
             $endpoint = $notification->getEndpoint();
             $payload = $notification->getPayload();
             $userPublicKey = $notification->getUserPublicKey();
+            $userAuthToken = $notification->getUserAuthToken();
 
-            if (isset($payload) && isset($userPublicKey) && ($this->payloadEncryptionSupport || $this->nativePayloadEncryptionSupport)) {
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $notification->getUserAuthToken(), $this->nativePayloadEncryptionSupport);
+            if (isset($payload) && isset($userPublicKey) && isset($userAuthToken) && ($this->payloadEncryptionSupport || $this->nativePayloadEncryptionSupport)) {
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
 
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
