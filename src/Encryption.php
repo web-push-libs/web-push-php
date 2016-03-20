@@ -12,7 +12,6 @@
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
-use Mdanter\Ecc\Crypto\Key\PublicKey;
 use Mdanter\Ecc\EccFactory;
 use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 
@@ -41,21 +40,22 @@ final class Encryption
     {
         $userPublicKey = base64_decode($userPublicKey);
         $userAuthToken = base64_decode($userAuthToken);
-        $plaintext = chr(0).chr(0).utf8_decode($payload);
+        $plaintext = chr(0).chr(0).$payload;
 
         // initialize utilities
         $math = EccFactory::getAdapter();
-        $keySerializer = new UncompressedPointSerializer($math);
-        $curveGenerator = EccFactory::getNistCurves()->generator256();
+        $pointSerializer = new UncompressedPointSerializer($math);
+        $generator = EccFactory::getNistCurves()->generator256();
         $curve = EccFactory::getNistCurves()->curve256();
 
         // get local key pair
-        $localPrivateKeyObject = $curveGenerator->createPrivateKey();
+        $localPrivateKeyObject = $generator->createPrivateKey();
         $localPublicKeyObject = $localPrivateKeyObject->getPublicKey();
-        $localPublicKey = hex2bin($keySerializer->serialize($localPublicKeyObject->getPoint()));
+        $localPublicKey = hex2bin($pointSerializer->serialize($localPublicKeyObject->getPoint()));
 
         // get user public key object
-        $userPublicKeyObject = new PublicKey($math, $curveGenerator, $keySerializer->unserialize($curve, bin2hex($userPublicKey)));
+        $pointUserPublicKey = $pointSerializer->unserialize($curve, bin2hex($userPublicKey));
+        $userPublicKeyObject = $generator->getPublicKeyFrom($pointUserPublicKey->getX(), $pointUserPublicKey->getY(), $generator->getOrder());
 
         // get shared secret from user public key and local private key
         $sharedSecret = hex2bin($math->decHex($userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX()));
@@ -145,7 +145,9 @@ final class Encryption
             throw new \ErrorException('Invalid server public key length');
         }
 
-        return chr(0).strlen($clientPublicKey).$clientPublicKey.strlen($serverPublicKey).$serverPublicKey;
+        $len = chr(0).'A'; // 65 as Uint16BE
+
+        return chr(0).$len.$clientPublicKey.$len.$serverPublicKey;
     }
 
     /**
