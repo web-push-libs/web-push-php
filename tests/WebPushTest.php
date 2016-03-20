@@ -13,62 +13,61 @@ use Minishlink\WebPush\WebPush;
 
 class WebPushTest extends PHPUnit_Framework_TestCase
 {
-    private $endpoints;
-    private $keys;
-    private $tokens;
+    private static $endpoints;
+    private static $keys;
+    private static $tokens;
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
-
-    public function setUp()
+    
+    public static function setUpBeforeClass()
     {
-        $this->endpoints = array(
+        self::$endpoints = array(
             'standard' => getenv('STANDARD_ENDPOINT'),
             'GCM' => getenv('GCM_ENDPOINT'),
         );
 
-        $this->keys = array(
+        self::$keys = array(
             'standard' => getenv('USER_PUBLIC_KEY'),
-            'GCM' => getenv('GCM_API_KEY'),
+            'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
         );
 
-        $this->tokens = array(
+        self::$tokens = array(
             'standard' => getenv('USER_AUTH_TOKEN'),
+            'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
         );
+    }
 
-        $this->webPush = new WebPush($this->keys);
+    public function setUp()
+    {
+        $this->webPush = new WebPush(array('GCM' => getenv('GCM_API_KEY')));
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
-    public function testSendNotification()
+    public function notificationProvider()
     {
-        $res = $this->webPush->sendNotification($this->endpoints['standard'], null, null, null, true);
-
-        $this->assertEquals($res, true);
+        self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
+        return array(
+            array(self::$endpoints['standard'], null, null, null),
+            array(self::$endpoints['standard'], '{message: "Plop", tag: "general"}', self::$keys['standard'], self::$tokens['standard']),
+            array(self::$endpoints['standard'], '{message: "Plop", tag: "general"}', self::$keys['standard'], null),
+            array(self::$endpoints['GCM'], null, null, null),
+            array(self::$endpoints['GCM'], '{message: "Plop", tag: "general"}', self::$keys['GCM'], self::$tokens['GCM']),
+            array(self::$endpoints['GCM'], '{message: "Plop", tag: "general"}', self::$keys['GCM'], null),
+        );
     }
 
-    public function testSendNotificationWithPayload()
+    /**
+     * @dataProvider notificationProvider
+     *
+     * @param string $endpoint
+     * @param string $payload
+     * @param string $userPublicKey
+     * @param string $userAuthKey
+     */
+    public function testSendNotification($endpoint, $payload, $userPublicKey, $userAuthKey)
     {
-        $res = $this->webPush->sendNotification(
-            $this->endpoints['standard'],
-            'test',
-            $this->keys['standard'],
-            $this->tokens['standard'],
-            true
-        );
-
-        $this->assertTrue($res);
-    }
-
-    public function testSendNotificationWithPayloadWithoutAuthToken()
-    {
-        $res = $this->webPush->sendNotification(
-            $this->endpoints['standard'],
-            '{message: "Plop", tag: "general"}',
-            $this->keys['standard'],
-            null,
-            true
-        );
+        $res = $this->webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthKey, true);
 
         $this->assertTrue($res);
     }
@@ -77,9 +76,9 @@ class WebPushTest extends PHPUnit_Framework_TestCase
     {
         $this->setExpectedException('ErrorException', 'The API has changed: sendNotification now takes the optional user auth token as parameter.');
         $this->webPush->sendNotification(
-            $this->endpoints['standard'],
+            self::$endpoints['standard'],
             'test',
-            $this->keys['standard'],
+            self::$keys['standard'],
             true
         );
     }
@@ -88,35 +87,24 @@ class WebPushTest extends PHPUnit_Framework_TestCase
     {
         $this->setExpectedException('ErrorException', 'Size of payload must not be greater than 4078 octets.');
         $this->webPush->sendNotification(
-            $this->endpoints['standard'],
+            self::$endpoints['standard'],
             str_repeat('test', 1020),
-            $this->keys['standard'],
+            self::$keys['standard'],
             null,
             true
         );
     }
 
-    public function testSendNotifications()
-    {
-        foreach($this->endpoints as $endpoint) {
-            $this->webPush->sendNotification($endpoint);
-        }
-
-        $res = $this->webPush->flush();
-
-        $this->assertEquals(true, $res);
-    }
-
     public function testFlush()
     {
-        $this->webPush->sendNotification($this->endpoints['standard']);
-        $this->assertEquals(true, $this->webPush->flush());
+        $this->webPush->sendNotification(self::$endpoints['standard']);
+        $this->assertTrue($this->webPush->flush());
 
         // queue has been reset
-        $this->assertEquals(false, $this->webPush->flush());
+        $this->assertFalse($this->webPush->flush());
 
-        $this->webPush->sendNotification($this->endpoints['standard']);
-        $this->assertEquals(true, $this->webPush->flush());
+        $this->webPush->sendNotification(self::$endpoints['standard']);
+        $this->assertTrue($this->webPush->flush());
     }
 
     public function testSendGCMNotificationWithoutGCMApiKey()
@@ -124,18 +112,18 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush = new WebPush();
 
         $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
-        $webPush->sendNotification($this->endpoints['GCM'], null, null, null, true);
+        $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         $webPush = new WebPush(array('GCM' => 'bar'));
 
-        $res = $webPush->sendNotification($this->endpoints['GCM'], null, null, null, true);
+        $res = $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
 
         $this->assertTrue(is_array($res)); // there has been an error
         $this->assertArrayHasKey('success', $res);
-        $this->assertEquals(false, $res['success']);
+        $this->assertFalse($res['success']);
 
         $this->assertArrayHasKey('statusCode', $res);
         $this->assertEquals(401, $res['statusCode']);
