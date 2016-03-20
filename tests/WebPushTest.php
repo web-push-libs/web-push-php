@@ -19,6 +19,19 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
+
+    protected function checkRequirements()
+    {
+        parent::checkRequirements();
+
+        if (!array_key_exists('skipIfTravis', $this->getAnnotations()['method'])) {
+            return;
+        }
+
+        if (getenv('TRAVIS') === true) {
+            $this->markTestSkipped('This test does not run on Travis.');
+        }
+    }
     
     public static function setUpBeforeClass()
     {
@@ -57,6 +70,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider notificationProvider
+     * @skipIfTravis
      *
      * @param string $endpoint
      * @param string $payload
@@ -93,6 +107,9 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    /*
+     * @skipIfTravis
+     */
     public function testFlush()
     {
         $this->webPush->sendNotification(self::$endpoints['standard']);
@@ -113,6 +130,9 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
+    /*
+     * @skipIfTravis
+     */
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         $webPush = new WebPush(array('GCM' => 'bar'));
