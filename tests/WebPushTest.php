@@ -126,7 +126,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($res['success']);
 
         $this->assertArrayHasKey('statusCode', $res);
-        $this->assertEquals(401, $res['statusCode']);
+        $this->assertEquals(400, $res['statusCode']);
 
         $this->assertArrayHasKey('headers', $res);
     }
