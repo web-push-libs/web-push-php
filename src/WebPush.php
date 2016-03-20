@@ -19,6 +19,9 @@ use Buzz\Message\Response;
 
 class WebPush
 {
+    const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    const TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm';
+
     /** @var Browser */
     protected $browser;
 
@@ -30,7 +33,7 @@ class WebPush
 
     /** @var array Array of not standard endpoint sources */
     private $urlByServerType = array(
-        'GCM' => 'https://android.googleapis.com/gcm/send',
+        'GCM' => self::GCM_URL,
     );
 
     /** @var int Time To Live of notifications */
@@ -104,7 +107,7 @@ class WebPush
 
             // if there has been a problem with at least one notification
             if (is_array($res)) {
-                // if there was only one notification, return the informations directly
+                // if there was only one notification, return the information directly
                 if (count($res) === 1) {
                     return $res[0];
                 }
@@ -143,14 +146,7 @@ class WebPush
         // for each endpoint server type
         $responses = array();
         foreach ($this->notificationsByServerType as $serverType => $notifications) {
-            switch ($serverType) {
-                case 'GCM':
-                    $responses += $this->sendToGCMEndpoints($notifications);
-                    break;
-                case 'standard':
-                    $responses += $this->sendToStandardEndpoints($notifications);
-                    break;
-            }
+            $responses += $this->prepareAndSend($notifications, $serverType);
         }
 
         // if multi curl, flush
@@ -191,11 +187,12 @@ class WebPush
         return $completeSuccess ? true : $return;
     }
 
-    private function sendToStandardEndpoints(array $notifications)
+    private function prepareAndSend(array $notifications, $serverType)
     {
         $responses = array();
         /** @var Notification $notification */
         foreach ($notifications as $notification) {
+            $endpoint = $notification->getEndpoint();
             $payload = $notification->getPayload();
             $userPublicKey = $notification->getUserPublicKey();
 
@@ -205,7 +202,7 @@ class WebPush
                 $headers = array(
                     'Content-Length' => strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => 'aesgcm128',
+                    'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
                     'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
                     'TTL' => $this->TTL,
@@ -221,43 +218,14 @@ class WebPush
                 $content = '';
             }
 
-            $responses[] = $this->sendRequest($notification->getEndpoint(), $headers, $content);
-        }
+            if ($serverType === 'GCM') {
+                // FUTURE remove when Chrome servers are all up-to-date
+                $endpoint = str_replace(self::GCM_URL, self::TEMP_GCM_URL, $endpoint);
 
-        return $responses;
-    }
+                $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
+            }
 
-    private function sendToGCMEndpoints(array $notifications)
-    {
-        $maxBatchSubscriptionIds = 1000;
-        $url = $this->urlByServerType['GCM'];
-
-        $headers = array(
-            'Authorization' => 'key='.$this->apiKeys['GCM'],
-            'Content-Type' => 'application/json',
-            'TTL' => $this->TTL,
-        );
-
-        $subscriptionIds = array();
-        /** @var Notification $notification */
-        foreach ($notifications as $notification) {
-            // get all subscriptions ids
-            $endpointsSections = explode('/', $notification->getEndpoint());
-            $subscriptionIds[] = $endpointsSections[count($endpointsSections) - 1];
-        }
-
-        // chunk by max number
-        $batch = array_chunk($subscriptionIds, $maxBatchSubscriptionIds);
-
-        $responses = array();
-        foreach ($batch as $subscriptionIds) {
-            $content = json_encode(array(
-                'registration_ids' => $subscriptionIds,
-            ));
-
-            $headers['Content-Length'] = strlen($content);
-
-            $responses[] = $this->sendRequest($url, $headers, $content);
+            $responses[] = $this->sendRequest($endpoint, $headers, $content);
         }
 
         return $responses;

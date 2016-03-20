@@ -72,8 +72,7 @@ final class Encryption
         $context = self::createContext($userPublicKey, $localPublicKey);
 
         // derive the Content Encryption Key
-        // TODO Chrome GCM wants 'aesgcm'?
-        $contentEncryptionKeyInfo = self::createInfo('aesgcm128', $context);
+        $contentEncryptionKeyInfo = self::createInfo('aesgcm', $context);
         $contentEncryptionKey = self::hkdf($salt, $ikm, $contentEncryptionKeyInfo, 16);
 
         // section 3.3, derive the nonce
@@ -165,7 +164,6 @@ final class Encryption
             throw new \ErrorException('Context argument has invalid size');
         }
 
-        // TODO Why 'P-256'?
         return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
     }
 }
