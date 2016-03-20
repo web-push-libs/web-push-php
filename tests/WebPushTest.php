@@ -49,9 +49,9 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
         return array(
             array(self::$endpoints['standard'], null, null, null),
-            array(self::$endpoints['standard'], '{"message":"Plop","tag":"general"}', self::$keys['standard'], self::$tokens['standard']),
+            array(self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']),
             array(self::$endpoints['GCM'], null, null, null),
-            array(self::$endpoints['GCM'], '{"message":"Plop","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']),
+            array(self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']),
         );
     }
 
