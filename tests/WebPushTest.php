@@ -86,7 +86,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     public function testSendNotificationWithOldAPI()
     {
-        $this->setExpectedException('ErrorException', 'The API has changed: sendNotification now takes the user auth token as parameter.');
+        $this->setExpectedException('ErrorException', 'The API has changed: sendNotification now takes the optional user auth token as parameter.');
         $this->webPush->sendNotification(
             self::$endpoints['standard'],
             'test',
@@ -107,7 +107,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /*
+    /**
      * @skipIfTravis
      */
     public function testFlush()
@@ -130,7 +130,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
-    /*
+    /**
      * @skipIfTravis
      */
     public function testSendGCMNotificationWithWrongGCMApiKey()
