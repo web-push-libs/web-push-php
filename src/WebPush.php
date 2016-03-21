@@ -93,9 +93,7 @@ class WebPush
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
-            if ($this->automaticPadding) {
-                $payload = Encryption::automaticPadding($payload);
-            }
+            $payload = Encryption::padPayload($payload, $this->automaticPadding);
         }
 
         // sort notification by server type

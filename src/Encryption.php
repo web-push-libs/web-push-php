@@ -20,16 +20,19 @@ final class Encryption
     const MAX_PAYLOAD_LENGTH = 4078;
 
     /**
-     * @param $payload
-     * @return string
+     * @param string $payload
+     * @param bool $automatic
+     * @return string padded payload (plaintext)
      */
-    public static function automaticPadding($payload)
+    public static function padPayload($payload, $automatic)
     {
-        return str_pad($payload, self::MAX_PAYLOAD_LENGTH, chr(0), STR_PAD_LEFT);
+        $payloadLen = strlen($payload);
+        $padLen = $automatic ? self::MAX_PAYLOAD_LENGTH - $payloadLen : 0;
+        return chr($padLen >> 8).chr($padLen & 0xFF).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
     }
 
     /**
-     * @param string $payload
+     * @param string $payload With padding
      * @param string $userPublicKey MIME base 64 encoded
      * @param string $userAuthToken MIME base 64 encoded
      * @param bool   $nativeEncryption Use OpenSSL (>PHP7.1)
@@ -40,7 +43,6 @@ final class Encryption
     {
         $userPublicKey = base64_decode($userPublicKey);
         $userAuthToken = base64_decode($userAuthToken);
-        $plaintext = chr(0).chr(0).$payload;
 
         // initialize utilities
         $math = EccFactory::getAdapter();
@@ -82,9 +84,9 @@ final class Encryption
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
         if (!$nativeEncryption) {
-            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $plaintext, "");
+            list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $payload, "");
         } else {
-            $encryptedText = openssl_encrypt($plaintext, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag); // base 64 encoded
+            $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag); // base 64 encoded
         }
 
         // return values in url safe base64
