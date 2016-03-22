@@ -28,7 +28,7 @@ final class Encryption
     {
         $payloadLen = strlen($payload);
         $padLen = $automatic ? self::MAX_PAYLOAD_LENGTH - $payloadLen : 0;
-        return chr($padLen >> 8).chr($padLen & 0xFF).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
+        return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
     }
 
     /**
