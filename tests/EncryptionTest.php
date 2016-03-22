@@ -18,12 +18,12 @@ class EncryptionTest extends PHPUnit_Framework_TestCase
      *
      * @param string $payload
      */
-    public function testAutomaticPadding($payload)
+    public function testPadPayload($payload)
     {
-        $res = Encryption::automaticPadding($payload);
+        $res = Encryption::padPayload($payload, true);
 
         $this->assertContains('test', $res);
-        $this->assertEquals(4078, strlen($res));
+        $this->assertEquals(4080, strlen($res));
     }
 
     public function payloadProvider()
