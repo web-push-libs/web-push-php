@@ -93,7 +93,7 @@ final class Encryption
         return array(
             'localPublicKey' => Base64Url::encode($localPublicKey),
             'salt' => Base64Url::encode($salt),
-            'cipherText' => $encryptedText.$tag,
+            'cipherText' => Base64Url::encode($encryptedText),
         );
     }
 
