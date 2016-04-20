@@ -86,7 +86,7 @@ final class Encryption
         if (!$nativeEncryption) {
             list($encryptedText, $tag) = \Jose\Util\GCM::encrypt($contentEncryptionKey, $nonce, $payload, "");
         } else {
-            $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag); // base 64 encoded
+            $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce); // base 64 encoded
         }
 
         // return values in url safe base64
