@@ -9,45 +9,67 @@
 
 ## Usage
 WebPush can be used to send notifications to endpoints which server delivers web push notifications as described in 
-the [Web Push API specification](http://www.w3.org/TR/push-api/).
+the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protocol-00).
 As it is standardized, you don't have to worry about what server type it relies on.
 
-__*Currently, WebPush doesn't support payloads at all.
-It is under development (see ["payload" branch](https://github.com/Minishlink/web-push/tree/payload)).
-PHP 7.1 will be needed for some encryption features.*__
-Development of payload support is stopped until [this PHP bug](https://bugs.php.net/bug.php?id=67304) is fixed.
-If you need to show custom info in your notifications, you will have to fetch this info from your server in your Service
-Worker when displaying the notification (see [this example](https://github.com/Minishlink/physbook/blob/e98ac7c3b7dd346eee1f315b8723060e8a3fc5cb/web/service-worker.js#L75)).
+Notifications with payloads are supported with this library on Firefox 46+ and Chrome 50+.
 
 ```php
 <?php
 
 use Minishlink\WebPush\WebPush;
 
-// array of endpoints
-$endpoints = array(
-    'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
-    'https://updates.push.services.mozilla.com/push/adcdef...', // Firefox 43+
-    'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+// array of notifications
+$notifications = array(
+    array(
+        'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
+        'payload' => 'hello !',
+        'userPublicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
+        'userAuthToken' => 'CxVX6QsVToEGEcjfYPqXQw==', // base 64 encoded, should be 24 chars
+    ), array(
+        'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
+        'payload' => null,
+        'userPublicKey' => null,
+        'userAuthToken' => null,
+    ), array(
+        'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+        'payload' => '{msg:"test"}',
+        'userPublicKey' => '(stringOf88Chars)', 
+        'userAuthToken' => '(stringOf24Chars)',
+    ),
 );
 
 $webPush = new WebPush();
 
-// send multiple notifications
-foreach ($endpoints as $endpoint) {
-    $webPush->sendNotification($endpoint);
+// send multiple notifications with payload
+foreach ($notifications as $notification) {
+    $webPush->sendNotification(
+        $notification['endpoint'],
+        $notification['payload'], // optional (defaults null)
+        $notification['userPublicKey'], // optional (defaults null)
+        $notification['userAuthToken'] // optional (defaults null)
+    );
 }
 $webPush->flush();
 
 // send one notification and flush directly
-$webPush->sendNotification($endpoints[0], null, null, true);
+$webPush->sendNotification(
+    $notifications[0]['endpoint'],
+    $notifications[0]['payload'], // optional (defaults null)
+    $notifications[0]['userPublicKey'], // optional (defaults null)
+    $notifications[0]['userAuthToken'], // optional (defaults null)
+    true // optional (defaults false)
+);
 ```
+
+### Client side implementation of Web Push
+There are several good examples and tutorials on the web:
+* Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload.html) (outdated as of 03-20-2016, because it does not take into account the user auth secret)
+* Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
+* you may take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/07433bdb5fe4e3c7a6e4465c74e3b07c5a12886c/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/2a468273665a241ddc9aa2e12c57d18cd842d965/app/Resources/public/js/app.js) (payload sent indirectly)
 
 ### GCM servers notes (Chrome)
 For compatibility reasons, this library detects if the server is a GCM server and appropriately sends the notification.
-GCM servers don't support encrypted payloads yet so WebPush will skip the payload.
-If you still want to show that payload on your notification, you should get that data on client-side from your server 
-where you will have to store somewhere the history of notifications.
 
 You will need to specify your GCM api key when instantiating WebPush:
 ```php
@@ -61,7 +83,26 @@ $apiKeys = array(
 );
 
 $webPush = new WebPush($apiKeys);
-$webPush->sendNotification($endpoint, null, null, true);
+$webPush->sendNotification($endpoint, null, null, null, true);
+```
+
+### Payload length and security
+Payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
+
+However, when you encrypt a string of a certain length, the resulting string will always have the same length,
+no matter how many times you encrypt the initial string. This can make attackers guess the content of the payload.
+In order to circumvent this, this library can add some null padding to the initial payload, so that all the input of the encryption process
+will have the same length. This way, all the output of the encryption process will also have the same length and attackers won't be able to 
+guess the content of your payload. The downside of this approach is that you will use more bandwidth than if you didn't pad the string.
+That's why the library provides the option to disable this security measure:
+
+```php
+<?php
+
+use Minishlink\WebPush\WebPush;
+
+$webPush = new WebPush();
+$webPush->setAutomaticPadding(false); // disable automatic padding
 ```
 
 ### Time To Live
@@ -69,7 +110,7 @@ Time To Live (TTL, in seconds) is how long a push message is retained by the pus
 is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks. 
 However, if you send multiple nonessential notifications, set a TTL of 0: the push notification will be delivered only 
 if the user is currently connected. For other cases, you should use a minimum of one day if your users have multiple time 
-zones, and if you don't several hours will suffice.
+zones, and if they don't several hours will suffice.
 
 ```php
 <?php
@@ -124,6 +165,15 @@ Feel free to add your own!
 
 ### Is the API stable?
 Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
+
+### What about security?
+Payload is encrypted according to the [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption-01) standard,
+using the user public key and authentication secret that you can get by following the [Web Push API](http://www.w3.org/TR/push-api/) specification.
+
+Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library to create 
+local public and private keys and compute the shared secret.
+Then, if you have a PHP >= 7.1, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
+Otherwise, if you have PHP < 7.1, it uses [Spomky-Labs/php-aes-gcm](https://github.com/Spomky-Labs/php-aes-gcm), which is slower.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate" ?
 Your installation lacks some certificates.

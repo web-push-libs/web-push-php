@@ -19,6 +19,9 @@ use Buzz\Message\Response;
 
 class WebPush
 {
+    const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    const TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm';
+
     /** @var Browser */
     protected $browser;
 
@@ -30,18 +33,24 @@ class WebPush
 
     /** @var array Array of not standard endpoint sources */
     private $urlByServerType = array(
-        'GCM' => 'https://android.googleapis.com/gcm/send',
+        'GCM' => self::GCM_URL,
     );
 
     /** @var int Time To Live of notifications */
     private $TTL;
 
+    /** @var bool Automatic padding of payloads, if disabled, trade security for bandwidth */
+    private $automaticPadding = true;
+
+    /** @var boolean */
+    private $nativePayloadEncryptionSupport;
+
     /**
      * WebPush constructor.
      *
-     * @param array               $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
-     * @param int|null            $TTL     Time To Live of notifications, default being 4 weeks.
-     * @param int|null            $timeout Timeout of POST request
+     * @param array $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
+     * @param int|null $TTL Time To Live of notifications, default being 4 weeks.
+     * @param int|null $timeout Timeout of POST request
      * @param AbstractClient|null $client
      */
     public function __construct(array $apiKeys = array(), $TTL = 2419200, $timeout = 30, AbstractClient $client = null)
@@ -52,29 +61,55 @@ class WebPush
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
+        
+        $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
     /**
      * Send a notification.
      *
-     * @param string      $endpoint
+     * @param string $endpoint
      * @param string|null $payload If you want to send an array, json_encode it.
      * @param string|null $userPublicKey
-     * @param bool        $flush If you want to flush directly (usually when you send only one notification)
+     * @param string|null $userAuthToken
+     * @param bool $flush If you want to flush directly (usually when you send only one notification)
      *
-     * @return bool|array Return an array of information if $flush is set to true and the request has failed.
+     * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true.
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $flush = false)
+    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false)
     {
+        if (isset($userAuthToken) && is_bool($userAuthToken)) {
+            throw new \ErrorException('The API has changed: sendNotification now takes the optional user auth token as parameter.');
+        }
+
+        if(isset($payload)) {
+            if (strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
+                throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
+            }
+
+            $payload = Encryption::padPayload($payload, $this->automaticPadding);
+        }
+
         // sort notification by server type
         $type = $this->sortEndpoint($endpoint);
-        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey);
+        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken);
 
         if ($flush) {
             $res = $this->flush();
-            return is_array($res) ? $res[0] : true;
+
+            // if there has been a problem with at least one notification
+            if (is_array($res)) {
+                // if there was only one notification, return the information directly
+                if (count($res) === 1) {
+                    return $res[0];
+                }
+
+                return $res;
+            }
+
+            return true;
         }
 
         return true;
@@ -105,14 +140,7 @@ class WebPush
         // for each endpoint server type
         $responses = array();
         foreach ($this->notificationsByServerType as $serverType => $notifications) {
-            switch ($serverType) {
-                case 'GCM':
-                    $responses += $this->sendToGCMEndpoints($notifications);
-                    break;
-                case 'standard':
-                    $responses += $this->sendToStandardEndpoints($notifications);
-                    break;
-            }
+            $responses += $this->prepareAndSend($notifications, $serverType);
         }
 
         // if multi curl, flush
@@ -153,55 +181,46 @@ class WebPush
         return $completeSuccess ? true : $return;
     }
 
-    private function sendToStandardEndpoints(array $notifications)
+    private function prepareAndSend(array $notifications, $serverType)
     {
-        $headers = array(
-            'Content-Length' => 0,
-            'TTL' => $this->TTL,
-        );
-
-        $content = '';
-
         $responses = array();
         /** @var Notification $notification */
         foreach ($notifications as $notification) {
-            $responses[] = $this->sendRequest($notification->getEndpoint(), $headers, $content);
-        }
+            $endpoint = $notification->getEndpoint();
+            $payload = $notification->getPayload();
+            $userPublicKey = $notification->getUserPublicKey();
+            $userAuthToken = $notification->getUserAuthToken();
 
-        return $responses;
-    }
+            if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
 
-    private function sendToGCMEndpoints(array $notifications)
-    {
-        $maxBatchSubscriptionIds = 1000;
-        $url = $this->urlByServerType['GCM'];
+                $headers = array(
+                    'Content-Length' => strlen($encrypted['cipherText']),
+                    'Content-Type' => 'application/octet-stream',
+                    'Content-Encoding' => 'aesgcm',
+                    'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
+                    'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
+                    'TTL' => $this->TTL,
+                );
 
-        $headers = array(
-            'Authorization' => 'key='.$this->apiKeys['GCM'],
-            'Content-Type' => 'application/json',
-            'TTL' => $this->TTL,
-        );
+                $content = $encrypted['cipherText'];
+            } else {
+                $headers = array(
+                    'Content-Length' => 0,
+                    'TTL' => $this->TTL,
+                );
 
-        $subscriptionIds = array();
-        /** @var Notification $notification */
-        foreach ($notifications as $notification) {
-            // get all subscriptions ids
-            $endpointsSections = explode('/', $notification->getEndpoint());
-            $subscriptionIds[] = $endpointsSections[count($endpointsSections) - 1];
-        }
+                $content = '';
+            }
 
-        // chunk by max number
-        $batch = array_chunk($subscriptionIds, $maxBatchSubscriptionIds);
+            if ($serverType === 'GCM') {
+                // FUTURE remove when Chrome servers are all up-to-date
+                $endpoint = str_replace(self::GCM_URL, self::TEMP_GCM_URL, $endpoint);
 
-        $responses = array();
-        foreach ($batch as $subscriptionIds) {
-            $content = json_encode(array(
-                'registration_ids' => $subscriptionIds,
-            ));
+                $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
+            }
 
-            $headers['Content-Length'] = strlen($content);
-
-            $responses[] = $this->sendRequest($url, $headers, $content);
+            $responses[] = $this->sendRequest($endpoint, $headers, $content);
         }
 
         return $responses;
@@ -251,10 +270,14 @@ class WebPush
 
     /**
      * @param Browser $browser
+     *
+     * @return WebPush
      */
     public function setBrowser($browser)
     {
         $this->browser = $browser;
+
+        return $this;
     }
 
     /**
@@ -267,9 +290,33 @@ class WebPush
 
     /**
      * @param int $TTL
+     *
+     * @return WebPush
      */
     public function setTTL($TTL)
     {
         $this->TTL = $TTL;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isAutomaticPadding()
+    {
+        return $this->automaticPadding;
+    }
+
+    /**
+     * @param boolean $automaticPadding
+     *
+     * @return WebPush
+     */
+    public function setAutomaticPadding($automaticPadding)
+    {
+        $this->automaticPadding = $automaticPadding;
+
+        return $this;
     }
 }

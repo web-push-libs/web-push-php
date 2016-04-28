@@ -13,55 +13,113 @@ use Minishlink\WebPush\WebPush;
 
 class WebPushTest extends PHPUnit_Framework_TestCase
 {
-    private $endpoints;
-    private $keys;
+    private static $endpoints;
+    private static $keys;
+    private static $tokens;
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
 
-    public function setUp()
+    protected function checkRequirements()
     {
-        $this->endpoints = array(
+        parent::checkRequirements();
+
+        if (!array_key_exists('skipIfTravis', $this->getAnnotations()['method'])) {
+            return;
+        }
+
+        if (getenv('TRAVIS') || getenv('CI')) {
+            $this->markTestSkipped('This test does not run on Travis.');
+        }
+    }
+    
+    public static function setUpBeforeClass()
+    {
+        self::$endpoints = array(
             'standard' => getenv('STANDARD_ENDPOINT'),
             'GCM' => getenv('GCM_ENDPOINT'),
         );
 
-        $this->keys = array(
+        self::$keys = array(
             'standard' => getenv('USER_PUBLIC_KEY'),
-            'GCM' => getenv('GCM_API_KEY'),
+            'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
         );
 
-        $this->webPush = new WebPush($this->keys);
+        self::$tokens = array(
+            'standard' => getenv('USER_AUTH_TOKEN'),
+            'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
+        );
     }
 
-    public function testSendNotification()
+    public function setUp()
     {
-        $res = $this->webPush->sendNotification($this->endpoints['standard'], null, null, true);
-
-        $this->assertEquals($res, true);
+        $this->webPush = new WebPush(array('GCM' => getenv('GCM_API_KEY')));
+        $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
-    public function testSendNotifications()
+    public function notificationProvider()
     {
-        foreach($this->endpoints as $endpoint) {
-            $this->webPush->sendNotification($endpoint);
-        }
-
-        $res = $this->webPush->flush();
-
-        $this->assertEquals(true, $res);
+        self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
+        return array(
+            array(self::$endpoints['standard'], null, null, null),
+            array(self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']),
+            array(self::$endpoints['GCM'], null, null, null),
+            array(self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']),
+        );
     }
 
+    /**
+     * @dataProvider notificationProvider
+     * @skipIfTravis
+     *
+     * @param string $endpoint
+     * @param string $payload
+     * @param string $userPublicKey
+     * @param string $userAuthKey
+     */
+    public function testSendNotification($endpoint, $payload, $userPublicKey, $userAuthKey)
+    {
+        $res = $this->webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthKey, true);
+
+        $this->assertTrue($res);
+    }
+
+    public function testSendNotificationWithOldAPI()
+    {
+        $this->setExpectedException('ErrorException', 'The API has changed: sendNotification now takes the optional user auth token as parameter.');
+        $this->webPush->sendNotification(
+            self::$endpoints['standard'],
+            'test',
+            self::$keys['standard'],
+            true
+        );
+    }
+
+    public function testSendNotificationWithTooBigPayload()
+    {
+        $this->setExpectedException('ErrorException', 'Size of payload must not be greater than 4078 octets.');
+        $this->webPush->sendNotification(
+            self::$endpoints['standard'],
+            str_repeat('test', 1020),
+            self::$keys['standard'],
+            null,
+            true
+        );
+    }
+
+    /**
+     * @skipIfTravis
+     */
     public function testFlush()
     {
-        $this->webPush->sendNotification($this->endpoints['standard']);
-        $this->assertEquals(true, $this->webPush->flush());
+        $this->webPush->sendNotification(self::$endpoints['standard']);
+        $this->assertTrue($this->webPush->flush());
 
         // queue has been reset
-        $this->assertEquals(false, $this->webPush->flush());
+        $this->assertFalse($this->webPush->flush());
 
-        $this->webPush->sendNotification($this->endpoints['standard']);
-        $this->assertEquals(true, $this->webPush->flush());
+        $this->webPush->sendNotification(self::$endpoints['standard']);
+        $this->assertTrue($this->webPush->flush());
     }
 
     public function testSendGCMNotificationWithoutGCMApiKey()
@@ -69,21 +127,24 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush = new WebPush();
 
         $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
-        $webPush->sendNotification($this->endpoints['GCM'], null, null, true);
+        $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
+    /**
+     * @skipIfTravis
+     */
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         $webPush = new WebPush(array('GCM' => 'bar'));
 
-        $res = $webPush->sendNotification($this->endpoints['GCM'], null, null, true);
+        $res = $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
 
         $this->assertTrue(is_array($res)); // there has been an error
         $this->assertArrayHasKey('success', $res);
-        $this->assertEquals(false, $res['success']);
+        $this->assertFalse($res['success']);
 
         $this->assertArrayHasKey('statusCode', $res);
-        $this->assertEquals(401, $res['statusCode']);
+        $this->assertEquals(400, $res['statusCode']);
 
         $this->assertArrayHasKey('headers', $res);
     }
