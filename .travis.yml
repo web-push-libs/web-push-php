@@ -6,17 +6,7 @@ php:
   - 5.6
   - hhvm
 
-env:
-  - PAYLOAD=true
-  - PAYLOAD=false
-
-matrix:
-  exclude:
-    - php: 5.4
-      env: PAYLOAD=true
-
 before_script:
   - composer install --prefer-source -n --no-dev
-  - 'if [[ ${PAYLOAD} == "true" ]]; then composer require spomky-labs/jose:2.0.x-dev; fi'
 
 script: phpunit -c phpunit.travis.xml
