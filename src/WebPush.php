@@ -43,9 +43,6 @@ class WebPush
     private $automaticPadding = true;
 
     /** @var boolean */
-    private $payloadEncryptionSupport;
-
-    /** @var boolean */
     private $nativePayloadEncryptionSupport;
 
     /**
@@ -64,8 +61,7 @@ class WebPush
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
-
-        $this->payloadEncryptionSupport = version_compare(phpversion(), '5.5.9', '>=') && class_exists("\\Jose\\Util\\GCM");
+        
         $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
@@ -195,7 +191,7 @@ class WebPush
             $userPublicKey = $notification->getUserPublicKey();
             $userAuthToken = $notification->getUserAuthToken();
 
-            if (isset($payload) && isset($userPublicKey) && isset($userAuthToken) && ($this->payloadEncryptionSupport || $this->nativePayloadEncryptionSupport)) {
+            if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
 
                 $headers = array(
