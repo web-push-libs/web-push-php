@@ -16,7 +16,7 @@ WebPush can be used to send notifications to endpoints which server delivers web
 the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protocol-00).
 As it is standardized, you don't have to worry about what server type it relies on.
 
-Notifications with payloads are supported with this library on Firefox 47+ and Chrome 50+.
+Notifications with payloads are supported with this library on Firefox 46+ and Chrome 50+.
 
 ```php
 <?php
