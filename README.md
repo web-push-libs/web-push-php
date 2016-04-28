@@ -64,9 +64,9 @@ $webPush->sendNotification(
 
 ### Client side implementation of Web Push
 There are several good examples and tutorials on the web:
-* Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload.html) (outdated as of 03-20-2016, because it does not take into account the user auth secret)
+* Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload_index_doc.html) (don't mind the `server.js` file: it should be replaced by your PHP server code with this library)
 * Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
-* you may take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/07433bdb5fe4e3c7a6e4465c74e3b07c5a12886c/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/2a468273665a241ddc9aa2e12c57d18cd842d965/app/Resources/public/js/app.js) (payload sent indirectly)
+* you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/d6855ca8f485556ab2ee5c047688fbf745367045/app/Resources/public/js/app.js)
 
 ### GCM servers notes (Chrome)
 For compatibility reasons, this library detects if the server is a GCM server and appropriately sends the notification.
