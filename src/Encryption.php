@@ -33,16 +33,16 @@ final class Encryption
 
     /**
      * @param string $payload With padding
-     * @param string $userPublicKey MIME base 64 encoded
-     * @param string $userAuthToken MIME base 64 encoded
+     * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
+     * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
      * @param bool   $nativeEncryption Use OpenSSL (>PHP7.1)
      *
      * @return array
      */
     public static function encrypt($payload, $userPublicKey, $userAuthToken, $nativeEncryption)
     {
-        $userPublicKey = base64_decode($userPublicKey);
-        $userAuthToken = base64_decode($userAuthToken);
+        $userPublicKey = Base64Url::decode($userPublicKey);
+        $userAuthToken = Base64Url::decode($userAuthToken);
 
         // initialize utilities
         $math = EccFactory::getAdapter();
