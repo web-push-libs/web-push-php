@@ -140,7 +140,7 @@ class WebPush
         // for each endpoint server type
         $responses = array();
         foreach ($this->notificationsByServerType as $serverType => $notifications) {
-            $responses += $this->prepareAndSend($notifications, $serverType);
+            $responses = array_merge($responses, $this->prepareAndSend($notifications, $serverType));
         }
 
         // if multi curl, flush
