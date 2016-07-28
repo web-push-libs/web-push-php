@@ -60,7 +60,7 @@ final class Encryption
         $userPublicKeyObject = $generator->getPublicKeyFrom($pointUserPublicKey->getX(), $pointUserPublicKey->getY(), $generator->getOrder());
 
         // get shared secret from user public key and local private key
-        $sharedSecret = hex2bin($math->decHex($userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX()));
+        $sharedSecret = hex2bin($math->decHex((string) $userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX()));
 
         // generate salt
         $salt = openssl_random_pseudo_bytes(16);
