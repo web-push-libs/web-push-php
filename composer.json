@@ -15,7 +15,7 @@
   "require": {
     "php": ">=5.4",
     "kriswallsmith/buzz": ">=0.6",
-    "mdanter/ecc": "^0.3.0",
+    "mdanter/ecc": "^0.4.0",
     "lib-openssl": "*",
     "spomky-labs/base64url": "^1.0",
     "spomky-labs/php-aes-gcm": "^1.0"
