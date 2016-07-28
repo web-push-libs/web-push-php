@@ -20,7 +20,6 @@ use Buzz\Message\Response;
 class WebPush
 {
     const GCM_URL = 'https://android.googleapis.com/gcm/send';
-    const TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm';
 
     /** @var Browser */
     protected $browser;
@@ -215,9 +214,6 @@ class WebPush
             }
 
             if ($serverType === 'GCM') {
-                // FUTURE remove when Chrome servers are all up-to-date
-                $endpoint = str_replace(self::GCM_URL, self::TEMP_GCM_URL, $endpoint);
-
                 $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
             }
 
