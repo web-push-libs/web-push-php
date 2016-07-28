@@ -120,7 +120,7 @@ class WebPush
      *
      * @return array|bool If there are no errors, return true.
      *                    If there were no notifications in the queue, return false.
-     *                    Else return an array of information for each notification sent (success, statusCode, headers).
+     *                    Else return an array of information for each notification sent (success, statusCode, headers, content).
      *
      * @throws \ErrorException
      */
@@ -165,6 +165,7 @@ class WebPush
                     'success' => false,
                     'statusCode' => $response->getStatusCode(),
                     'headers' => $response->getHeaders(),
+                    'content' => $response->getContent(),
                 );
 
                 $completeSuccess = false;
