@@ -14,6 +14,8 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 Notifications with payloads are supported with this library on Firefox 46+ and Chrome 50+.
 
+You'll need at least PHP 5.6, and PHP 7.1 is recommended for much better performance.
+
 ```php
 <?php
 
