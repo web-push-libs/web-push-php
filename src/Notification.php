@@ -25,12 +25,16 @@ class Notification
     /** @var string */
     private $userAuthToken;
 
-    public function __construct($endpoint, $payload, $userPublicKey, $userAuthToken)
+    /** @var array Options : TTL, urgency, topic **/
+    private $options;
+
+    public function __construct($endpoint, $payload, $userPublicKey, $userAuthToken, $options)
     {
         $this->endpoint = $endpoint;
         $this->payload = $payload;
         $this->userPublicKey = $userPublicKey;
         $this->userAuthToken = $userAuthToken;
+        $this->options = $options;
     }
 
     /**
@@ -64,4 +68,19 @@ class Notification
     {
         return $this->userAuthToken;
     }
+
+    /**
+     * @param array $defaultOptions
+     * @return array
+     */
+    public function getOptions(array $defaultOptions = array())
+    {
+        $options = $this->options;
+        $options['TTL'] = array_key_exists('TTL', $options) ?  $options['TTL'] : $defaultOptions['TTL'];
+        $options['urgency'] = array_key_exists('urgency', $options) ? $options['urgency'] : $defaultOptions['urgency'];
+        $options['topic'] = array_key_exists('topic', $options) ? $options['topic'] : $defaultOptions['topic'];
+
+        return $options;
+    }
+
 }

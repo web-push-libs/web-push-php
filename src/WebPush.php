@@ -35,8 +35,8 @@ class WebPush
         'GCM' => self::GCM_URL,
     );
 
-    /** @var int Time To Live of notifications */
-    private $TTL;
+    /** @var array Default options : TTL, urgency, topic */
+    private $defaultOptions;
 
     /** @var bool Automatic padding of payloads, if disabled, trade security for bandwidth */
     private $automaticPadding = true;
@@ -48,14 +48,14 @@ class WebPush
      * WebPush constructor.
      *
      * @param array $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
-     * @param int|null $TTL Time To Live of notifications, default being 4 weeks.
+     * @param array $defaultOptions TTL, urgency, topic
      * @param int|null $timeout Timeout of POST request
      * @param AbstractClient|null $client
      */
-    public function __construct(array $apiKeys = array(), $TTL = 2419200, $timeout = 30, AbstractClient $client = null)
+    public function __construct(array $apiKeys = array(), $defaultOptions = array(), $timeout = 30, AbstractClient $client = null)
     {
         $this->apiKeys = $apiKeys;
-        $this->TTL = $TTL;
+        $this->setDefaultOptions($defaultOptions);
 
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
@@ -72,17 +72,13 @@ class WebPush
      * @param string|null $userPublicKey
      * @param string|null $userAuthToken
      * @param bool $flush If you want to flush directly (usually when you send only one notification)
-     *
+     * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object.
      * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true.
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false)
+    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array())
     {
-        if (isset($userAuthToken) && is_bool($userAuthToken)) {
-            throw new \ErrorException('The API has changed: sendNotification now takes the optional user auth token as parameter.');
-        }
-
         if(isset($payload)) {
             if (strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
@@ -93,7 +89,7 @@ class WebPush
 
         // sort notification by server type
         $type = $this->sortEndpoint($endpoint);
-        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken);
+        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken, $options);
 
         if ($flush) {
             $res = $this->flush();
@@ -190,6 +186,7 @@ class WebPush
             $payload = $notification->getPayload();
             $userPublicKey = $notification->getUserPublicKey();
             $userAuthToken = $notification->getUserAuthToken();
+            $options = $notification->getOptions($this->getDefaultOptions());
 
             if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
@@ -200,17 +197,25 @@ class WebPush
                     'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
                     'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
-                    'TTL' => $this->TTL,
                 );
 
                 $content = $encrypted['cipherText'];
             } else {
                 $headers = array(
                     'Content-Length' => 0,
-                    'TTL' => $this->TTL,
                 );
 
                 $content = '';
+            }
+
+            $headers['TTL'] = $options['TTL'];
+
+            if (isset($options['urgency'])) {
+                $headers['Urgency'] = $options['urgency'];
+            }
+
+            if (isset($options['topic'])) {
+                $headers['Topic'] = $options['topic'];
             }
 
             if ($serverType === 'GCM') {
@@ -278,26 +283,6 @@ class WebPush
     }
 
     /**
-     * @return int
-     */
-    public function getTTL()
-    {
-        return $this->TTL;
-    }
-
-    /**
-     * @param int $TTL
-     *
-     * @return WebPush
-     */
-    public function setTTL($TTL)
-    {
-        $this->TTL = $TTL;
-
-        return $this;
-    }
-
-    /**
      * @return boolean
      */
     public function isAutomaticPadding()
@@ -315,5 +300,23 @@ class WebPush
         $this->automaticPadding = $automaticPadding;
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefaultOptions()
+    {
+        return $this->defaultOptions;
+    }
+
+    /**
+     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', and 'topic'
+     */
+    public function setDefaultOptions(array $defaultOptions)
+    {
+        $this->defaultOptions['TTL'] = array_key_exists('TTL', $defaultOptions) ? $defaultOptions['TTL'] : 2419200;
+        $this->defaultOptions['urgency'] = array_key_exists('urgency', $defaultOptions) ? $defaultOptions['urgency'] : null;
+        $this->defaultOptions['topic'] = array_key_exists('topic', $defaultOptions) ? $defaultOptions['topic'] : null;
     }
 }
