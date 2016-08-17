@@ -161,6 +161,7 @@ class WebPush
                     'statusCode' => $response->getStatusCode(),
                     'headers' => $response->getHeaders(),
                     'content' => $response->getContent(),
+                    'expired' => in_array($response->getStatusCode(), array(404, 410)),
                 );
 
                 $completeSuccess = false;
