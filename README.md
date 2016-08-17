@@ -99,8 +99,8 @@ use Minishlink\WebPush\WebPush;
 
 $defaultOptions = array(
     'TTL' => 300, // defaults to 4 weeks
-    'urgency' => 'normal',
-    'topic' => 'new_event',
+    'urgency' => 'normal', // protocol defaults to "normal"
+    'topic' => 'new_event', // not defined by default
 );
 
 // for every notifications
@@ -108,7 +108,7 @@ $webPush = new WebPush(array(), $defaultOptions);
 $webPush->setDefaultOptions($defaultOptions);
 
 // or for one notification
-$webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthToken, true, array('TTL' => 5000));
+$webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthToken, $flush, array('TTL' => 5000));
 ```
 
 #### TTL
@@ -122,7 +122,7 @@ zones, and if they don't several hours will suffice.
 Urgency can be either "very-low", "low", "normal", or "high". If the browser vendor has implemented this feature, it will save battery life on mobile devices (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.3)). 
 
 #### topic
-Similar to the old `collapse_key` on legacy GCM servers, this string will make the vendor show to the user only the last notification of this topic (cf. [protocol]((cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.4)))).
+Similar to the old `collapse_key` on legacy GCM servers, this string will make the vendor show to the user only the last notification of this topic (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.4)).
 
 ### Payload length and security
 Payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
