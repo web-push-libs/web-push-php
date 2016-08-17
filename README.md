@@ -124,6 +124,26 @@ Urgency can be either "very-low", "low", "normal", or "high". If the browser ven
 #### topic
 Similar to the old `collapse_key` on legacy GCM servers, this string will make the vendor show to the user only the last notification of this topic (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.4)).
 
+#### Server errors
+You can see what the browser vendor's server sends back in case it encountered an error (push subscription expiration, wrong parameters...).
+`sendNotification()` (with flush as true) and `flush()` returns true if there were no errors. If there are errors it returns an array like the following.
+The `expired` key can be useful to clean your database of expired endpoints.
+
+```php
+$res = array(
+    array( // first notification
+        'success' => false,
+        'statusCode' => $responseStatusCode,
+        'headers' => $responseHeaders,
+        'content' => $responseContent, // you may have more infos here
+        'expired' => $isTheEndpointWrongOrExpired,
+    ),
+    array( // second notification
+        ...
+    ), ...
+);
+```
+
 ### Payload length and security
 Payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
 
