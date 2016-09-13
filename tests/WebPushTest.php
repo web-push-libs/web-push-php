@@ -84,17 +84,6 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($res);
     }
 
-    public function testSendNotificationWithOldAPI()
-    {
-        $this->setExpectedException('ErrorException', 'The API has changed: sendNotification now takes the optional user auth token as parameter.');
-        $this->webPush->sendNotification(
-            self::$endpoints['standard'],
-            'test',
-            self::$keys['standard'],
-            true
-        );
-    }
-
     public function testSendNotificationWithTooBigPayload()
     {
         $this->setExpectedException('ErrorException', 'Size of payload must not be greater than 4078 octets.');

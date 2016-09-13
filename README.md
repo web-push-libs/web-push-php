@@ -14,6 +14,8 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 Notifications with payloads are supported with this library on Firefox 46+ and Chrome 50+.
 
+You'll need at least PHP 5.6, and PHP 7.1 is recommended for much better performance.
+
 ```php
 <?php
 
@@ -86,6 +88,62 @@ $webPush = new WebPush($apiKeys);
 $webPush->sendNotification($endpoint, null, null, null, true);
 ```
 
+### Notification options
+Each notification can have a specific Time To Live, urgency, and topic.
+You can change the default options with `setDefaultOptions()` or in the constructor:
+
+```php
+<?php
+
+use Minishlink\WebPush\WebPush;
+
+$defaultOptions = array(
+    'TTL' => 300, // defaults to 4 weeks
+    'urgency' => 'normal', // protocol defaults to "normal"
+    'topic' => 'new_event', // not defined by default
+);
+
+// for every notifications
+$webPush = new WebPush(array(), $defaultOptions);
+$webPush->setDefaultOptions($defaultOptions);
+
+// or for one notification
+$webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthToken, $flush, array('TTL' => 5000));
+```
+
+#### TTL
+Time To Live (TTL, in seconds) is how long a push message is retained by the push service (eg. Mozilla) in case the user browser 
+is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks. 
+However, if you send multiple nonessential notifications, set a TTL of 0: the push notification will be delivered only 
+if the user is currently connected. For other cases, you should use a minimum of one day if your users have multiple time 
+zones, and if they don't several hours will suffice.
+
+#### urgency
+Urgency can be either "very-low", "low", "normal", or "high". If the browser vendor has implemented this feature, it will save battery life on mobile devices (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.3)). 
+
+#### topic
+Similar to the old `collapse_key` on legacy GCM servers, this string will make the vendor show to the user only the last notification of this topic (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.4)).
+
+### Server errors
+You can see what the browser vendor's server sends back in case it encountered an error (push subscription expiration, wrong parameters...).
+`sendNotification()` (with flush as true) and `flush()` returns true if there were no errors. If there are errors it returns an array like the following.
+The `expired` key can be useful to clean your database of expired endpoints.
+
+```php
+$res = array(
+    array( // first notification
+        'success' => false,
+        'statusCode' => $responseStatusCode,
+        'headers' => $responseHeaders,
+        'content' => $responseContent, // you may have more infos here
+        'expired' => $isTheEndpointWrongOrExpired,
+    ),
+    array( // second notification
+        ...
+    ), ...
+);
+```
+
 ### Payload length and security
 Payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
 
@@ -105,28 +163,6 @@ $webPush = new WebPush();
 $webPush->setAutomaticPadding(false); // disable automatic padding
 ```
 
-### Time To Live
-Time To Live (TTL, in seconds) is how long a push message is retained by the push service (eg. Mozilla) in case the user browser 
-is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks. 
-However, if you send multiple nonessential notifications, set a TTL of 0: the push notification will be delivered only 
-if the user is currently connected. For other cases, you should use a minimum of one day if your users have multiple time 
-zones, and if they don't several hours will suffice.
-
-```php
-<?php
-
-use Minishlink\WebPush\WebPush;
-
-$webPush = new WebPush(); // default TTL is 4 weeks
-// send some important notifications...
-
-$webPush->setTTL(3600);
-// send some not so important notifications
-
-$webPush->setTTL(0);
-// send some trivial notifications
-```
-
 ### Changing the browser client
 By default, WebPush will use `MultiCurl`, allowing to send multiple notifications in parallel.
 You can change the client to any client extending `\Buzz\Client\AbstractClient`.
@@ -139,7 +175,7 @@ use Minishlink\WebPush\WebPush;
 
 $client = new \Buzz\Client\Curl();
 $timeout = 20; // seconds
-$webPush = new WebPush(array(), null, $timeout, $client);
+$webPush = new WebPush(array(), array(), $timeout, $client);
 ```
 
 You have access to the inner browser if you want to configure it further.
