@@ -27,13 +27,8 @@ class WebPush
     /** @var array Key is push server type and value is the API key */
     protected $apiKeys;
 
-    /** @var array Array of array of Notifications by server type */
-    private $notificationsByServerType;
-
-    /** @var array Array of not standard endpoint sources */
-    private $urlByServerType = array(
-        'GCM' => self::GCM_URL,
-    );
+    /** @var array Array of array of Notifications */
+    private $notifications;
 
     /** @var array Default options : TTL, urgency, topic */
     private $defaultOptions;
@@ -87,9 +82,7 @@ class WebPush
             $payload = Encryption::padPayload($payload, $this->automaticPadding);
         }
 
-        // sort notification by server type
-        $type = $this->sortEndpoint($endpoint);
-        $this->notificationsByServerType[$type][] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken, $options);
+        $this->notifications[] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken, $options);
 
         if ($flush) {
             $res = $this->flush();
@@ -121,22 +114,12 @@ class WebPush
      */
     public function flush()
     {
-        if (empty($this->notificationsByServerType)) {
+        if (empty($this->notifications)) {
             return false;
         }
 
-        // if GCM is present, we should check for the API key
-        if (array_key_exists('GCM', $this->notificationsByServerType)) {
-            if (empty($this->apiKeys['GCM'])) {
-                throw new \ErrorException('No GCM API Key specified.');
-            }
-        }
-
         // for each endpoint server type
-        $responses = array();
-        foreach ($this->notificationsByServerType as $serverType => $notifications) {
-            $responses = array_merge($responses, $this->prepareAndSend($notifications, $serverType));
-        }
+        $responses = $this->prepareAndSend($this->notifications);
 
         // if multi curl, flush
         if ($this->browser->getClient() instanceof MultiCurl) {
@@ -148,20 +131,22 @@ class WebPush
         /** @var Response|null $response */
         $return = array();
         $completeSuccess = true;
-        foreach ($responses as $response) {
+        foreach ($responses as $i => $response) {
             if (!isset($response)) {
                 $return[] = array(
                     'success' => false,
+                    'endpoint' => $this->notifications[$i]->getEndpoint(),
                 );
 
                 $completeSuccess = false;
             } elseif (!$response->isSuccessful()) {
                 $return[] = array(
                     'success' => false,
+                    'endpoint' => $this->notifications[$i]->getEndpoint(),
                     'statusCode' => $response->getStatusCode(),
                     'headers' => $response->getHeaders(),
                     'content' => $response->getContent(),
-                    'expired' => in_array($response->getStatusCode(), array(404, 410)),
+                    'expired' => in_array($response->getStatusCode(), array(400, 404, 410)),
                 );
 
                 $completeSuccess = false;
@@ -173,12 +158,12 @@ class WebPush
         }
 
         // reset queue
-        $this->notificationsByServerType = null;
+        $this->notifications = null;
 
         return $completeSuccess ? true : $return;
     }
 
-    private function prepareAndSend(array $notifications, $serverType)
+    private function prepareAndSend(array $notifications)
     {
         $responses = array();
         /** @var Notification $notification */
@@ -219,8 +204,12 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            if ($serverType === 'GCM') {
-                $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
+            if (substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
+                if (array_key_exists('GCM', $this->apiKeys)) {
+                    $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
+                } else {
+                    throw new \ErrorException('No GCM API Key specified.');
+                }
             }
 
             $responses[] = $this->sendRequest($endpoint, $headers, $content);
@@ -245,22 +234,6 @@ class WebPush
         }
 
         return $response;
-    }
-
-    /**
-     * @param string $endpoint
-     *
-     * @return string
-     */
-    private function sortEndpoint($endpoint)
-    {
-        foreach ($this->urlByServerType as $type => $url) {
-            if (substr($endpoint, 0, strlen($url)) === $url) {
-                return $type;
-            }
-        }
-
-        return 'standard';
     }
 
     /**
