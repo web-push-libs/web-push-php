@@ -38,22 +38,25 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         self::$endpoints = array(
             'standard' => getenv('STANDARD_ENDPOINT'),
             'GCM' => getenv('GCM_ENDPOINT'),
+            'FCM' => getenv('FCM_ENDPOINT'),
         );
 
         self::$keys = array(
             'standard' => getenv('USER_PUBLIC_KEY'),
             'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
+            'FCM' => getenv('FCM_USER_PUBLIC_KEY'),
         );
 
         self::$tokens = array(
             'standard' => getenv('USER_AUTH_TOKEN'),
             'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
+            'FCM' => getenv('FCM_USER_AUTH_TOKEN'),
         );
     }
 
     public function setUp()
     {
-        $this->webPush = new WebPush(array('GCM' => getenv('GCM_API_KEY')));
+        $this->webPush = new WebPush(array('GCM' => getenv('GCM_API_KEY'), 'FCM' => getenv('FCM_API_KEY')));
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
@@ -65,6 +68,8 @@ class WebPushTest extends PHPUnit_Framework_TestCase
             array(self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']),
             array(self::$endpoints['GCM'], null, null, null),
             array(self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']),
+            array(self::$endpoints['FCM'], null, null, null),
+            array(self::$endpoints['FCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['FCM'], self::$tokens['FCM']),
         );
     }
 
@@ -119,6 +124,14 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
+    public function testSendFCMNotificationWithoutFCMApiKey()
+    {
+        $webPush = new WebPush();
+
+        $this->setExpectedException('ErrorException', 'No FCM API Key specified.');
+        $webPush->sendNotification(self::$endpoints['FCM'], null, null, null, true);
+    }
+
     /**
      * @skipIfTravis
      */
@@ -139,5 +152,27 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
         $this->assertArrayHasKey('endpoint', $res);
         $this->assertEquals(self::$endpoints['GCM'], $res['endpoint']);
+    }
+
+    /**
+     * @skipIfTravis
+     */
+    public function testSendFCMNotificationWithWrongFCMApiKey()
+    {
+        $webPush = new WebPush(array('FCM' => 'bar'));
+
+        $res = $webPush->sendNotification(self::$endpoints['FCM'], null, null, null, true);
+
+        $this->assertTrue(is_array($res)); // there has been an error
+        $this->assertArrayHasKey('success', $res);
+        $this->assertFalse($res['success']);
+
+        $this->assertArrayHasKey('statusCode', $res);
+        $this->assertEquals(400, $res['statusCode']);
+
+        $this->assertArrayHasKey('headers', $res);
+
+        $this->assertArrayHasKey('endpoint', $res);
+        $this->assertEquals(self::$endpoints['FCM'], $res['endpoint']);
     }
 }

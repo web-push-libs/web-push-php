@@ -20,6 +20,7 @@ use Buzz\Message\Response;
 class WebPush
 {
     const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    const FCM_URL = 'https://fcm.googleapis.com/fcm/send';
 
     /** @var Browser */
     protected $browser;
@@ -209,6 +210,13 @@ class WebPush
                     $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
                 } else {
                     throw new \ErrorException('No GCM API Key specified.');
+                }
+            }
+            else if (substr($endpoint, 0, strlen(self::FCM_URL)) === self::FCM_URL) {
+                if (array_key_exists('FCM', $this->apiKeys)) {
+                    $headers['Authorization'] = 'key='.$this->apiKeys['FCM'];
+                } else {
+                    throw new \ErrorException('No FCM API Key specified.');
                 }
             }
 
