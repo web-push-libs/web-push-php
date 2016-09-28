@@ -154,6 +154,9 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(self::$endpoints['GCM'], $res['endpoint']);
     }
 
+    /**
+     * @skipIfTravis
+     */
     public function testSendFCMNotificationWithWrongFCMApiKey()
     {
         $webPush = new WebPush(array('FCM' => 'bar'));
