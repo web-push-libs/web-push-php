@@ -38,7 +38,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         self::$endpoints = array(
             'standard' => getenv('STANDARD_ENDPOINT'),
             'GCM' => getenv('GCM_ENDPOINT'),
-            'FCM' => getenv('FCM_ENDPOINT')
+            'FCM' => getenv('FCM_ENDPOINT'),
         );
 
         self::$keys = array(
