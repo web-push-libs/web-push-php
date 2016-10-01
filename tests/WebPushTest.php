@@ -32,7 +32,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
             $this->markTestSkipped('This test does not run on Travis.');
         }
     }
-    
+
     public static function setUpBeforeClass()
     {
         self::$endpoints = array(
@@ -53,7 +53,14 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->webPush = new WebPush(array('GCM' => getenv('GCM_API_KEY')));
+        $this->webPush = new WebPush(array(
+            'GCM' => getenv('GCM_API_KEY'),
+            'VAPID' => array(
+                'subject' => 'https://github.com/Minishlink/web-push',
+                'publicKey' => getenv('VAPID_PUBLIC_KEY'),
+                'privateKey' => getenv('VAPID_PRIVATE_KEY'),
+            ),
+        ));
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 

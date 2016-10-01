@@ -70,22 +70,37 @@ There are several good examples and tutorials on the web:
 * Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
 * you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/d6855ca8f485556ab2ee5c047688fbf745367045/app/Resources/public/js/app.js)
 
-### GCM servers notes (Chrome)
-For compatibility reasons, this library detects if the server is a GCM server and appropriately sends the notification.
+### Authentication
+Browsers need to verify your identity. At the moment, some browsers don't force you but you'll have to do it in the future, so why not now?
+GCM (Chrome, Opera, Samsung Mobile) do force you to authenticate using an API key that you can find either on your Google Developer Console or Firebase Console.
+A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
 
-You will need to specify your GCM api key when instantiating WebPush:
+You can specify your authentication details when instantiating WebPush:
 ```php
 <?php
 
 use Minishlink\WebPush\WebPush;
 
 $endpoint = 'https://android.googleapis.com/gcm/send/abcdef...'; // Chrome
-$apiKeys = array(
+
+$auth = array(
     'GCM' => 'MY_GCM_API_KEY',
+    'VAPID' => array(
+        'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
+        'publicKey' => '88 chars', // uncompressed public key P-256
+        'privateKey' => '44 chars', // in fact the secret multiplier of the private key
+    ),
 );
 
-$webPush = new WebPush($apiKeys);
+$webPush = new WebPush($auth);
 $webPush->sendNotification($endpoint, null, null, null, true);
+```
+
+In order to generate the public and private keys, enter the following in your Linux bash:
+```
+$ openssl ecparam -genkey -name prime256v1 -out private_key.pem
+$ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64 >> public_key.txt
+$ openssl ec -in private_key.pem -outform DER|tail -c +8|head -c 32|base64 >> private_key.txt
 ```
 
 ### Notification options

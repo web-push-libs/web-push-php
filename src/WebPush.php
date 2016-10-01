@@ -37,45 +37,52 @@ class WebPush
     /** @var bool Automatic padding of payloads, if disabled, trade security for bandwidth */
     private $automaticPadding = true;
 
-    /** @var boolean */
+    /** @var bool */
     private $nativePayloadEncryptionSupport;
 
     /**
      * WebPush constructor.
      *
-     * @param array $auth Some servers needs authentication.
-     * @param array $defaultOptions TTL, urgency, topic
-     * @param int|null $timeout Timeout of POST request
+     * @param array               $auth           Some servers needs authentication
+     * @param array               $defaultOptions TTL, urgency, topic
+     * @param int|null            $timeout        Timeout of POST request
      * @param AbstractClient|null $client
      */
     public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, AbstractClient $client = null)
     {
         $this->auth = $auth;
+
+        if (array_key_exists('VAPID', $auth)) {
+            $auth['VAPID'] = VAPID::validate($auth['VAPID']);
+        }
+
         $this->setDefaultOptions($defaultOptions);
 
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
-        
+
         $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
     /**
      * Send a notification.
      *
-     * @param string $endpoint
-     * @param string|null $payload If you want to send an array, json_encode it.
+     * @param string      $endpoint
+     * @param string|null $payload       If you want to send an array, json_encode it
      * @param string|null $userPublicKey
      * @param string|null $userAuthToken
-     * @param bool $flush If you want to flush directly (usually when you send only one notification)
-     * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object.
+     * @param bool        $flush         If you want to flush directly (usually when you send only one notification)
+     * @param array       $options       Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
+     *
      * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
-     *                    Else return true.
+     *                    Else return true
+     *
      * @throws \ErrorException
      */
     public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array())
     {
-        if(isset($payload)) {
+        if (isset($payload)) {
             if (Utils::safe_strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
@@ -109,7 +116,7 @@ class WebPush
      *
      * @return array|bool If there are no errors, return true.
      *                    If there were no notifications in the queue, return false.
-     *                    Else return an array of information for each notification sent (success, statusCode, headers, content).
+     *                    Else return an array of information for each notification sent (success, statusCode, headers, content)
      *
      * @throws \ErrorException
      */
@@ -214,6 +221,27 @@ class WebPush
                     throw new \ErrorException('No GCM/FCM API Key specified.');
                 }
             }
+            // if VAPID
+            elseif (array_key_exists('VAPID', $this->auth)) {
+                $vapid = $this->auth['VAPID'];
+
+                $audience = parse_url($endpoint, PHP_URL_SCHEME).'//'.parse_url($endpoint, PHP_URL_HOST);
+
+                if (!parse_url($audience)) {
+                    throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
+                }
+
+                $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey']);
+
+                $headers['Authorization'] = 'key='.$vapidHeaders['Authorization'];
+
+                if (array_key_exists('Crypto-Key', $headers)) {
+                    // FUTURE replace ';' with ','
+                    $headers['Crypto-Key'] .= ';'.$vapidHeaders['Crypto-Key'];
+                } else {
+                    $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
+                }
+            }
 
             $responses[] = $this->sendRequest($endpoint, $headers, $content);
         }
@@ -260,7 +288,7 @@ class WebPush
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isAutomaticPadding()
     {
@@ -268,7 +296,7 @@ class WebPush
     }
 
     /**
-     * @param boolean $automaticPadding
+     * @param bool $automaticPadding
      *
      * @return WebPush
      */

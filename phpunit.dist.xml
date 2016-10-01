@@ -23,5 +23,8 @@
         <env name="GCM_USER_PUBLIC_KEY" value="" />
         <env name="GCM_USER_AUTH_TOKEN" value="" />
         <env name="GCM_API_KEY" value="" />
+
+        <env name="VAPID_PUBLIC_KEY" value="" />
+        <env name="VAPID_PRIVATE_KEY" value="" />
     </php>
 </phpunit>
