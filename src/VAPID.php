@@ -14,8 +14,6 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Jose\Factory\JWKFactory;
 use Jose\Factory\JWSFactory;
-use Jose\Object\JWK;
-use Mdanter\Ecc\Curves\NistCurve;
 use Mdanter\Ecc\EccFactory;
 use Mdanter\Ecc\Serializer\PrivateKey\DerPrivateKeySerializer;
 use Mdanter\Ecc\Serializer\PrivateKey\PemPrivateKeySerializer;
