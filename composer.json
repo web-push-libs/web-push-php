@@ -18,7 +18,8 @@
     "mdanter/ecc": "^0.4.0",
     "lib-openssl": "*",
     "spomky-labs/base64url": "^1.0",
-    "spomky-labs/php-aes-gcm": "^1.0"
+    "spomky-labs/php-aes-gcm": "^1.0",
+    "lcobucci/jwt": "^3.2"
   },
   "require-dev": {
     "phpunit/phpunit": "4.8.*"

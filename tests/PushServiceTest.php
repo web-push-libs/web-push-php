@@ -30,10 +30,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         $resp = curl_exec($curl);
         $parsedResp = json_decode($resp);
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
-
-        fwrite(STDOUT, "Test Suite ID: " . self::$testSuiteId . "\n");
-
-        // Close request to clear up some resources
         curl_close($curl);
     }
 
@@ -121,16 +117,8 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         $resp = curl_exec($curl);
         $parsedResp = json_decode($resp);
 
-        fwrite(STDOUT, "Ending Test Suite ID: " . self::$testSuiteId . "\n");
-
         self::$testSuiteId = null;
         // Close request to clear up some resources
         curl_close($curl);
-    }
-
-    protected function onNotSuccessfulTest($e)
-    {
-        fwrite(STDOUT, "onNotSuccessfulTest()\n");
-        throw $e;
     }
 }
