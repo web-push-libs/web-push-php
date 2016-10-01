@@ -133,6 +133,7 @@ The `expired` key can be useful to clean your database of expired endpoints.
 $res = array(
     array( // first notification
         'success' => false,
+        'endpoint' => $theEndpointToDeleteInYourDatabaseIfExpired
         'statusCode' => $responseStatusCode,
         'headers' => $responseHeaders,
         'content' => $responseContent, // you may have more infos here
