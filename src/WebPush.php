@@ -20,12 +20,13 @@ use Buzz\Message\Response;
 class WebPush
 {
     const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    const FCM_URL = 'https://fcm.googleapis.com/fcm/send';
 
     /** @var Browser */
     protected $browser;
 
-    /** @var array Key is push server type and value is the API key */
-    protected $apiKeys;
+    /** @var array */
+    protected $auth;
 
     /** @var array Array of array of Notifications */
     private $notifications;
@@ -42,14 +43,14 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array $apiKeys Some servers needs authentication. Provide your API keys here. (eg. array('GCM' => 'GCM_API_KEY'))
+     * @param array $auth Some servers needs authentication.
      * @param array $defaultOptions TTL, urgency, topic
      * @param int|null $timeout Timeout of POST request
      * @param AbstractClient|null $client
      */
-    public function __construct(array $apiKeys = array(), $defaultOptions = array(), $timeout = 30, AbstractClient $client = null)
+    public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, AbstractClient $client = null)
     {
-        $this->apiKeys = $apiKeys;
+        $this->auth = $auth;
         $this->setDefaultOptions($defaultOptions);
 
         $client = isset($client) ? $client : new MultiCurl();
@@ -204,11 +205,13 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            if (substr($endpoint, 0, Utils::safe_strlen(self::GCM_URL)) === self::GCM_URL) {
-                if (array_key_exists('GCM', $this->apiKeys)) {
-                    $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
+            // if GCM or FCM url
+            if (substr($endpoint, 0, Utils::safe_strlen(self::GCM_URL)) === self::GCM_URL
+                || substr($endpoint, 0, Utils::safe_strlen(self::FCM_URL)) === self::FCM_URL) {
+                if (array_key_exists('GCM', $this->auth)) {
+                    $headers['Authorization'] = 'key='.$this->auth['GCM'];
                 } else {
-                    throw new \ErrorException('No GCM API Key specified.');
+                    throw new \ErrorException('No GCM/FCM API Key specified.');
                 }
             }
 
