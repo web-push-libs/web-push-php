@@ -72,7 +72,6 @@ There are several good examples and tutorials on the web:
 
 ### Authentication
 Browsers need to verify your identity. At the moment, some browsers don't force you but you'll have to do it in the future, so why not now?
-GCM (Chrome, Opera, Samsung Mobile) do force you to authenticate using an API key that you can find either on your Google Developer Console or Firebase Console.
 A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
 
 You can specify your authentication details when instantiating WebPush:
@@ -84,7 +83,7 @@ use Minishlink\WebPush\WebPush;
 $endpoint = 'https://android.googleapis.com/gcm/send/abcdef...'; // Chrome
 
 $auth = array(
-    'GCM' => 'MY_GCM_API_KEY',
+    'GCM' => 'MY_GCM_API_KEY', // deprecated and optional, it's here only for compatibility reasons
     'VAPID' => array(
         'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
         'publicKey' => '88 chars', // uncompressed public key P-256
