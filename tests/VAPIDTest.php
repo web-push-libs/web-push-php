@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
  */
 
+use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
 
 class VAPIDTest extends PHPUnit_Framework_TestCase
@@ -45,6 +46,7 @@ class VAPIDTest extends PHPUnit_Framework_TestCase
         $headers = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $expiration);
 
         $this->assertArrayHasKey('Authorization', $headers);
+        $this->assertEquals(Utils::safe_strlen($expectedAuthorization), Utils::safe_strlen($headers['Authorization']));
         $this->assertEquals($this->explodeAuthorization($expectedAuthorization), $this->explodeAuthorization($headers['Authorization']));
         $this->assertArrayHasKey('Crypto-Key', $headers);
         $this->assertEquals($expectedCryptoKey, $headers['Crypto-Key']);
