@@ -50,11 +50,11 @@ class WebPush
      */
     public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, AbstractClient $client = null)
     {
-        $this->auth = $auth;
-
         if (array_key_exists('VAPID', $auth)) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
         }
+
+        $this->auth = $auth;
 
         $this->setDefaultOptions($defaultOptions);
 
@@ -189,8 +189,8 @@ class WebPush
                     'Content-Length' => Utils::safe_strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => 'aesgcm',
-                    'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
-                    'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
+                    'Encryption' => 'keyid=p256dh;salt='.$encrypted['salt'],
+                    'Crypto-Key' => 'keyid=p256dh;dh='.$encrypted['localPublicKey'],
                 );
 
                 $content = $encrypted['cipherText'];
@@ -235,7 +235,7 @@ class WebPush
 
                 $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey']);
 
-                $headers['Authorization'] = 'key='.$vapidHeaders['Authorization'];
+                $headers['Authorization'] = $vapidHeaders['Authorization'];
 
                 if (array_key_exists('Crypto-Key', $headers)) {
                     // FUTURE replace ';' with ','
