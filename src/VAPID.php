@@ -84,16 +84,17 @@ class VAPID
             'alg' => 'ES256',
         );
 
-        $jwtPayload = array(
+        $jwtPayload = json_encode(array(
             'aud' => $audience,
             'exp' => $expiration,
             'sub' => $subject,
-        );
+        ), JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 
         $generator = EccFactory::getNistCurves()->generator256();
         $privateKeyObject = $generator->getPrivateKeyFrom(gmp_init(bin2hex($privateKey), 16));
         $pemSerialize = new PemPrivateKeySerializer(new DerPrivateKeySerializer());
         $pem = $pemSerialize->serialize($privateKeyObject);
+
         $jwk = JWKFactory::createFromKey($pem, null);
         $jws = JWSFactory::createJWSToCompactJSON($jwtPayload, $jwk, $header);
 
