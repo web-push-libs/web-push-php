@@ -15,9 +15,9 @@
         </testsuite>
     </testsuites>
     <php>
-        <env name="STANDARD_ENDPOINT" value="https://updates.push.services.mozilla.com/push/v1/gAAAAABXiSWBmzoJ_47PXk6UyanoOLswFf0DrfPYrTAxd2CTN1Pq-eb1_H9Dv9A0ak99wztjIiwtkRbnDiqdBqpEEtDwHUJz8Fc9U7uOHmLz6ChrrPW1S7i2VLH7gYcMA3HrpHK_hqty" />
-        <env name="USER_PUBLIC_KEY" value="BOnLEGITWRc0vhu7W8qPcIeFaYVYwyTY7LYJ3gNUqpmLtW3DKGbGr2QqNKeJ_NYweaSYQndVVxP77q8-HXOUE14" />
-        <env name="USER_AUTH_TOKEN" value="vtEljnqHYQ7Pzqxt3sR5tg" />
+        <env name="STANDARD_ENDPOINT" value="" />
+        <env name="USER_PUBLIC_KEY" value="" />
+        <env name="USER_AUTH_TOKEN" value="" />
 
         <env name="GCM_ENDPOINT" value="" />
         <env name="GCM_USER_PUBLIC_KEY" value="" />
