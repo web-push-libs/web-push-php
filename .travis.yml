@@ -5,6 +5,9 @@ php:
   - hhvm
   - 7.0
 
+node:
+  - stable
+
 install:
   - npm install web-push-testing-service -g
 
