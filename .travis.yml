@@ -8,6 +8,9 @@ php:
 env:
   - TRAVIS_NODE_VERSION="stable"
 
+before_install:
+  - nvm install node
+
 install:
   - npm install web-push-testing-service -g
 
