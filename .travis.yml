@@ -6,7 +6,7 @@ php:
   - 7.0
 
 install:
-  - npm install -g web-push-testing-service
+  - npm install web-push-testing-service -g
 
 before_script:
   - composer install --prefer-source -n --no-dev
