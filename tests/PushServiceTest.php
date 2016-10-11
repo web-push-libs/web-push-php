@@ -52,6 +52,9 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         echo "RESP:\n";
         echo $resp;
         echo "\n";
+        echo "ERROR:\n";
+        echo curl_error($curl);
+        echo "\n";
         echo "\n";
 
         if ($resp) {
