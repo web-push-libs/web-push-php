@@ -38,7 +38,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
     protected function setUp()
     {
-        echo "setup()\n";
+        echo "\n\nsetup()\n";
         echo self::$testServiceUrl."/api/start-test-suite/";
         echo "\n";
         echo "\n";
@@ -49,6 +49,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_RETURNTRANSFER => true
         ));
         $resp = curl_exec($curl);
+        echo "RESP:\n";
         echo $resp;
         echo "\n";
         echo "\n";
@@ -60,7 +61,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
           throw new Exception('Unable to get a test suite from the '.
             'web-push-testing-service');
         }
-        
+
         curl_close($curl);
     }
 
