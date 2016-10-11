@@ -44,12 +44,13 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_RETURNTRANSFER => true
         ));
         $resp = curl_exec($curl);
+        echo $resp
         if ($resp) {
           $parsedResp = json_decode($resp);
           self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
         } else {
           throw new Exception('Unable to get a test suite from the '.
-            'web-push-testing-service'. $resp);
+            'web-push-testing-service');
         }
         curl_close($curl);
     }
