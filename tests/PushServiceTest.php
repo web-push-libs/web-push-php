@@ -28,7 +28,16 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
           "web-push-testing-service start phpunit-tests -p".self::$portNumber,
         $output, $returnValue);
 
-        echo $output;
+        echo "\n";
+        echo "OUTPUT:\n";
+
+        foreach($output as $line) {
+          echo $line;
+          echo "\n";
+        }
+
+        echo "\n";
+        echo "\n";
 
         if ($returnValue !== 0) {
           throw new Exception('Unable to start web-push-testing-service');
