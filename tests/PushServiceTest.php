@@ -49,7 +49,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
           self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
         } else {
           throw new Exception('Unable to get a test suite from the '.
-            'web-push-testing-service');
+            'web-push-testing-service'. $resp);
         }
         curl_close($curl);
     }
