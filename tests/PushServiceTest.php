@@ -25,7 +25,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     public static function setUpBeforeClass()
     {
         $testingServiceResult = exec(
-          "web-push-testing-service start phpunit -p".self::$portNumber,
+          "web-push-testing-service start phpunit-tests -p".self::$portNumber,
         $output, $returnValue);
 
         if ($returnValue !== 0) {
@@ -44,7 +44,8 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_RETURNTRANSFER => true
         ));
         $resp = curl_exec($curl);
-        echo $resp
+        echo $resp;
+        echo "\n";
         if ($resp) {
           $parsedResp = json_decode($resp);
           self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
