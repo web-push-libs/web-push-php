@@ -13,7 +13,7 @@ use Minishlink\WebPush\WebPush;
 
 class PushServiceTest extends PHPUnit_Framework_TestCase
 {
-    private static $portNumber = 8090;
+    private static $portNumber = 9012;
     private static $testSuiteId;
     private static $testServiceUrl;
     private static $gcmSenderId = "759071690750";
@@ -24,7 +24,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
-        $testingServiceResult = exec(
+        /** $testingServiceResult = exec(
           "web-push-testing-service start phpunit-tests -p".self::$portNumber,
         $output, $returnValue);
 
@@ -41,7 +41,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
         if ($returnValue !== 0) {
           throw new Exception('Unable to start web-push-testing-service');
-        }
+        }**/
 
         self::$testServiceUrl = "http://localhost:".self::$portNumber;
     }

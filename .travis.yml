@@ -23,6 +23,6 @@ before_script:
 script:
   - web-push-testing-service start example -p 9012
   - curl -X 'POST' http://localhost:9012/api/start-test-suite/
-  - web-push-testing-service stop example
   - phpunit -c phpunit.travis.xml
+  - web-push-testing-service stop example
   - cat web-push-testing-service.log
