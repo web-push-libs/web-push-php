@@ -32,7 +32,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         echo "OUTPUT:\n";
 
         foreach($output as $line) {
-          echo $line;
+          echo "OUTPUT: ".$line;
           echo "\n";
         }
 
