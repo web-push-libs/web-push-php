@@ -22,3 +22,4 @@ before_script:
 
 script:
   - phpunit -c phpunit.travis.xml
+  - cat web-push-testing-service.log 
