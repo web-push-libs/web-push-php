@@ -24,25 +24,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
-        /** $testingServiceResult = exec(
-          "web-push-testing-service start phpunit-tests -p".self::$portNumber,
-        $output, $returnValue);
-
-        echo "\n";
-        echo "OUTPUT:\n";
-
-        foreach($output as $line) {
-          echo "OUTPUT: ".$line;
-          echo "\n";
-        }
-
-        echo "\n";
-        echo "\n";
-
-        if ($returnValue !== 0) {
-          throw new Exception('Unable to start web-push-testing-service');
-        }**/
-
         self::$testServiceUrl = "http://localhost:".self::$portNumber;
     }
 

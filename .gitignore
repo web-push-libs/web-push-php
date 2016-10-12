@@ -3,3 +3,4 @@ composer.lock
 phpunit.xml
 temp/
 .node-persist/
+web-push-testing-service.log
