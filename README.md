@@ -230,8 +230,5 @@ This library was inspired by the Node.js [marco-c/web-push](https://github.com/m
 ## Contributing
 See [CONTRIBUTING.md](https://github.com/Minishlink/web-push/blob/master/CONTRIBUTING.md).
 
-## Tests
-Copy `phpunit.xml` from `phpunit.dist.xml` and fill it with your test endpoints and private keys.
-
 ## License
 [MIT](https://github.com/Minishlink/web-push/blob/master/LICENSE)
