@@ -3,7 +3,7 @@
   "type": "library",
   "description": "Web Push library for PHP",
   "keywords": ["push", "notifications", "web", "WebPush", "Push API"],
-  "homepage": "https://github.com/Minishlink/web-push",
+  "homepage": "https://github.com/web-push-libs/web-push",
   "license": "MIT",
   "authors": [
     {
