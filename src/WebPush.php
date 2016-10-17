@@ -20,7 +20,6 @@ use Buzz\Message\Response;
 class WebPush
 {
     const GCM_URL = 'https://android.googleapis.com/gcm/send';
-    const FCM_URL = 'https://fcm.googleapis.com/fcm/send';
 
     /** @var Browser */
     protected $browser;
@@ -212,19 +211,16 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            // if GCM or FCM url
-            $isGCM = substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL;
-            if ($isGCM || substr($endpoint, 0, strlen(self::FCM_URL)) === self::FCM_URL) {
+            // if GCM
+            if (substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
                 if (array_key_exists('GCM', $this->auth)) {
                     $headers['Authorization'] = 'key='.$this->auth['GCM'];
-                } elseif ($isGCM) {
-                    // FCM doesn't need an API key, it's optional if you're using VAPID
-                    throw new \ErrorException('No GCM/FCM API Key specified.');
+                } else {
+                    throw new \ErrorException('No GCM API Key specified.');
                 }
             }
-
             // if VAPID (GCM doesn't support it but FCM does)
-            if (array_key_exists('VAPID', $this->auth) && !$isGCM) {
+            elseif (array_key_exists('VAPID', $this->auth)) {
                 $vapid = $this->auth['VAPID'];
 
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'//'.parse_url($endpoint, PHP_URL_HOST);

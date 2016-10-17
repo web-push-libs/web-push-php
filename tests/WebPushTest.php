@@ -122,7 +122,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
     {
         $webPush = new WebPush();
 
-        $this->setExpectedException('ErrorException', 'No GCM/FCM API Key specified.');
+        $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
