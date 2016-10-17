@@ -24,7 +24,7 @@ class EncryptionTest extends PHPUnit_Framework_TestCase
         $res = Encryption::padPayload($payload, true);
 
         $this->assertContains('test', $res);
-        $this->assertEquals(4080, Utils::safe_strlen($res));
+        $this->assertEquals(4080, Utils::safeStrlen($res));
     }
 
     public function payloadProvider()
