@@ -71,8 +71,7 @@ There are several good examples and tutorials on the web:
 * you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/d6855ca8f485556ab2ee5c047688fbf745367045/app/Resources/public/js/app.js)
 
 ### Authentication
-Browsers need to verify your identity. At the moment, some browsers don't force you but you'll have to do it in the future, so why not now?
-A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
+Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
 
 You can specify your authentication details when instantiating WebPush:
 ```php
@@ -86,8 +85,8 @@ $auth = array(
     'GCM' => 'MY_GCM_API_KEY', // deprecated and optional, it's here only for compatibility reasons
     'VAPID' => array(
         'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
-        'publicKey' => '88 chars', // uncompressed public key P-256
-        'privateKey' => '44 chars', // in fact the secret multiplier of the private key
+        'publicKey' => '~88 chars', // uncompressed public key P-256 encoded in Base64-URL
+        'privateKey' => '~44 chars', // in fact the secret multiplier of the private key encoded in Base64-URL
     ),
 );
 
@@ -98,8 +97,8 @@ $webPush->sendNotification($endpoint, null, null, null, true);
 In order to generate the public and private keys, enter the following in your Linux bash:
 ```
 $ openssl ecparam -genkey -name prime256v1 -out private_key.pem
-$ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64 >> public_key.txt
-$ openssl ec -in private_key.pem -outform DER|tail -c +8|head -c 32|base64 >> private_key.txt
+$ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64|tr -d '=' |tr '/+' '_-' >> public_key.txt
+$ openssl ec -in private_key.pem -outform DER|tail -c +8|head -c 32|base64|tr -d '=' |tr '/+' '_-' >> private_key.txt
 ```
 
 ### Notification options
