@@ -197,6 +197,7 @@ $browser = $webPush->getBrowser();
 The following are available:
 
 - Symfony: [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
+- Laravel: [laravel-notification-channels/webpush](https://github.com/laravel-notification-channels/webpush)
 
 Feel free to add your own!
 
