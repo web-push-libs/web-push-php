@@ -32,7 +32,7 @@ class WebPushTest extends PHPUnit_Framework_TestCase
             $this->markTestSkipped('This test does not run on Travis.');
         }
     }
-    
+
     public static function setUpBeforeClass()
     {
         self::$endpoints = array(

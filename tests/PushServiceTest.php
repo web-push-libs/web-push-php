@@ -40,13 +40,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_RETURNTRANSFER => true
         ));
         $resp = curl_exec($curl);
-        echo "RESP:\n";
-        echo $resp;
-        echo "\n";
-        echo "ERROR:\n";
-        echo curl_error($curl);
-        echo "\n";
-        echo "\n";
 
         if ($resp) {
           $parsedResp = json_decode($resp);
@@ -152,7 +145,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         } else {
           throw $e;
         }
-
       }
     }
 

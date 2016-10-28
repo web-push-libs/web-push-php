@@ -75,7 +75,7 @@ class WebPush
     public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array())
     {
         if(isset($payload)) {
-            if (strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
+            if (Utils::safe_strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
@@ -178,7 +178,7 @@ class WebPush
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
 
                 $headers = array(
-                    'Content-Length' => strlen($encrypted['cipherText']),
+                    'Content-Length' => Utils::safe_strlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
@@ -204,7 +204,7 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            if (substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
+            if (substr($endpoint, 0, Utils::safe_strlen(self::GCM_URL)) === self::GCM_URL) {
                 if (array_key_exists('GCM', $this->apiKeys)) {
                     $headers['Authorization'] = 'key='.$this->apiKeys['GCM'];
                 } else {

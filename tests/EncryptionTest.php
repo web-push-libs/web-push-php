@@ -10,6 +10,7 @@
  */
 
 use Minishlink\WebPush\Encryption;
+use Minishlink\WebPush\Utils;
 
 class EncryptionTest extends PHPUnit_Framework_TestCase
 {
@@ -23,13 +24,13 @@ class EncryptionTest extends PHPUnit_Framework_TestCase
         $res = Encryption::padPayload($payload, true);
 
         $this->assertContains('test', $res);
-        $this->assertEquals(4080, strlen($res));
+        $this->assertEquals(4080, Utils::safe_strlen($res));
     }
 
     public function payloadProvider()
     {
         return array(
-            array('test'),
+            array('testé'),
             array(str_repeat('test', 1019)),
             array(str_repeat('test', 1019).'te'),
         );
