@@ -120,6 +120,9 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         // Close request to clear up some resources
         curl_close($getSubscriptionCurl);
 
+        echo "Get Subscription Response: ".$resp;
+        echo "\n\n";
+
         $parsedResp = json_decode($resp);
 
         $testId = $parsedResp->{'data'}->{'testId'};
@@ -151,6 +154,9 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             )
           ));
           $resp = curl_exec($getNotificationCurl);
+          echo "Get Notification Response: ".$resp;
+          echo "\n\n";
+
           $parsedResp = json_decode($resp);
 
           $messages = $parsedResp->{'data'}->{'messages'};
