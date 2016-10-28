@@ -55,7 +55,7 @@ class WebPush
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
-        
+
         $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
@@ -75,7 +75,7 @@ class WebPush
     public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array())
     {
         if(isset($payload)) {
-            if (strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
+            if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
@@ -178,7 +178,7 @@ class WebPush
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
 
                 $headers = array(
-                    'Content-Length' => strlen($encrypted['cipherText']),
+                    'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
