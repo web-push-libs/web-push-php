@@ -22,6 +22,21 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
 
+    /**
+     * This check forces these tests to only run on Travis.
+     * If we can reliably start and stop web-push-testing-service and
+     * detect current OS, we can probably run this automatically
+     * for Linux and OS X at a later date.
+     */
+    protected function checkRequirements()
+    {
+        parent::checkRequirements();
+
+        if (!(getenv('TRAVIS') || getenv('CI'))) {
+            $this->markTestSkipped('This test does not run on Travis.');
+        }
+    }
+
     public static function setUpBeforeClass()
     {
         self::$testServiceUrl = "http://localhost:".self::$portNumber;
