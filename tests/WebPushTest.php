@@ -111,9 +111,6 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->webPush->flush());
     }
 
-    /**
-     * @skipIfTravis
-     */
     public function testSendGCMNotificationWithoutGCMApiKey()
     {
         $webPush = new WebPush();
