@@ -4,6 +4,8 @@ Feel free to contribute by submitting a pull request or creating (and solving) i
 
 ## Running Tests
 
+    sudo apt-get install php-gmp, php-dom, php-mbstring, php-curl, phpunit
+
 First, you will need to create your own configuration file by copying
 phpunit.dist.xml to phpunit.xml and filling in the fields you need for
 testing (i.e. STANDARD_ENDPOINT, GCM_API_KEY etc.).

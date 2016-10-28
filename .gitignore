@@ -1,4 +1,7 @@
 /vendor
 composer.lock
 phpunit.xml
-
+temp/
+.node-persist/
+cli.log
+module.log

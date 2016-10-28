@@ -55,7 +55,7 @@ class WebPush
         $client = isset($client) ? $client : new MultiCurl();
         $client->setTimeout($timeout);
         $this->browser = new Browser($client);
-        
+
         $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
