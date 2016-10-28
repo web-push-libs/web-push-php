@@ -13,7 +13,7 @@ namespace Minishlink\WebPush;
 
 class Utils
 {
-    public static function safe_strlen($string) {
+    public static function safeStrlen($string) {
         return mb_strlen($string, "8bit");
     }
 }
