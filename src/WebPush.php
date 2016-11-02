@@ -181,8 +181,8 @@ class WebPush
                     'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => 'aesgcm',
-                    'Encryption' => 'keyid="p256dh";salt="'.$encrypted['salt'].'"',
-                    'Crypto-Key' => 'keyid="p256dh";dh="'.$encrypted['localPublicKey'].'"',
+                    'Encryption' => 'salt="'.$encrypted['salt'].'"',
+                    'Crypto-Key' => 'dh="'.$encrypted['localPublicKey'].'"',
                 );
 
                 $content = $encrypted['cipherText'];

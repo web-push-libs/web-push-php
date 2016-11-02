@@ -61,12 +61,7 @@ final class Encryption
 
         // get shared secret from user public key and local private key
         $localPrivateSecret = $localPrivateKeyObject->getSecret();
-
-        $userPublicX = $userPublicKeyObject->getPoint()
-          ->mul($localPrivateSecret)->getX();
-        // On HHVM this value is on type GMP and throws if cast to a string.
-        $userPublicX = gmp_strval($userPublicX);
-        $sharedSecret = hex2bin($math->decHex($userPublicX));
+        $sharedSecret = hex2bin($math->decHex(gmp_strval($userPublicKeyObject->getPoint()->mul($localPrivateSecret)->getX())));
 
         // generate salt
         $salt = openssl_random_pseudo_bytes(16);
