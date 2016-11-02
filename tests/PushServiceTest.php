@@ -18,6 +18,11 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     private static $testServiceUrl;
     private static $gcmSenderId = '759071690750';
     private static $gcmApiKey = 'AIzaSyBAU0VfXoskxUSg81K5VgLgwblHbZWe6tA';
+    private static $vapidKeys = array(
+        'subject' => 'http://test.com',
+        'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
+        'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
+    );
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
@@ -46,11 +51,11 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     {
         $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
         curl_setopt_array($startApiCurl, array(
-          CURLOPT_POST => true,
-          CURLOPT_POSTFIELDS => array(),
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_TIMEOUT => 30,
-      ));
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => array(),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 30,
+        ));
 
         $resp = curl_exec($startApiCurl);
 
@@ -86,7 +91,19 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             array('firefox', 'beta', array('GCM' => self::$gcmApiKey)),
             array('firefox', 'unstable', array('GCM' => self::$gcmApiKey)),
             // Web Push + VAPID
+            array('chrome', 'stable', array('VAPID' => self::$vapidKeys)),
+            array('chrome', 'beta', array('VAPID' => self::$vapidKeys)),
+            array('chrome', 'unstable', array('VAPID' => self::$vapidKeys)),
+            array('firefox', 'stable', array('VAPID' => self::$vapidKeys)),
+            array('firefox', 'beta', array('VAPID' => self::$vapidKeys)),
+            array('firefox', 'unstable', array('VAPID' => self::$vapidKeys)),
             // Web Push + GCM + VAPID
+            array('chrome', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('chrome', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('chrome', 'unstable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('firefox', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('firefox', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('firefox', 'unstable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
         );
     }
 
@@ -99,20 +116,30 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         $this->webPush = new WebPush($options);
         $this->webPush->setAutomaticPadding(false);
 
-        $dataString = json_encode(array(
+        $subscriptionParameters = array(
             'testSuiteId' => self::$testSuiteId,
             'browserName' => $browserId,
             'browserVersion' => $browserVersion,
-            'gcmSenderId' => self::$gcmSenderId,
-        ));
+        );
+
+        if (array_key_exists('GCM', $options)) {
+            $subscriptionParameters['gcmSenderId'] = self::$gcmSenderId;
+        }
+
+        if (array_key_exists('VAPID', $options)) {
+            $subscriptionParameters['vapidPublicKey'] = self::$vapidKeys['publicKey'];
+        }
+
+        $subscriptionParameters = json_encode($subscriptionParameters);
+
         $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
         curl_setopt_array($getSubscriptionCurl, array(
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $dataString,
+            CURLOPT_POSTFIELDS => $subscriptionParameters,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => array(
                 'Content-Type: application/json',
-                'Content-Length: '.strlen($dataString),
+                'Content-Length: '.strlen($subscriptionParameters),
             ),
             CURLOPT_TIMEOUT => 30,
         ));
@@ -184,21 +211,21 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         $dataString = '{ "testSuiteId": '.self::$testSuiteId.' }';
         $curl = curl_init(self::$testServiceUrl.'/api/end-test-suite/');
         curl_setopt_array($curl, array(
-          CURLOPT_POST => true,
-          CURLOPT_POSTFIELDS => $dataString,
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_HTTPHEADER => array(
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $dataString,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => array(
               'Content-Type: application/json',
               'Content-Length: '.strlen($dataString),
-          ),
-          CURLOPT_TIMEOUT => 30,
-      ));
+            ),
+            CURLOPT_TIMEOUT => 30,
+        ));
         $resp = curl_exec($curl);
         $parsedResp = json_decode($resp);
 
         self::$testSuiteId = null;
-      // Close request to clear up some resources
-      curl_close($curl);
+        // Close request to clear up some resources
+        curl_close($curl);
     }
 
     public static function tearDownAfterClass()
