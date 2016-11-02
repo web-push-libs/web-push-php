@@ -49,6 +49,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
           CURLOPT_POST => true,
           CURLOPT_POSTFIELDS => array(),
           CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_TIMEOUT => 30,
       ));
 
       $resp = curl_exec($startApiCurl);
@@ -112,7 +113,8 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_HTTPHEADER => array(
                 "Content-Type: application/json",
                 "Content-Length: " . strlen($dataString)
-            )
+            ),
+            CURLOPT_TIMEOUT => 30,
         ));
 
         $resp = curl_exec($getSubscriptionCurl);
@@ -148,7 +150,8 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_HTTPHEADER => array(
                 "Content-Type: application/json",
                 "Content-Length: " . strlen($dataString)
-            )
+            ),
+            CURLOPT_TIMEOUT => 30,
           ));
           $resp = curl_exec($getNotificationCurl);
 
@@ -187,7 +190,8 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
           CURLOPT_HTTPHEADER => array(
               "Content-Type: application/json",
               "Content-Length: " . strlen($dataString)
-          )
+          ),
+          CURLOPT_TIMEOUT => 30,
       ));
       $resp = curl_exec($curl);
       $parsedResp = json_decode($resp);
