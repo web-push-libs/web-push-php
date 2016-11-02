@@ -1,7 +1,7 @@
 # WebPush
 > Web Push library for PHP
 
-[![Build Status](https://travis-ci.org/Minishlink/web-push.svg?branch=master)](https://travis-ci.org/Minishlink/web-push)
+[![Build Status](https://travis-ci.org/web-push-libs/web-push-php.svg?branch=master)](https://travis-ci.org/web-push-libs/web-push-php)
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf/mini.png)](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf)
 
 ## Installation
@@ -210,6 +210,7 @@ $browser = $webPush->getBrowser();
 The following are available:
 
 - Symfony: [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
+- Laravel: [laravel-notification-channels/webpush](https://github.com/laravel-notification-channels/webpush)
 
 Feel free to add your own!
 
@@ -242,9 +243,6 @@ This library was inspired by the Node.js [marco-c/web-push](https://github.com/m
 
 ## Contributing
 See [CONTRIBUTING.md](https://github.com/Minishlink/web-push/blob/master/CONTRIBUTING.md).
-
-## Tests
-Copy `phpunit.xml` from `phpunit.dist.xml` and fill it with your test endpoints and private keys.
 
 ## License
 [MIT](https://github.com/Minishlink/web-push/blob/master/LICENSE)

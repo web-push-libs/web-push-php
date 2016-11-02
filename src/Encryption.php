@@ -27,7 +27,7 @@ final class Encryption
      */
     public static function padPayload($payload, $automatic)
     {
-        $payloadLen = Utils::safe_strlen($payload);
+        $payloadLen = Utils::safeStrlen($payload);
         $padLen = $automatic ? self::MAX_PAYLOAD_LENGTH - $payloadLen : 0;
 
         return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
@@ -62,7 +62,7 @@ final class Encryption
         $userPublicKeyObject = $generator->getPublicKeyFrom($pointUserPublicKey->getX(), $pointUserPublicKey->getY(), $generator->getOrder());
 
         // get shared secret from user public key and local private key
-        $sharedSecret = hex2bin($math->decHex((string) $userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX()));
+        $sharedSecret = hex2bin($math->decHex(gmp_strval($userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX())));
 
         // generate salt
         $salt = openssl_random_pseudo_bytes(16);
@@ -143,12 +143,12 @@ final class Encryption
      */
     private static function createContext($clientPublicKey, $serverPublicKey)
     {
-        if (Utils::safe_strlen($clientPublicKey) !== 65) {
+        if (Utils::safeStrlen($clientPublicKey) !== 65) {
             throw new \ErrorException('Invalid client public key length');
         }
 
         // This one should never happen, because it's our code that generates the key
-        if (Utils::safe_strlen($serverPublicKey) !== 65) {
+        if (Utils::safeStrlen($serverPublicKey) !== 65) {
             throw new \ErrorException('Invalid server public key length');
         }
 
@@ -171,7 +171,7 @@ final class Encryption
      */
     private static function createInfo($type, $context)
     {
-        if (Utils::safe_strlen($context) !== 135) {
+        if (Utils::safeStrlen($context) !== 135) {
             throw new \ErrorException('Context argument has invalid size');
         }
 
