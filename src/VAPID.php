@@ -39,7 +39,7 @@ class VAPID
 
         $publicKey = Base64Url::decode($vapid['publicKey']);
 
-        if (Utils::safe_strlen($publicKey) !== 65) {
+        if (Utils::safeStrlen($publicKey) !== 65) {
             throw new \ErrorException('[VAPID] Public key should be 65 bytes long when decoded.');
         }
 
@@ -49,7 +49,7 @@ class VAPID
 
         $privateKey = Base64Url::decode($vapid['privateKey']);
 
-        if (Utils::safe_strlen($privateKey) !== 32) {
+        if (Utils::safeStrlen($privateKey) !== 32) {
             throw new \ErrorException('[VAPID] Private key should be 32 bytes long when decoded.');
         }
 
