@@ -46,7 +46,7 @@ class VAPIDTest extends PHPUnit_Framework_TestCase
         $headers = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $expiration);
 
         $this->assertArrayHasKey('Authorization', $headers);
-        $this->assertEquals(Utils::safe_strlen($expectedAuthorization), Utils::safe_strlen($headers['Authorization']));
+        $this->assertEquals(Utils::safeStrlen($expectedAuthorization), Utils::safeStrlen($headers['Authorization']));
         $this->assertEquals($this->explodeAuthorization($expectedAuthorization), $this->explodeAuthorization($headers['Authorization']));
         $this->assertArrayHasKey('Crypto-Key', $headers);
         $this->assertEquals($expectedCryptoKey, $headers['Crypto-Key']);
