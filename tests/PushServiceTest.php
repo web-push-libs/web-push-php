@@ -180,12 +180,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
                     echo $e;
                 }
                 $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
-            } else {
-                if ($getNotificationCurl) {
-                    echo 'Curl error: ';
-                    echo curl_error($getNotificationCurl);
-                }
-                throw $e;
             }
         }
     }
