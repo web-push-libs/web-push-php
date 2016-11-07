@@ -208,7 +208,9 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         $resp = curl_exec($ch);
 
         if (!$resp) {
-            throw new Exception('Curl error: n'.curl_errno($ch).' - '.curl_error($ch));
+            $error = 'Curl error: n'.curl_errno($ch).' - '.curl_error($ch);
+            curl_close($ch);
+            throw new Exception($error);
         }
 
         $parsedResp = json_decode($resp);
