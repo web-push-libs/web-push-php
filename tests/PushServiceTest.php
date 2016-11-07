@@ -13,6 +13,7 @@ use Minishlink\WebPush\WebPush;
 
 class PushServiceTest extends PHPUnit_Framework_TestCase
 {
+    private static $timeout = 60;
     private static $portNumber = 9012;
     private static $testSuiteId;
     private static $testServiceUrl;
@@ -54,23 +55,12 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => array(),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_TIMEOUT => self::$timeout,
         ));
 
+        $parsedResp = self::getResponse($startApiCurl);
+        self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
         $resp = curl_exec($startApiCurl);
-
-        if ($resp) {
-            $parsedResp = json_decode($resp);
-            self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
-        } else {
-            echo 'Curl error: ';
-            echo curl_error($startApiCurl);
-
-            throw new Exception('Unable to get a test suite from the '.
-          'web-push-testing-service');
-        }
-
-        curl_close($startApiCurl);
     }
 
     public function browserProvider()
@@ -141,20 +131,10 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
                 'Content-Type: application/json',
                 'Content-Length: '.strlen($subscriptionParameters),
             ),
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_TIMEOUT => self::$timeout,
         ));
 
-        $resp = curl_exec($getSubscriptionCurl);
-
-        if (!$resp) {
-            throw new Exception('Curl error: '.curl_error($getSubscriptionCurl));
-        }
-
-        // Close request to clear up some resources
-        curl_close($getSubscriptionCurl);
-
-        $parsedResp = json_decode($resp);
-        var_dump($resp);
+        $parsedResp = self::getResponse($getSubscriptionCurl);
         $testId = $parsedResp->{'data'}->{'testId'};
         $subscription = $parsedResp->{'data'}->{'subscription'};
         $endpoint = $subscription->{'endpoint'};
@@ -182,20 +162,16 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
                     'Content-Type: application/json',
                     'Content-Length: '.strlen($dataString),
                 ),
-                CURLOPT_TIMEOUT => 30,
+                CURLOPT_TIMEOUT => self::$timeout,
             ));
-            $resp = curl_exec($getNotificationCurl);
 
-            $parsedResp = json_decode($resp);
-
+            $parsedResp = self::getResponse($getSubscriptionCurl);
             $messages = $parsedResp->{'data'}->{'messages'};
             $this->assertEquals(count($messages), 1);
             $this->assertEquals($messages[0], $payload);
         } catch (Exception $e) {
-            if (
-          strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0 &&
-          !array_key_exists('GCM', $options)
-        ) {
+            if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
+                && !array_key_exists('GCM', $options)) {
                 if ($e->getMessage() !== 'No GCM API Key specified.') {
                     echo $e;
                 }
@@ -219,22 +195,37 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_POSTFIELDS => $dataString,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => array(
-              'Content-Type: application/json',
-              'Content-Length: '.strlen($dataString),
+                'Content-Type: application/json',
+                'Content-Length: '.strlen($dataString),
             ),
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_TIMEOUT => self::$timeout,
         ));
-        $resp = curl_exec($curl);
-        $parsedResp = json_decode($resp);
-
+        self::getResponse($curl);
         self::$testSuiteId = null;
-        // Close request to clear up some resources
-        curl_close($curl);
     }
 
     public static function tearDownAfterClass()
     {
-        $testingServiceResult = exec(
-          'web-push-testing-service stop phpunit');
+        exec('web-push-testing-service stop phpunit');
     }
+
+    public static function getResponse($ch) {
+        $resp = curl_exec($ch);
+
+        if (!$resp) {
+            throw new Exception('Curl error: '.curl_error($ch));
+        }
+
+        $parsedResp = json_decode($resp);
+
+        if (!array_key_exists('data', $parsedResp)) {
+            throw new Exception('web-push-testing-service error: '.$resp);
+        }
+
+        // Close request to clear up some resources
+        curl_close($ch);
+
+        return $parsedResp;
+    }
+
 }
