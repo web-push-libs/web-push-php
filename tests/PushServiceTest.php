@@ -154,7 +154,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         curl_close($getSubscriptionCurl);
 
         $parsedResp = json_decode($resp);
-
+        var_dump($resp);
         $testId = $parsedResp->{'data'}->{'testId'};
         $subscription = $parsedResp->{'data'}->{'subscription'};
         $endpoint = $subscription->{'endpoint'};
