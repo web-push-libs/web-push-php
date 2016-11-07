@@ -58,7 +58,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_TIMEOUT => self::$timeout,
         ));
 
-        $parsedResp = self::getResponse($startApiCurl);
+        $parsedResp = $this->getResponse($startApiCurl);
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
     }
 
@@ -133,7 +133,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             CURLOPT_TIMEOUT => self::$timeout,
         ));
 
-        $parsedResp = self::getResponse($getSubscriptionCurl);
+        $parsedResp = $this->getResponse($getSubscriptionCurl);
         $testId = $parsedResp->{'data'}->{'testId'};
         $subscription = $parsedResp->{'data'}->{'subscription'};
         $endpoint = $subscription->{'endpoint'};
@@ -164,7 +164,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
                 CURLOPT_TIMEOUT => self::$timeout,
             ));
 
-            $parsedResp = self::getResponse($getSubscriptionCurl);
+            $parsedResp = $this->getResponse($getSubscriptionCurl);
             $messages = $parsedResp->{'data'}->{'messages'};
             $this->assertEquals(count($messages), 1);
             $this->assertEquals($messages[0], $payload);
@@ -199,7 +199,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             ),
             CURLOPT_TIMEOUT => self::$timeout,
         ));
-        self::getResponse($curl);
+        $this->getResponse($curl);
         self::$testSuiteId = null;
     }
 
@@ -208,7 +208,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         exec('web-push-testing-service stop phpunit');
     }
 
-    public static function getResponse($ch) {
+    public function getResponse($ch) {
         $resp = curl_exec($ch);
 
         if (!$resp) {
