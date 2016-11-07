@@ -20,8 +20,4 @@ following commands:
 **For a Single Test**
     `php phpunit.phar . --filter "/::testPadPayload( .*)?$/"` (regex)
 
-Some tests have a custom decorator @skipIfTravis. The reason is that
-there's no way in Travis to update the push subscription, so the endpoint
-in my phpunit.travis.xml would ultimately expire
-(and require a human modification), and the corresponding tests would fail.
 But locally, these tests are handy.
