@@ -223,7 +223,7 @@ class WebPush
             elseif (array_key_exists('VAPID', $this->auth)) {
                 $vapid = $this->auth['VAPID'];
 
-                $audience = parse_url($endpoint, PHP_URL_SCHEME).'//'.parse_url($endpoint, PHP_URL_HOST);
+                $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
 
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
