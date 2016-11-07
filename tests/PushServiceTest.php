@@ -163,7 +163,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
             $parsedResp = $this->getResponse($getSubscriptionCurl);
 
-            if (!array_key_exists('messages', $parsedResp['data'])) {
+            if (!property_exists($parsedResp->{'data'}, 'messages')) {
                 throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
             }
 
@@ -215,7 +215,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
         $parsedResp = json_decode($resp);
 
-        if (!array_key_exists('data', $parsedResp)) {
+        if (!property_exists($parsedResp, 'data')) {
             throw new Exception('web-push-testing-service error: '.$resp);
         }
 
