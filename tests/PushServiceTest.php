@@ -66,9 +66,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     {
         return array(
             // Web Push
-            array('chrome', 'stable', array()),
-            array('chrome', 'beta', array()),
-            array('chrome', 'unstable', array()),
             array('firefox', 'stable', array()),
             array('firefox', 'beta', array()),
             array('firefox', 'unstable', array()),
