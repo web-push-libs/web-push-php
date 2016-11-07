@@ -60,7 +60,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
         $parsedResp = self::getResponse($startApiCurl);
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
-        $resp = curl_exec($startApiCurl);
     }
 
     public function browserProvider()
