@@ -165,6 +165,11 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             ));
 
             $parsedResp = $this->getResponse($getSubscriptionCurl);
+
+            if (!array_key_exists('messages', $parsedResp['data'])) {
+                throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
+            }
+
             $messages = $parsedResp->{'data'}->{'messages'};
             $this->assertEquals(count($messages), 1);
             $this->assertEquals($messages[0], $payload);
