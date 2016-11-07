@@ -146,6 +146,10 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         // Close request to clear up some resources
         curl_close($getSubscriptionCurl);
 
+        echo "\n\n";
+        var_dump($resp);
+        echo "\n\n";
+
         $parsedResp = json_decode($resp);
 
         $testId = $parsedResp->{'data'}->{'testId'};
