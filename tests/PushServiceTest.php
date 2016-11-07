@@ -146,6 +146,10 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
         $resp = curl_exec($getSubscriptionCurl);
 
+        if (!$resp) {
+            throw new Exception('Curl error: '.curl_error($getSubscriptionCurl));
+        }
+
         // Close request to clear up some resources
         curl_close($getSubscriptionCurl);
 
@@ -165,21 +169,21 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             $this->assertTrue($sendResp);
 
             $dataString = json_encode(array(
-             'testSuiteId' => self::$testSuiteId,
-             'testId' => $testId,
-          ));
+                'testSuiteId' => self::$testSuiteId,
+                'testId' => $testId,
+            ));
 
             $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
             curl_setopt_array($getNotificationCurl, array(
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $dataString,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Content-Length: '.strlen($dataString),
-            ),
-            CURLOPT_TIMEOUT => 30,
-          ));
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $dataString,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    'Content-Length: '.strlen($dataString),
+                ),
+                CURLOPT_TIMEOUT => 30,
+            ));
             $resp = curl_exec($getNotificationCurl);
 
             $parsedResp = json_decode($resp);
