@@ -73,7 +73,7 @@ There are several good examples and tutorials on the web:
 ### Authentication
 Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
 
-You can specify your authentication details when instantiating WebPush:
+You can specify your authentication details when instantiating WebPush. The keys can be passed directly, or you can load a PEM file or its content:
 ```php
 <?php
 
@@ -87,6 +87,8 @@ $auth = array(
         'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
         'publicKey' => '~88 chars', // uncompressed public key P-256 encoded in Base64-URL
         'privateKey' => '~44 chars', // in fact the secret multiplier of the private key encoded in Base64-URL
+        'pemFile' => 'path/to/pem', // if you have a PEM file and can link to it on your filesystem
+        'pem' => 'pemFileContent', // if you have a PEM file and want to hardcode its content
     ),
 );
 
@@ -94,7 +96,7 @@ $webPush = new WebPush($auth);
 $webPush->sendNotification($endpoint, null, null, null, true);
 ```
 
-In order to generate the public and private keys, enter the following in your Linux bash:
+In order to generate the uncompressed public and secret key, encoded in Base64, enter the following in your Linux bash:
 ```
 $ openssl ecparam -genkey -name prime256v1 -out private_key.pem
 $ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64|tr -d '=' |tr '/+' '_-' >> public_key.txt

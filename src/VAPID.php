@@ -15,6 +15,7 @@ use Base64Url\Base64Url;
 use Jose\Factory\JWKFactory;
 use Jose\Factory\JWSFactory;
 use Mdanter\Ecc\EccFactory;
+use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 use Mdanter\Ecc\Serializer\PrivateKey\DerPrivateKeySerializer;
 use Mdanter\Ecc\Serializer\PrivateKey\PemPrivateKeySerializer;
 
@@ -31,6 +32,33 @@ class VAPID
     {
         if (!array_key_exists('subject', $vapid)) {
             throw new \ErrorException('[VAPID] You must provide a subject that is either a mailto: or a URL.');
+        }
+
+        if (array_key_exists('pemFile', $vapid)) {
+            $vapid['pem'] = file_get_contents($vapid['pemFile']);
+
+            if (!$vapid['pem']) {
+                throw new \ErrorException('Error loading PEM file.');
+            }
+        }
+
+        if (array_key_exists('pem', $vapid)) {
+            $pem = $vapid['pem'];
+            $posStartKey = strpos($pem, '-----BEGIN EC PRIVATE KEY-----');
+            $posEndKey = strpos($pem, '-----END EC PRIVATE KEY-----');
+
+            if ($posStartKey === false || $posEndKey === false) {
+                throw new \ErrorException('Invalid PEM data.');
+            }
+
+            $posStartKey += 30; // length of '-----BEGIN EC PRIVATE KEY-----'
+
+            $pemSerializer = new PemPrivateKeySerializer(new DerPrivateKeySerializer());
+            $keys = $pemSerializer->parse(substr($pem, $posStartKey, $posEndKey - $posStartKey));
+
+            $pointSerializer = new UncompressedPointSerializer(EccFactory::getAdapter());
+            $vapid['publicKey'] = base64_encode(hex2bin($pointSerializer->serialize($keys->getPublicKey()->getPoint())));
+            $vapid['privateKey'] = base64_encode(hex2bin(gmp_strval($keys->getSecret(), 16)));
         }
 
         if (!array_key_exists('publicKey', $vapid)) {
