@@ -29,35 +29,35 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         }
 
         if (!getenv('STANDARD_ENDPOINT')) {
-          $this->markTestSkipped('No \'STANDARD_ENDPOINT\' found in env.');
+            $this->markTestSkipped('No \'STANDARD_ENDPOINT\' found in env.');
         }
 
         if (!getenv('GCM_ENDPOINT')) {
-          $this->markTestSkipped('No \'GCM_ENDPOINT\' found in env.');
+            $this->markTestSkipped('No \'GCM_ENDPOINT\' found in env.');
         }
 
         if (!getenv('USER_PUBLIC_KEY')) {
-          $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
         }
 
         if (!getenv('GCM_USER_PUBLIC_KEY')) {
-          $this->markTestSkipped('No \'GCM_USER_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped('No \'GCM_USER_PUBLIC_KEY\' found in env.');
         }
 
         if (!getenv('USER_AUTH_TOKEN')) {
-          $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
         }
 
         if (!getenv('GCM_USER_AUTH_TOKEN')) {
-          $this->markTestSkipped('No \'GCM_USER_AUTH_TOKEN\' found in env.');
+            $this->markTestSkipped('No \'GCM_USER_AUTH_TOKEN\' found in env.');
         }
 
         if (!getenv('VAPID_PUBLIC_KEY')) {
-          $this->markTestSkipped('No \'VAPID_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped('No \'VAPID_PUBLIC_KEY\' found in env.');
         }
 
         if (!getenv('VAPID_PRIVATE_KEY')) {
-          $this->markTestSkipped('No \'VAPID_PRIVATE_KEY\' found in env.');
+            $this->markTestSkipped('No \'VAPID_PRIVATE_KEY\' found in env.');
         }
     }
 
