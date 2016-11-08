@@ -13,7 +13,7 @@ use Minishlink\WebPush\WebPush;
 
 class PushServiceTest extends PHPUnit_Framework_TestCase
 {
-    private static $timeout = 60;
+    private static $timeout = 30;
     private static $portNumber = 9012;
     private static $testSuiteId;
     private static $testServiceUrl;
@@ -94,91 +94,117 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Selenium tests are flakey so add retries.
+     */
+    public function retryTest($retryCount, $test)
+    {
+        // just like above without checking the annotation
+        for ($i = 0; $i < $retryCount; $i++) {
+            try {
+                $test();
+                return;
+            }
+            catch (Exception $e) {
+                // last one thrown below
+            }
+        }
+        if ($e) {
+            throw $e;
+        }
+    }
+
+    /**
      * @dataProvider browserProvider
      * Run integration tests with browsers
      */
     public function testBrowsers($browserId, $browserVersion, $options)
     {
-        $this->webPush = new WebPush($options);
-        $this->webPush->setAutomaticPadding(false);
+        $this->retryTest(4, $this->createClosureTest($browserId, $browserVersion, $options));
+    }
 
-        $subscriptionParameters = array(
-            'testSuiteId' => self::$testSuiteId,
-            'browserName' => $browserId,
-            'browserVersion' => $browserVersion,
-        );
+    protected function createClosureTest($browserId, $browserVersion, $options) {
+        return function() use ($browserId, $browserVersion, $options) {
+            $this->webPush = new WebPush($options);
+            $this->webPush->setAutomaticPadding(false);
 
-        if (array_key_exists('GCM', $options)) {
-            $subscriptionParameters['gcmSenderId'] = self::$gcmSenderId;
-        }
-
-        if (array_key_exists('VAPID', $options)) {
-            $subscriptionParameters['vapidPublicKey'] = self::$vapidKeys['publicKey'];
-        }
-
-        $subscriptionParameters = json_encode($subscriptionParameters);
-
-        $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
-        curl_setopt_array($getSubscriptionCurl, array(
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $subscriptionParameters,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => array(
-                'Content-Type: application/json',
-                'Content-Length: '.strlen($subscriptionParameters),
-            ),
-            CURLOPT_TIMEOUT => self::$timeout,
-        ));
-
-        $parsedResp = $this->getResponse($getSubscriptionCurl);
-        $testId = $parsedResp->{'data'}->{'testId'};
-        $subscription = $parsedResp->{'data'}->{'subscription'};
-        $endpoint = $subscription->{'endpoint'};
-        $keys = $subscription->{'keys'};
-        $auth = $keys->{'auth'};
-        $p256dh = $keys->{'p256dh'};
-
-        $payload = 'hello';
-        $getNotificationCurl = null;
-        try {
-            $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
-            $this->assertTrue($sendResp);
-
-            $dataString = json_encode(array(
+            $subscriptionParameters = array(
                 'testSuiteId' => self::$testSuiteId,
-                'testId' => $testId,
-            ));
+                'browserName' => $browserId,
+                'browserVersion' => $browserVersion,
+            );
 
-            $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
-            curl_setopt_array($getNotificationCurl, array(
+            if (array_key_exists('GCM', $options)) {
+                $subscriptionParameters['gcmSenderId'] = self::$gcmSenderId;
+            }
+
+            if (array_key_exists('VAPID', $options)) {
+                $subscriptionParameters['vapidPublicKey'] = self::$vapidKeys['publicKey'];
+            }
+
+            $subscriptionParameters = json_encode($subscriptionParameters);
+
+            $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
+            curl_setopt_array($getSubscriptionCurl, array(
                 CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $dataString,
+                CURLOPT_POSTFIELDS => $subscriptionParameters,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HTTPHEADER => array(
                     'Content-Type: application/json',
-                    'Content-Length: '.strlen($dataString),
+                    'Content-Length: '.strlen($subscriptionParameters),
                 ),
                 CURLOPT_TIMEOUT => self::$timeout,
             ));
 
             $parsedResp = $this->getResponse($getSubscriptionCurl);
+            $testId = $parsedResp->{'data'}->{'testId'};
+            $subscription = $parsedResp->{'data'}->{'subscription'};
+            $endpoint = $subscription->{'endpoint'};
+            $keys = $subscription->{'keys'};
+            $auth = $keys->{'auth'};
+            $p256dh = $keys->{'p256dh'};
 
-            if (!property_exists($parsedResp->{'data'}, 'messages')) {
-                throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
-            }
+            $payload = 'hello';
+            $getNotificationCurl = null;
+            try {
+                $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
+                $this->assertTrue($sendResp);
 
-            $messages = $parsedResp->{'data'}->{'messages'};
-            $this->assertEquals(count($messages), 1);
-            $this->assertEquals($messages[0], $payload);
-        } catch (Exception $e) {
-            if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
-                && !array_key_exists('GCM', $options)) {
-                if ($e->getMessage() !== 'No GCM API Key specified.') {
-                    echo $e;
+                $dataString = json_encode(array(
+                    'testSuiteId' => self::$testSuiteId,
+                    'testId' => $testId,
+                ));
+
+                $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
+                curl_setopt_array($getNotificationCurl, array(
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => $dataString,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: application/json',
+                        'Content-Length: '.strlen($dataString),
+                    ),
+                    CURLOPT_TIMEOUT => self::$timeout,
+                ));
+
+                $parsedResp = $this->getResponse($getSubscriptionCurl);
+
+                if (!property_exists($parsedResp->{'data'}, 'messages')) {
+                    throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
                 }
-                $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
+
+                $messages = $parsedResp->{'data'}->{'messages'};
+                $this->assertEquals(count($messages), 1);
+                $this->assertEquals($messages[0], $payload);
+            } catch (Exception $e) {
+                if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
+                    && !array_key_exists('GCM', $options)) {
+                    if ($e->getMessage() !== 'No GCM API Key specified.') {
+                        echo $e;
+                    }
+                    $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
+                }
             }
-        }
+        };
     }
 
     protected function tearDown()
@@ -204,7 +230,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         exec('web-push-testing-service stop phpunit');
     }
 
-    public function getResponse($ch) {
+    private function getResponse($ch) {
         $resp = curl_exec($ch);
 
         if (!$resp) {
