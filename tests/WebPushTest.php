@@ -24,12 +24,40 @@ class WebPushTest extends PHPUnit_Framework_TestCase
     {
         parent::checkRequirements();
 
-        if (!array_key_exists('skipIfTravis', $this->getAnnotations()['method'])) {
-            return;
-        }
-
         if (getenv('TRAVIS') || getenv('CI')) {
             $this->markTestSkipped('This test does not run on Travis.');
+        }
+
+        if (!getenv('STANDARD_ENDPOINT')) {
+          $this->markTestSkipped('No \'STANDARD_ENDPOINT\' found in env.');
+        }
+
+        if (!getenv('GCM_ENDPOINT')) {
+          $this->markTestSkipped('No \'GCM_ENDPOINT\' found in env.');
+        }
+
+        if (!getenv('USER_PUBLIC_KEY')) {
+          $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
+        }
+
+        if (!getenv('GCM_USER_PUBLIC_KEY')) {
+          $this->markTestSkipped('No \'GCM_USER_PUBLIC_KEY\' found in env.');
+        }
+
+        if (!getenv('USER_AUTH_TOKEN')) {
+          $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
+        }
+
+        if (!getenv('GCM_USER_AUTH_TOKEN')) {
+          $this->markTestSkipped('No \'GCM_USER_AUTH_TOKEN\' found in env.');
+        }
+
+        if (!getenv('VAPID_PUBLIC_KEY')) {
+          $this->markTestSkipped('No \'VAPID_PUBLIC_KEY\' found in env.');
+        }
+
+        if (!getenv('VAPID_PRIVATE_KEY')) {
+          $this->markTestSkipped('No \'VAPID_PRIVATE_KEY\' found in env.');
         }
     }
 
@@ -77,7 +105,6 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     /**
      * @dataProvider notificationProvider
-     * @skipIfTravis
      *
      * @param string $endpoint
      * @param string $payload
@@ -103,9 +130,6 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    /**
-     * @skipIfTravis
-     */
     public function testFlush()
     {
         $this->webPush->sendNotification(self::$endpoints['standard']);
@@ -118,9 +142,6 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($this->webPush->flush());
     }
 
-    /**
-     * @skipIfTravis
-     */
     public function testSendGCMNotificationWithoutGCMApiKey()
     {
         $webPush = new WebPush();
@@ -129,9 +150,6 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
-    /**
-     * @skipIfTravis
-     */
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         $webPush = new WebPush(array('GCM' => 'bar'));

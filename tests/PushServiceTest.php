@@ -77,9 +77,6 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     {
         return array(
             // Web Push
-            array('chrome', 'stable', array()),
-            array('chrome', 'beta', array()),
-            array('chrome', 'unstable', array()),
             array('firefox', 'stable', array()),
             array('firefox', 'beta', array()),
             array('firefox', 'unstable', array()),
@@ -108,11 +105,36 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * Selenium tests are flakey so add retries.
+     */
+    public function retryTest($retryCount, $test)
+    {
+      // just like above without checking the annotation
+      for ($i = 0; $i < $retryCount; $i++) {
+        try {
+            $test();
+            return;
+        }
+        catch (Exception $e) {
+            // last one thrown below
+        }
+      }
+      if ($e) {
+        throw $e;
+      }
+    }
+
+    /**
      * @dataProvider browserProvider
      * Run integration tests with browsers
      */
     public function testBrowsers($browserId, $browserVersion, $options)
     {
+        $this->retryTest(4, $this->createClosureTest($browserId, $browserVersion, $options));
+    }
+
+    protected function createClosureTest($browserId, $browserVersion, $options) {
+      return function() use ($browserId, $browserVersion, $options) {
         $this->webPush = new WebPush($options);
         $this->webPush->setAutomaticPadding(false);
 
@@ -143,13 +165,22 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             ),
             CURLOPT_TIMEOUT => 30,
         ));
-
         $resp = curl_exec($getSubscriptionCurl);
 
         // Close request to clear up some resources
         curl_close($getSubscriptionCurl);
 
         $parsedResp = json_decode($resp);
+
+
+
+        if (!array_key_exists('data', $parsedResp)) {
+          echo "\n\n";
+          echo "Unexpected response from web-push-testing-service.............";
+          var_dump($resp);
+          echo "\n\n";
+          throw new Error('Unexpected response from web-push-testing-service.');
+        }
 
         $testId = $parsedResp->{'data'}->{'testId'};
         $subscription = $parsedResp->{'data'}->{'subscription'};
@@ -204,6 +235,7 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
                 throw $e;
             }
         }
+      };
     }
 
     protected function tearDown()
