@@ -102,13 +102,13 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         for ($i = 0; $i < $retryCount; $i++) {
             try {
                 $test();
+
                 return;
-            }
-            catch (Exception $e) {
+            } catch (Exception $e) {
                 // last one thrown below
             }
         }
-        if ($e) {
+        if (isset($e)) {
             throw $e;
         }
     }
@@ -122,8 +122,9 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         $this->retryTest(4, $this->createClosureTest($browserId, $browserVersion, $options));
     }
 
-    protected function createClosureTest($browserId, $browserVersion, $options) {
-        return function() use ($browserId, $browserVersion, $options) {
+    protected function createClosureTest($browserId, $browserVersion, $options)
+    {
+        return function () use ($browserId, $browserVersion, $options) {
             $this->webPush = new WebPush($options);
             $this->webPush->setAutomaticPadding(false);
 
@@ -230,7 +231,8 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
         exec('web-push-testing-service stop phpunit');
     }
 
-    private function getResponse($ch) {
+    private function getResponse($ch)
+    {
         $resp = curl_exec($ch);
 
         if (!$resp) {
@@ -250,5 +252,4 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
         return $parsedResp;
     }
-
 }
