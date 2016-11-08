@@ -13,11 +13,17 @@ use Minishlink\WebPush\WebPush;
 
 class PushServiceTest extends PHPUnit_Framework_TestCase
 {
+    private static $timeout = 30;
     private static $portNumber = 9012;
     private static $testSuiteId;
     private static $testServiceUrl;
-    private static $gcmSenderId = "759071690750";
-    private static $gcmApiKey = "AIzaSyBAU0VfXoskxUSg81K5VgLgwblHbZWe6tA";
+    private static $gcmSenderId = '759071690750';
+    private static $gcmApiKey = 'AIzaSyBAU0VfXoskxUSg81K5VgLgwblHbZWe6tA';
+    private static $vapidKeys = array(
+        'subject' => 'http://test.com',
+        'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
+        'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
+    );
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
@@ -39,55 +45,72 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$testServiceUrl = "http://localhost:".self::$portNumber;
+        self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
     }
 
     protected function setUp()
     {
-      $startApiCurl = curl_init(self::$testServiceUrl."/api/start-test-suite/");
-      curl_setopt_array($startApiCurl, array(
-          CURLOPT_POST => true,
-          CURLOPT_POSTFIELDS => array(),
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_TIMEOUT => 30,
-      ));
+        $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
+        curl_setopt_array($startApiCurl, array(
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => array(),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => self::$timeout,
+        ));
 
-      $resp = curl_exec($startApiCurl);
-
-      if ($resp) {
-        $parsedResp = json_decode($resp);
+        $parsedResp = $this->getResponse($startApiCurl);
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
-      } else {
-        echo "Curl error: ";
-        echo curl_error($startApiCurl);
-
-        throw new Exception('Unable to get a test suite from the '.
-          'web-push-testing-service');
-      }
-
-      curl_close($startApiCurl);
     }
 
     public function browserProvider()
     {
         return array(
             // Web Push
-            array("chrome", "stable", array()),
-            array("chrome", "beta", array()),
-            array("chrome", "unstable", array()),
-            array("firefox", "stable", array()),
-            array("firefox", "beta", array()),
-            array("firefox", "unstable", array()),
+            array('firefox', 'stable', array()),
+            array('firefox', 'beta', array()),
+            array('firefox', 'unstable', array()),
             // Web Push + GCM
-            array("chrome", "stable", array('GCM' => self::$gcmApiKey)),
-            array("chrome", "beta", array('GCM' => self::$gcmApiKey)),
-            array("chrome", "unstable", array('GCM' => self::$gcmApiKey)),
-            array("firefox", "stable", array('GCM' => self::$gcmApiKey)),
-            array("firefox", "beta", array('GCM' => self::$gcmApiKey)),
-            array("firefox", "unstable", array('GCM' => self::$gcmApiKey)),
+            array('chrome', 'stable', array('GCM' => self::$gcmApiKey)),
+            array('chrome', 'beta', array('GCM' => self::$gcmApiKey)),
+            array('chrome', 'unstable', array('GCM' => self::$gcmApiKey)),
+            array('firefox', 'stable', array('GCM' => self::$gcmApiKey)),
+            array('firefox', 'beta', array('GCM' => self::$gcmApiKey)),
+            array('firefox', 'unstable', array('GCM' => self::$gcmApiKey)),
             // Web Push + VAPID
+            array('chrome', 'stable', array('VAPID' => self::$vapidKeys)),
+            array('chrome', 'beta', array('VAPID' => self::$vapidKeys)),
+            array('chrome', 'unstable', array('VAPID' => self::$vapidKeys)),
+            array('firefox', 'stable', array('VAPID' => self::$vapidKeys)),
+            array('firefox', 'beta', array('VAPID' => self::$vapidKeys)),
+            array('firefox', 'unstable', array('VAPID' => self::$vapidKeys)),
             // Web Push + GCM + VAPID
+            array('chrome', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('chrome', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('chrome', 'unstable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('firefox', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('firefox', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            array('firefox', 'unstable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
         );
+    }
+
+    /**
+     * Selenium tests are flakey so add retries.
+     */
+    public function retryTest($retryCount, $test)
+    {
+        // just like above without checking the annotation
+        for ($i = 0; $i < $retryCount; $i++) {
+            try {
+                $test();
+
+                return;
+            } catch (Exception $e) {
+                // last one thrown below
+            }
+        }
+        if (isset($e)) {
+            throw $e;
+        }
     }
 
     /**
@@ -96,114 +119,137 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
      */
     public function testBrowsers($browserId, $browserVersion, $options)
     {
-        $this->webPush = new WebPush($options);
-        $this->webPush->setAutomaticPadding(false);
+        $this->retryTest(4, $this->createClosureTest($browserId, $browserVersion, $options));
+    }
 
-        $dataString = json_encode(array(
-            "testSuiteId" => self::$testSuiteId,
-            "browserName" => $browserId,
-            "browserVersion" => $browserVersion,
-            "gcmSenderId" => self::$gcmSenderId
-        ));
-        $getSubscriptionCurl = curl_init(self::$testServiceUrl."/api/get-subscription/");
-        curl_setopt_array($getSubscriptionCurl, array(
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $dataString,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json",
-                "Content-Length: " . strlen($dataString)
-            ),
-            CURLOPT_TIMEOUT => 30,
-        ));
+    protected function createClosureTest($browserId, $browserVersion, $options)
+    {
+        return function () use ($browserId, $browserVersion, $options) {
+            $this->webPush = new WebPush($options);
+            $this->webPush->setAutomaticPadding(false);
 
-        $resp = curl_exec($getSubscriptionCurl);
+            $subscriptionParameters = array(
+                'testSuiteId' => self::$testSuiteId,
+                'browserName' => $browserId,
+                'browserVersion' => $browserVersion,
+            );
 
-        // Close request to clear up some resources
-        curl_close($getSubscriptionCurl);
+            if (array_key_exists('GCM', $options)) {
+                $subscriptionParameters['gcmSenderId'] = self::$gcmSenderId;
+            }
 
-        $parsedResp = json_decode($resp);
+            if (array_key_exists('VAPID', $options)) {
+                $subscriptionParameters['vapidPublicKey'] = self::$vapidKeys['publicKey'];
+            }
 
-        $testId = $parsedResp->{'data'}->{'testId'};
-        $subscription = $parsedResp->{'data'}->{'subscription'};
-        $endpoint = $subscription->{'endpoint'};
-        $keys = $subscription->{'keys'};
-        $auth = $keys->{'auth'};
-        $p256dh = $keys->{'p256dh'};
+            $subscriptionParameters = json_encode($subscriptionParameters);
 
-        $payload = 'hello';
-        $getNotificationCurl = null;
-        try {
-          $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
-          $this->assertTrue($sendResp);
+            $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
+            curl_setopt_array($getSubscriptionCurl, array(
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $subscriptionParameters,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => array(
+                    'Content-Type: application/json',
+                    'Content-Length: '.strlen($subscriptionParameters),
+                ),
+                CURLOPT_TIMEOUT => self::$timeout,
+            ));
 
-          $dataString = json_encode(array(
-             "testSuiteId" => self::$testSuiteId,
-             "testId" => $testId
-          ));
+            $parsedResp = $this->getResponse($getSubscriptionCurl);
+            $testId = $parsedResp->{'data'}->{'testId'};
+            $subscription = $parsedResp->{'data'}->{'subscription'};
+            $endpoint = $subscription->{'endpoint'};
+            $keys = $subscription->{'keys'};
+            $auth = $keys->{'auth'};
+            $p256dh = $keys->{'p256dh'};
 
-          $getNotificationCurl = curl_init(self::$testServiceUrl."/api/get-notification-status/");
-          curl_setopt_array($getNotificationCurl, array(
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $dataString,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/json",
-                "Content-Length: " . strlen($dataString)
-            ),
-            CURLOPT_TIMEOUT => 30,
-          ));
-          $resp = curl_exec($getNotificationCurl);
+            $payload = 'hello';
+            $getNotificationCurl = null;
+            try {
+                $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
+                $this->assertTrue($sendResp);
 
-          $parsedResp = json_decode($resp);
+                $dataString = json_encode(array(
+                    'testSuiteId' => self::$testSuiteId,
+                    'testId' => $testId,
+                ));
 
-          $messages = $parsedResp->{'data'}->{'messages'};
-          $this->assertEquals(count($messages), 1);
-          $this->assertEquals($messages[0], $payload);
-      } catch (Exception $e) {
-        if (
-          strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0 &&
-          !array_key_exists('GCM', $options)
-        ) {
-          if ($e->getMessage() !== 'No GCM API Key specified.') {
-            echo $e;
-          }
-          $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
-        } else {
-          if ($getNotificationCurl) {
-            echo "Curl error: ";
-            echo curl_error($getNotificationCurl);
-          }
-          throw $e;
-        }
-      }
+                $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
+                curl_setopt_array($getNotificationCurl, array(
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => $dataString,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER => array(
+                        'Content-Type: application/json',
+                        'Content-Length: '.strlen($dataString),
+                    ),
+                    CURLOPT_TIMEOUT => self::$timeout,
+                ));
+
+                $parsedResp = $this->getResponse($getSubscriptionCurl);
+
+                if (!property_exists($parsedResp->{'data'}, 'messages')) {
+                    throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
+                }
+
+                $messages = $parsedResp->{'data'}->{'messages'};
+                $this->assertEquals(count($messages), 1);
+                $this->assertEquals($messages[0], $payload);
+            } catch (Exception $e) {
+                if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
+                    && !array_key_exists('GCM', $options)) {
+                    if ($e->getMessage() !== 'No GCM API Key specified.') {
+                        echo $e;
+                    }
+                    $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
+                }
+            }
+        };
     }
 
     protected function tearDown()
     {
-      $dataString = "{ \"testSuiteId\": " . self::$testSuiteId . " }";
-      $curl = curl_init(self::$testServiceUrl."/api/end-test-suite/");
-      curl_setopt_array($curl, array(
-          CURLOPT_POST => true,
-          CURLOPT_POSTFIELDS => $dataString,
-          CURLOPT_RETURNTRANSFER => true,
-          CURLOPT_HTTPHEADER => array(
-              "Content-Type: application/json",
-              "Content-Length: " . strlen($dataString)
-          ),
-          CURLOPT_TIMEOUT => 30,
-      ));
-      $resp = curl_exec($curl);
-      $parsedResp = json_decode($resp);
-
-      self::$testSuiteId = null;
-      // Close request to clear up some resources
-      curl_close($curl);
+        $dataString = '{ "testSuiteId": '.self::$testSuiteId.' }';
+        $curl = curl_init(self::$testServiceUrl.'/api/end-test-suite/');
+        curl_setopt_array($curl, array(
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $dataString,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => array(
+                'Content-Type: application/json',
+                'Content-Length: '.strlen($dataString),
+            ),
+            CURLOPT_TIMEOUT => self::$timeout,
+        ));
+        $this->getResponse($curl);
+        self::$testSuiteId = null;
     }
 
     public static function tearDownAfterClass()
     {
-        $testingServiceResult = exec(
-          "web-push-testing-service stop phpunit");
+        exec('web-push-testing-service stop phpunit');
+    }
+
+    private function getResponse($ch)
+    {
+        $resp = curl_exec($ch);
+
+        if (!$resp) {
+            $error = 'Curl error: n'.curl_errno($ch).' - '.curl_error($ch);
+            curl_close($ch);
+            throw new Exception($error);
+        }
+
+        $parsedResp = json_decode($resp);
+
+        if (!property_exists($parsedResp, 'data')) {
+            throw new Exception('web-push-testing-service error: '.$resp);
+        }
+
+        // Close request to clear up some resources
+        curl_close($ch);
+
+        return $parsedResp;
     }
 }

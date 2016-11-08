@@ -21,20 +21,22 @@ final class Encryption
 
     /**
      * @param string $payload
-     * @param bool $automatic
+     * @param bool   $automatic
+     *
      * @return string padded payload (plaintext)
      */
     public static function padPayload($payload, $automatic)
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $automatic ? self::MAX_PAYLOAD_LENGTH - $payloadLen : 0;
+
         return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
     }
 
     /**
-     * @param string $payload With padding
-     * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
-     * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
+     * @param string $payload          With padding
+     * @param string $userPublicKey    Base 64 encoded (MIME or URL-safe)
+     * @param string $userAuthToken    Base 64 encoded (MIME or URL-safe)
      * @param bool   $nativeEncryption Use OpenSSL (>PHP7.1)
      *
      * @return array
@@ -60,8 +62,7 @@ final class Encryption
         $userPublicKeyObject = $generator->getPublicKeyFrom($pointUserPublicKey->getX(), $pointUserPublicKey->getY(), $generator->getOrder());
 
         // get shared secret from user public key and local private key
-        $localPrivateSecret = $localPrivateKeyObject->getSecret();
-        $sharedSecret = hex2bin($math->decHex(gmp_strval($userPublicKeyObject->getPoint()->mul($localPrivateSecret)->getX())));
+        $sharedSecret = hex2bin($math->decHex(gmp_strval($userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX())));
 
         // generate salt
         $salt = openssl_random_pseudo_bytes(16);
@@ -85,7 +86,7 @@ final class Encryption
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
         if (!$nativeEncryption) {
-            list($encryptedText, $tag) = \AESGCM\AESGCM::encrypt($contentEncryptionKey, $nonce, $payload, "");
+            list($encryptedText, $tag) = \AESGCM\AESGCM::encrypt($contentEncryptionKey, $nonce, $payload, '');
         } else {
             $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag); // base 64 encoded
         }
@@ -99,7 +100,7 @@ final class Encryption
     }
 
     /**
-     * HMAC-based Extract-and-Expand Key Derivation Function (HKDF)
+     * HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
      *
      * This is used to derive a secure encryption key from a mostly-secure shared
      * secret.
@@ -115,6 +116,7 @@ final class Encryption
      * @param $ikm string Input keying material
      * @param $info string Application-specific context
      * @param $length int The length (in bytes) of the required output key
+     *
      * @return string
      */
     private static function hkdf($salt, $ikm, $info, $length)
@@ -130,11 +132,13 @@ final class Encryption
      * Creates a context for deriving encyption parameters.
      * See section 4.2 of
      * {@link https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding-00}
-     * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}
+     * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}.
      *
      * @param $clientPublicKey string The client's public key
      * @param $serverPublicKey string Our public key
+     *
      * @return string
+     *
      * @throws \ErrorException
      */
     private static function createContext($clientPublicKey, $serverPublicKey)
@@ -156,14 +160,17 @@ final class Encryption
     /**
      * Returns an info record. See sections 3.2 and 3.3 of
      * {@link https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding-00}
-     * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}
+     * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}.
      *
      * @param $type string The type of the info record
      * @param $context string The context for the record
+     *
      * @return string
+     *
      * @throws \ErrorException
      */
-    private static function createInfo($type, $context) {
+    private static function createInfo($type, $context)
+    {
         if (Utils::safeStrlen($context) !== 135) {
             throw new \ErrorException('Context argument has invalid size');
         }
