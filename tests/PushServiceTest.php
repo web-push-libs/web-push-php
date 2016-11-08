@@ -33,14 +33,14 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
      * detect current OS, we can probably run this automatically
      * for Linux and OS X at a later date.
      */
-    /**protected function checkRequirements()
+    protected function checkRequirements()
     {
         parent::checkRequirements();
 
         if (!(getenv('TRAVIS') || getenv('CI'))) {
             $this->markTestSkipped('This test does not run on Travis.');
         }
-    }**/
+    }
 
     public static function setUpBeforeClass()
     {
