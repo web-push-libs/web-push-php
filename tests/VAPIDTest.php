@@ -58,4 +58,13 @@ class VAPIDTest extends PHPUnit_Framework_TestCase
         array_pop($auth); // delete the signature which changes each time
         return $auth;
     }
+
+    public function testCreateVapidKeys()
+    {
+        $keys = VAPID::createVapidKeys();
+        $this->assertArrayHasKey('publicKey', $keys);
+        $this->assertArrayHasKey('privateKey', $keys);
+        $this->assertEquals(strlen($keys['publicKey']), 88);
+        $this->assertEquals(strlen($keys['privateKey']), 44);
+    }
 }

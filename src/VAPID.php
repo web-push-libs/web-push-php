@@ -131,4 +131,21 @@ class VAPID
           'Crypto-Key' => 'p256ecdsa='.Base64Url::encode($publicKey),
         );
     }
+
+
+    /**
+     * This method creates VAPID keys in case you would not be able to have a Linux bash.
+     * DO NOT create keys at each initialization! Save those keys and reuse them.
+     *
+     * @return array
+     */
+    public static function createVapidKeys()
+    {
+        $privateKeyObject = EccFactory::getNistCurves()->generator256()->createPrivateKey();
+        $pointSerializer = new UncompressedPointSerializer(EccFactory::getAdapter());
+        $vapid['publicKey'] = base64_encode(hex2bin($pointSerializer->serialize($privateKeyObject->getPublicKey()->getPoint())));
+        $vapid['privateKey'] = base64_encode(hex2bin(gmp_strval($privateKeyObject->getSecret(), 16)));
+
+        return $vapid;
+    }
 }

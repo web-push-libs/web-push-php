@@ -68,9 +68,9 @@ $webPush->sendNotification(
 There are several good examples and tutorials on the web:
 * Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload_index_doc.html) (don't mind the `server.js` file: it should be replaced by your PHP server code with this library)
 * Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
-* you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/d6855ca8f485556ab2ee5c047688fbf745367045/app/Resources/public/js/app.js)
+* you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/app/Resources/public/js/app.js)
 
-### Authentication
+### Authentication (VAPID)
 Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
 
 You can specify your authentication details when instantiating WebPush. The keys can be passed directly, or you can load a PEM file or its content:
@@ -101,6 +101,19 @@ In order to generate the uncompressed public and secret key, encoded in Base64, 
 $ openssl ecparam -genkey -name prime256v1 -out private_key.pem
 $ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64|tr -d '=' |tr '/+' '_-' >> public_key.txt
 $ openssl ec -in private_key.pem -outform DER|tail -c +8|head -c 32|base64|tr -d '=' |tr '/+' '_-' >> private_key.txt
+```
+
+If you can't access a Linux bash, you can print the output of the `createVapidKeys` function:
+```php
+var_dump(VAPID::createVapidKeys()); // store the keys afterwards
+```
+
+On the client-side, don't forget to subscribe with the VAPID public key as the `applicationServerKey`: (`urlBase64ToUint8Array` source [here](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/app/Resources/public/js/app.js#L177))
+```js
+serviceWorkerRegistration.pushManager.subscribe({
+  userVisibleOnly: true,
+  applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+})
 ```
 
 ### Notification options
