@@ -71,9 +71,9 @@ There are several good examples and tutorials on the web:
 * you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/app/Resources/public/js/app.js)
 
 ### Authentication (VAPID)
-Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server.
+Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server. These keys must be safely stored and should not change.
 
-You can specify your authentication details when instantiating WebPush. The keys can be passed directly, or you can load a PEM file or its content:
+You can specify your authentication details when instantiating WebPush. The keys can be passed directly (recommended), or you can load a PEM file or its content:
 ```php
 <?php
 
@@ -85,15 +85,15 @@ $auth = array(
     'GCM' => 'MY_GCM_API_KEY', // deprecated and optional, it's here only for compatibility reasons
     'VAPID' => array(
         'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
-        'publicKey' => '~88 chars', // uncompressed public key P-256 encoded in Base64-URL
-        'privateKey' => '~44 chars', // in fact the secret multiplier of the private key encoded in Base64-URL
+        'publicKey' => '~88 chars', // (recommended) uncompressed public key P-256 encoded in Base64-URL
+        'privateKey' => '~44 chars', // (recommended) in fact the secret multiplier of the private key encoded in Base64-URL
         'pemFile' => 'path/to/pem', // if you have a PEM file and can link to it on your filesystem
         'pem' => 'pemFileContent', // if you have a PEM file and want to hardcode its content
     ),
 );
 
 $webPush = new WebPush($auth);
-$webPush->sendNotification($endpoint, null, null, null, true);
+$webPush->sendNotification(...);
 ```
 
 In order to generate the uncompressed public and secret key, encoded in Base64, enter the following in your Linux bash:
