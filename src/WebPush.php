@@ -73,13 +73,14 @@ class WebPush
      * @param string|null $userAuthToken
      * @param bool        $flush         If you want to flush directly (usually when you send only one notification)
      * @param array       $options       Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
+     * @param array       $auth          Use this auth details instead of what you provided when creating WebPush
      *
      * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true
      *
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array())
+    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array(), $auth = array())
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
@@ -89,7 +90,11 @@ class WebPush
             $payload = Encryption::padPayload($payload, $this->automaticPadding);
         }
 
-        $this->notifications[] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken, $options);
+        if (array_key_exists('VAPID', $auth)) {
+            $auth['VAPID'] = VAPID::validate($auth['VAPID']);
+        }
+
+        $this->notifications[] = new Notification($endpoint, $payload, $userPublicKey, $userAuthToken, $options, $auth);
 
         if ($flush) {
             $res = $this->flush();
@@ -180,6 +185,7 @@ class WebPush
             $userPublicKey = $notification->getUserPublicKey();
             $userAuthToken = $notification->getUserAuthToken();
             $options = $notification->getOptions($this->getDefaultOptions());
+            $auth = $notification->getAuth($this->auth);
 
             if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
@@ -213,15 +219,15 @@ class WebPush
 
             // if GCM
             if (substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
-                if (array_key_exists('GCM', $this->auth)) {
-                    $headers['Authorization'] = 'key='.$this->auth['GCM'];
+                if (array_key_exists('GCM', $auth)) {
+                    $headers['Authorization'] = 'key='.$auth['GCM'];
                 } else {
                     throw new \ErrorException('No GCM API Key specified.');
                 }
             }
             // if VAPID (GCM doesn't support it but FCM does)
-            elseif (array_key_exists('VAPID', $this->auth)) {
-                $vapid = $this->auth['VAPID'];
+            elseif (array_key_exists('VAPID', $auth)) {
+                $vapid = $auth['VAPID'];
 
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
 

@@ -249,6 +249,9 @@ Your installation lacks some certificates.
 
 You can also force using a client without peer verification.
 
+### I lost my VAPID keys!
+See [issue #58](https://github.com/web-push-libs/web-push-php/issues/58).
+
 ### I need to send notifications to native apps. (eg. APNS for iOS)
 WebPush is for web apps.
 You need something like [RMSPushNotificationsBundle](https://github.com/richsage/RMSPushNotificationsBundle) (Symfony).

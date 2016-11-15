@@ -134,7 +134,6 @@ class VAPID
         );
     }
 
-
     /**
      * This method creates VAPID keys in case you would not be able to have a Linux bash.
      * DO NOT create keys at each initialization! Save those keys and reuse them.
@@ -152,7 +151,7 @@ class VAPID
     {
         $pointSerializer = new UncompressedPointSerializer(EccFactory::getAdapter());
         $vapid['publicKey'] = base64_encode(hex2bin($pointSerializer->serialize($privateKeyObject->getPublicKey()->getPoint())));
-        $vapid['privateKey'] = base64_encode(hex2bin(str_pad(gmp_strval($privateKeyObject->getSecret(), 16), 2*self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)));
+        $vapid['privateKey'] = base64_encode(hex2bin(str_pad(gmp_strval($privateKeyObject->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)));
 
         return $vapid;
     }

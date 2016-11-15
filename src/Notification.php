@@ -25,16 +25,20 @@ class Notification
     /** @var string */
     private $userAuthToken;
 
-    /** @var array Options : TTL, urgency, topic * */
+    /** @var array Options : TTL, urgency, topic */
     private $options;
 
-    public function __construct($endpoint, $payload, $userPublicKey, $userAuthToken, $options)
+    /** @var array Auth details : GCM, VAPID */
+    private $auth;
+
+    public function __construct($endpoint, $payload, $userPublicKey, $userAuthToken, $options, $auth)
     {
         $this->endpoint = $endpoint;
         $this->payload = $payload;
         $this->userPublicKey = $userPublicKey;
         $this->userAuthToken = $userAuthToken;
         $this->options = $options;
+        $this->auth = $auth;
     }
 
     /**
@@ -82,5 +86,15 @@ class Notification
         $options['topic'] = array_key_exists('topic', $options) ? $options['topic'] : $defaultOptions['topic'];
 
         return $options;
+    }
+
+    /**
+     * @param array $defaultAuth
+     *
+     * @return array
+     */
+    public function getAuth(array $defaultAuth)
+    {
+        return count($this->auth) > 0 ? $this->auth : $defaultAuth;
     }
 }
