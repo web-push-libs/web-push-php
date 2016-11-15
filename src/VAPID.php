@@ -14,6 +14,7 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Jose\Factory\JWKFactory;
 use Jose\Factory\JWSFactory;
+use Mdanter\Ecc\Crypto\Key\PrivateKeyInterface;
 use Mdanter\Ecc\EccFactory;
 use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 use Mdanter\Ecc\Serializer\PrivateKey\DerPrivateKeySerializer;
@@ -21,6 +22,9 @@ use Mdanter\Ecc\Serializer\PrivateKey\PemPrivateKeySerializer;
 
 class VAPID
 {
+    const PUBLIC_KEY_LENGTH = 65;
+    const PRIVATE_KEY_LENGTH = 32;
+
     /**
      * @param array $vapid
      *
@@ -54,11 +58,9 @@ class VAPID
             $posStartKey += 30; // length of '-----BEGIN EC PRIVATE KEY-----'
 
             $pemSerializer = new PemPrivateKeySerializer(new DerPrivateKeySerializer());
-            $keys = $pemSerializer->parse(substr($pem, $posStartKey, $posEndKey - $posStartKey));
-
-            $pointSerializer = new UncompressedPointSerializer(EccFactory::getAdapter());
-            $vapid['publicKey'] = base64_encode(hex2bin($pointSerializer->serialize($keys->getPublicKey()->getPoint())));
-            $vapid['privateKey'] = base64_encode(hex2bin(gmp_strval($keys->getSecret(), 16)));
+            $keys = self::getUncompressedKeys($pemSerializer->parse(substr($pem, $posStartKey, $posEndKey - $posStartKey)));
+            $vapid['publicKey'] = $keys['publicKey'];
+            $vapid['privateKey'] = $keys['privateKey'];
         }
 
         if (!array_key_exists('publicKey', $vapid)) {
@@ -67,7 +69,7 @@ class VAPID
 
         $publicKey = Base64Url::decode($vapid['publicKey']);
 
-        if (Utils::safeStrlen($publicKey) !== 65) {
+        if (Utils::safeStrlen($publicKey) !== self::PUBLIC_KEY_LENGTH) {
             throw new \ErrorException('[VAPID] Public key should be 65 bytes long when decoded.');
         }
 
@@ -77,7 +79,7 @@ class VAPID
 
         $privateKey = Base64Url::decode($vapid['privateKey']);
 
-        if (Utils::safeStrlen($privateKey) !== 32) {
+        if (Utils::safeStrlen($privateKey) !== self::PRIVATE_KEY_LENGTH) {
             throw new \ErrorException('[VAPID] Private key should be 32 bytes long when decoded.');
         }
 
@@ -127,8 +129,8 @@ class VAPID
         $jws = JWSFactory::createJWSToCompactJSON($jwtPayload, $jwk, $header);
 
         return array(
-          'Authorization' => 'WebPush '.$jws,
-          'Crypto-Key' => 'p256ecdsa='.Base64Url::encode($publicKey),
+            'Authorization' => 'WebPush '.$jws,
+            'Crypto-Key' => 'p256ecdsa='.Base64Url::encode($publicKey),
         );
     }
 
@@ -142,9 +144,15 @@ class VAPID
     public static function createVapidKeys()
     {
         $privateKeyObject = EccFactory::getNistCurves()->generator256()->createPrivateKey();
+
+        return self::getUncompressedKeys($privateKeyObject);
+    }
+
+    private static function getUncompressedKeys(PrivateKeyInterface $privateKeyObject)
+    {
         $pointSerializer = new UncompressedPointSerializer(EccFactory::getAdapter());
         $vapid['publicKey'] = base64_encode(hex2bin($pointSerializer->serialize($privateKeyObject->getPublicKey()->getPoint())));
-        $vapid['privateKey'] = base64_encode(hex2bin(gmp_strval($privateKeyObject->getSecret(), 16)));
+        $vapid['privateKey'] = base64_encode(hex2bin(str_pad(gmp_strval($privateKeyObject->getSecret(), 16), 2*self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)));
 
         return $vapid;
     }
