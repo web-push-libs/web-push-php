@@ -34,7 +34,7 @@ class WebPush
     private $defaultOptions;
 
     /** @var bool Automatic padding of payloads, if disabled, trade security for bandwidth */
-    private $automaticPadding = true;
+    private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /** @var bool */
     private $nativePayloadEncryptionSupport;
@@ -296,17 +296,33 @@ class WebPush
      */
     public function isAutomaticPadding()
     {
+        return $this->automaticPadding != false;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAutomaticPadding()
+    {
         return $this->automaticPadding;
     }
 
     /**
-     * @param bool $automaticPadding
+     * @param int $automaticPadding Max padding length
      *
      * @return WebPush
      */
     public function setAutomaticPadding($automaticPadding)
     {
-        $this->automaticPadding = $automaticPadding;
+        if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
+            throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
+        } else if ($automaticPadding < 0) {
+            throw new \Exception('Padding length should be positive or zero.');
+        } else if ($automaticPadding === true) {
+            $this->automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+        } else {
+            $this->automaticPadding = $automaticPadding;
+        }
 
         return $this;
     }

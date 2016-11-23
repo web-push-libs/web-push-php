@@ -173,15 +173,31 @@ $res = array(
 );
 ```
 
-### Payload length and security
-Payload will be encrypted by the library. The maximum payload length is 4078 bytes (or ASCII characters).
+### Payload length, security, and performance
+Payloads are encrypted by the library. The maximum payload length is theoretically 4078 bytes (or ASCII characters).
+For [compatibility reasons](mozilla-services/autopush/issues/748) though, your payload should be less than 3052 bytes long.
 
-However, when you encrypt a string of a certain length, the resulting string will always have the same length,
+The library pads the payload by default. This is more secure but it decreases performance for both your server and your user's device.
+
+#### Why is it more secure?
+When you encrypt a string of a certain length, the resulting string will always have the same length,
 no matter how many times you encrypt the initial string. This can make attackers guess the content of the payload.
-In order to circumvent this, this library can add some null padding to the initial payload, so that all the input of the encryption process
+In order to circumvent this, this library adds some null padding to the initial payload, so that all the input of the encryption process
 will have the same length. This way, all the output of the encryption process will also have the same length and attackers won't be able to 
-guess the content of your payload. The downside of this approach is that you will use more bandwidth than if you didn't pad the string.
-That's why the library provides the option to disable this security measure:
+guess the content of your payload.
+
+#### Why does it decrease performance?
+Encrypting more bytes takes more runtime on your server, and also slows down the user's device with decryption. Moreover, sending and receiving the packet will take more time.
+It's also not very friendly with users who have limited data plans.
+
+#### How can I disable or customize automatic padding?
+You can customize automatic padding in order to better fit your needs.
+
+Here are some ideas of settings:
+* (default) `Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH` (3052 bytes) for compatibility purposes with Firefox for Android
+* `Encryption::MAX_PAYLOAD_LENGTH` (4078 bytes) for maximum security
+* `false` for maximum performance
+* If you know your payloads will not exceed `X` bytes, then set it to `X` for the best balance between security and performance.
 
 ```php
 <?php
@@ -190,6 +206,8 @@ use Minishlink\WebPush\WebPush;
 
 $webPush = new WebPush();
 $webPush->setAutomaticPadding(false); // disable automatic padding
+$webPush->setAutomaticPadding(512); // enable automatic padding to 512 bytes (you should make sure that your payload is less than 512 bytes, or else an attacker could guess the content)
+$webPush->setAutomaticPadding(true); // enable automatic padding to default maximum compatibility length
 ```
 
 ### Changing the browser client

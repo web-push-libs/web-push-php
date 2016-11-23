@@ -18,17 +18,18 @@ use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
 final class Encryption
 {
     const MAX_PAYLOAD_LENGTH = 4078;
+    const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;
 
     /**
      * @param string $payload
-     * @param bool   $automatic
+     * @param bool   $maxLengthToPad
      *
      * @return string padded payload (plaintext)
      */
-    public static function padPayload($payload, $automatic)
+    public static function padPayload($payload, $maxLengthToPad)
     {
         $payloadLen = Utils::safeStrlen($payload);
-        $padLen = $automatic ? self::MAX_PAYLOAD_LENGTH - $payloadLen : 0;
+        $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
 
         return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
     }

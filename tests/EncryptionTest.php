@@ -18,21 +18,27 @@ class EncryptionTest extends PHPUnit_Framework_TestCase
      * @dataProvider payloadProvider
      *
      * @param string $payload
+     * @param integer $maxLengthToPad
+     * @param integer $expectedResLength
      */
-    public function testPadPayload($payload)
+    public function testPadPayload($payload, $maxLengthToPad, $expectedResLength)
     {
-        $res = Encryption::padPayload($payload, true);
+        $res = Encryption::padPayload($payload, $maxLengthToPad);
 
         $this->assertContains('test', $res);
-        $this->assertEquals(4080, Utils::safeStrlen($res));
+        $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
     }
 
     public function payloadProvider()
     {
         return array(
-            array('testé'),
-            array(str_repeat('test', 1019)),
-            array(str_repeat('test', 1019).'te'),
+            array('testé', 0, 8),
+            array('testé', 1, 8),
+            array('testé', 6, 8),
+            array('testé', 7, 9),
+            array('testé', Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH, Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH + 2),
+            array('testé', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2),
+            array(str_repeat('test', 1019).'te', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2),
         );
     }
 }
