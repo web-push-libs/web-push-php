@@ -144,14 +144,21 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     public function testSendGCMNotificationWithoutGCMApiKey()
     {
-        $webPush = new WebPush();
+        if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
+            $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
+        }
 
+        $webPush = new WebPush();
         $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
+        if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
+            $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
+        }
+
         $webPush = new WebPush(array('GCM' => 'bar'));
 
         $res = $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
