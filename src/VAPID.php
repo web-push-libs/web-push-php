@@ -104,7 +104,7 @@ class VAPID
      */
     public static function getVapidHeaders($audience, $subject, $publicKey, $privateKey, $expiration = null)
     {
-        $expirationLimit = time() + 86400;
+        $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
         if (!isset($expiration) || $expiration > $expirationLimit) {
             $expiration = $expirationLimit;
         }
