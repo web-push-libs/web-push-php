@@ -33,7 +33,7 @@ class WebPush
     /** @var array Default options : TTL, urgency, topic */
     private $defaultOptions;
 
-    /** @var bool Automatic padding of payloads, if disabled, trade security for bandwidth */
+    /** @var int Automatic padding of payloads, if disabled, trade security for bandwidth */
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /** @var bool */
