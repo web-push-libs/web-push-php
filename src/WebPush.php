@@ -296,7 +296,7 @@ class WebPush
      */
     public function isAutomaticPadding()
     {
-        return $this->automaticPadding != false;
+        return $this->automaticPadding !== false && $this->automaticPadding !== 0;
     }
 
     /**
@@ -316,9 +316,9 @@ class WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
             throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
-        } else if ($automaticPadding < 0) {
+        } elseif ($automaticPadding < 0) {
             throw new \Exception('Padding length should be positive or zero.');
-        } else if ($automaticPadding === true) {
+        } elseif ($automaticPadding === true) {
             $this->automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
         } else {
             $this->automaticPadding = $automaticPadding;
