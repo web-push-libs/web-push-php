@@ -12,6 +12,9 @@
 namespace Minishlink\WebPush;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Promise;
 
 class WebPush
 {
@@ -128,36 +131,36 @@ class WebPush
         }
 
         // for each endpoint server type
-        $responses = $this->prepareAndSend($this->notifications);
-
-        // if multi curl, flush
-        if ($this->browser->getClient() instanceof MultiCurl) {
-            /** @var MultiCurl $multiCurl */
-            $multiCurl = $this->browser->getClient();
-            $multiCurl->flush();
+        $requests = $this->prepare($this->notifications);
+        $promises = [];
+        foreach ($requests as $request) {
+            $promises[] = $this->client->sendAsync($request);
         }
+        $results = Promise\settle($promises)->wait();
 
-        /** @var Response|null $response */
         $return = array();
         $completeSuccess = true;
-        foreach ($responses as $i => $response) {
-            if (!isset($response)) {
-                $return[] = array(
+        foreach ($results as $result) {
+            if ($result['state'] === "rejected") {
+                /** @var RequestException $reason **/
+                $reason = $result['reason'];
+
+                $error = array(
                     'success' => false,
-                    'endpoint' => $this->notifications[$i]->getEndpoint(),
+                    'endpoint' => "".$reason->getRequest()->getUri(),
+                    'message' => $reason->getMessage(),
                 );
 
-                $completeSuccess = false;
-            } elseif (!$response->isSuccessful()) {
-                $return[] = array(
-                    'success' => false,
-                    'endpoint' => $this->notifications[$i]->getEndpoint(),
-                    'statusCode' => $response->getStatusCode(),
-                    'headers' => $response->getHeaders(),
-                    'content' => $response->getContent(),
-                    'expired' => in_array($response->getStatusCode(), array(400, 404, 410)),
-                );
+                $response = $reason->getResponse();
+                if ($response !== null) {
+                    $statusCode = $response->getStatusCode();
+                    $error['statusCode'] = $statusCode;
+                    $error['expired'] = in_array($statusCode, array(400, 404, 410));
+                    $error['content'] = $response->getBody();
+                    $error['headers'] = $response->getHeaders();
+                }
 
+                $return[] = $error;
                 $completeSuccess = false;
             } else {
                 $return[] = array(
@@ -172,9 +175,9 @@ class WebPush
         return $completeSuccess ? true : $return;
     }
 
-    private function prepareAndSend(array $notifications)
+    private function prepare(array $notifications)
     {
-        $responses = array();
+        $requests = array();
         /** @var Notification $notification */
         foreach ($notifications as $notification) {
             $endpoint = $notification->getEndpoint();
@@ -244,48 +247,10 @@ class WebPush
                 }
             }
 
-            $responses[] = $this->sendRequest($endpoint, $headers, $content);
+            $requests[] = new Request('POST', $endpoint, $headers, $content);
         }
 
-        return $responses;
-    }
-
-    /**
-     * @param string $url
-     * @param array  $headers
-     * @param string $content
-     *
-     * @return \Buzz\Message\MessageInterface|null
-     */
-    private function sendRequest($url, array $headers, $content)
-    {
-        try {
-            $response = $this->browser->post($url, $headers, $content);
-        } catch (RequestException $e) {
-            $response = null;
-        }
-
-        return $response;
-    }
-
-    /**
-     * @return Browser
-     */
-    public function getBrowser()
-    {
-        return $this->browser;
-    }
-
-    /**
-     * @param Browser $browser
-     *
-     * @return WebPush
-     */
-    public function setBrowser($browser)
-    {
-        $this->browser = $browser;
-
-        return $this;
+        return $requests;
     }
 
     /**
