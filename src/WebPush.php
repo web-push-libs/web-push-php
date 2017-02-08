@@ -11,18 +11,14 @@
 
 namespace Minishlink\WebPush;
 
-use Buzz\Browser;
-use Buzz\Client\AbstractClient;
-use Buzz\Client\MultiCurl;
-use Buzz\Exception\RequestException;
-use Buzz\Message\Response;
+use GuzzleHttp\Client;
 
 class WebPush
 {
     const GCM_URL = 'https://android.googleapis.com/gcm/send';
 
-    /** @var Browser */
-    protected $browser;
+    /** @var Client */
+    protected $client;
 
     /** @var array */
     protected $auth;
@@ -45,9 +41,9 @@ class WebPush
      * @param array               $auth           Some servers needs authentication
      * @param array               $defaultOptions TTL, urgency, topic
      * @param int|null            $timeout        Timeout of POST request
-     * @param AbstractClient|null $client
+     * @param array               $clientOptions
      */
-    public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, AbstractClient $client = null)
+    public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, $clientOptions = array())
     {
         if (array_key_exists('VAPID', $auth)) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
@@ -57,9 +53,10 @@ class WebPush
 
         $this->setDefaultOptions($defaultOptions);
 
-        $client = isset($client) ? $client : new MultiCurl();
-        $client->setTimeout($timeout);
-        $this->browser = new Browser($client);
+        if (!array_key_exists('timeout', $clientOptions) && isset($timeout)) {
+            $clientOptions['timeout'] = $timeout;
+        }
+        $this->client = new Client($clientOptions);
 
         $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
