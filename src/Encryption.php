@@ -38,11 +38,10 @@ final class Encryption
      * @param string $payload          With padding
      * @param string $userPublicKey    Base 64 encoded (MIME or URL-safe)
      * @param string $userAuthToken    Base 64 encoded (MIME or URL-safe)
-     * @param bool   $nativeEncryption Use OpenSSL (>PHP7.1)
      *
      * @return array
      */
-    public static function encrypt($payload, $userPublicKey, $userAuthToken, $nativeEncryption)
+    public static function encrypt($payload, $userPublicKey, $userAuthToken)
     {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
@@ -86,11 +85,7 @@ final class Encryption
 
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
-        if (!$nativeEncryption) {
-            list($encryptedText, $tag) = \AESGCM\AESGCM::encrypt($contentEncryptionKey, $nonce, $payload, '');
-        } else {
-            $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag); // base 64 encoded
-        }
+        list($encryptedText, $tag) = \AESGCM\AESGCM::encrypt($contentEncryptionKey, $nonce, $payload, '');
 
         // return values in url safe base64
         return array(

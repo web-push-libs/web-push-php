@@ -35,9 +35,6 @@ class WebPush
     /** @var int Automatic padding of payloads, if disabled, trade security for bandwidth */
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
-    /** @var bool */
-    private $nativePayloadEncryptionSupport;
-
     /**
      * WebPush constructor.
      *
@@ -60,8 +57,6 @@ class WebPush
             $clientOptions['timeout'] = $timeout;
         }
         $this->client = new Client($clientOptions);
-
-        $this->nativePayloadEncryptionSupport = version_compare(phpversion(), '7.1', '>=');
     }
 
     /**
@@ -188,7 +183,7 @@ class WebPush
             $auth = $notification->getAuth($this->auth);
 
             if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $this->nativePayloadEncryptionSupport);
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken);
 
                 $headers = array(
                     'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),

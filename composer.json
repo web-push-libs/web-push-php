@@ -17,7 +17,7 @@
     "mdanter/ecc": "^0.4.0",
     "lib-openssl": "*",
     "spomky-labs/base64url": "^1.0",
-    "spomky-labs/php-aes-gcm": "^1.0",
+    "spomky-labs/php-aes-gcm": "^1.2",
     "spomky-labs/jose": "^6.0",
     "guzzlehttp/guzzle": "^6.2"
   },
