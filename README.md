@@ -210,31 +210,21 @@ $webPush->setAutomaticPadding(512); // enable automatic padding to 512 bytes (yo
 $webPush->setAutomaticPadding(true); // enable automatic padding to default maximum compatibility length
 ```
 
-### Changing the browser client
-By default, WebPush will use `MultiCurl`, allowing to send multiple notifications in parallel.
-You can change the client to any client extending `\Buzz\Client\AbstractClient`.
-Timeout is configurable in the constructor.
+### Customizing the HTTP client
+WebPush uses [Guzzle](https://github.com/guzzle/guzzle). It will use the most appropriate client it finds, 
+and most of the time it will be `MultiCurl`, which allows to send multiple notifications in parallel.
 
+You can customize the default request options and timeout when instantiating WebPush:
 ```php
 <?php
 
 use Minishlink\WebPush\WebPush;
 
-$client = new \Buzz\Client\Curl();
 $timeout = 20; // seconds
-$webPush = new WebPush(array(), array(), $timeout, $client);
-```
-
-You have access to the inner browser if you want to configure it further.
-```php
-<?php
-
-use Minishlink\WebPush\WebPush;
-
-$webPush = new WebPush();
-
-/** @var $browser \Buzz\Browser */
-$browser = $webPush->getBrowser();
+$clientOptions = array(
+    \GuzzleHttp\RequestOptions::ALLOW_REDIRECTS => false,
+); // see \GuzzleHttp\RequestOptions
+$webPush = new WebPush(array(), array(), $timeout, $clientOptions);
 ```
 
 ## Common questions
