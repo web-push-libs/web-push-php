@@ -58,7 +58,7 @@ class VAPID
             $posStartKey += 30; // length of '-----BEGIN EC PRIVATE KEY-----'
 
             $pemSerializer = new PemPrivateKeySerializer(new DerPrivateKeySerializer());
-            $keys = self::getUncompressedKeys($pemSerializer->parse(substr($pem, $posStartKey, $posEndKey - $posStartKey)));
+            $keys = self::getUncompressedKeys($pemSerializer->parse(mb_substr($pem, $posStartKey, $posEndKey - $posStartKey, '8bit')));
             $vapid['publicKey'] = $keys['publicKey'];
             $vapid['privateKey'] = $keys['privateKey'];
         }

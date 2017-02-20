@@ -121,7 +121,7 @@ final class Encryption
         $prk = hash_hmac('sha256', $ikm, $salt, true);
 
         // expand
-        return substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length);
+        return mb_substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length, '8bit');
     }
 
     /**
