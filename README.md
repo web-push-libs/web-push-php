@@ -5,6 +5,8 @@
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf/mini.png)](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf)
 
 ## Installation
+Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
+
 `composer require minishlink/web-push`
 
 ## Usage
@@ -14,7 +16,8 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 Notifications with payloads are supported with this library on Firefox 46+ and Chrome 50+.
 
-You'll need at least PHP 5.6, and PHP 7.1 is recommended for much better performance.
+You'll need at least PHP 5.6 with the following extensions enabled: gmp, mbstring, curl, openssl.
+PHP 7.1 is recommended for much better performance.
 
 ```php
 <?php
@@ -249,13 +252,23 @@ local public and private keys and compute the shared secret.
 Then, if you have a PHP >= 7.1, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
 Otherwise, if you have PHP < 7.1, it uses [Spomky-Labs/php-aes-gcm](https://github.com/Spomky-Labs/php-aes-gcm), which is slower.
 
-### How to solve "SSL certificate problem: unable to get local issuer certificate" ?
+### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 Your installation lacks some certificates.
 
 1. Download [cacert.pem](http://curl.haxx.se/ca/cacert.pem).
 2. Edit your `php.ini`: after `[curl]`, type `curl.cainfo = /path/to/cacert.pem`.
 
 You can also force using a client without peer verification.
+
+### How to solve "Bad key encryption key length"?
+Disable `mbstring.func_overload` in your `php.ini`.
+
+### How to solve "Class 'Minishlink\WebPush\WebPush' not found"
+Make sure to require Composer's [autoloader](https://getcomposer.org/doc/01-basic-usage.md#autoloading).
+
+```php
+require __DIR__ . '/path/to/vendor/autoload.php';
+```
 
 ### I lost my VAPID keys!
 See [issue #58](https://github.com/web-push-libs/web-push-php/issues/58).
