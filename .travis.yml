@@ -17,12 +17,12 @@ install:
   - npm install web-push-testing-service@0.3.0 -g
 
 before_script:
-  - composer install --prefer-source -n --no-dev
+  - composer install --prefer-source -n
   - "export DISPLAY=:99.0"
   - "sh -e /etc/init.d/xvfb start || echo \"Unable to start virtual display.\""
   - sleep 3 # give xvfb some time to start
 
 script:
   - web-push-testing-service start example -p 9012
-  - phpunit -c phpunit.travis.xml
+  - php ./vendor/phpunit/phpunit/phpunit -c phpunit.travis.xml
   - web-push-testing-service stop example
