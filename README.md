@@ -261,10 +261,10 @@ Otherwise, if you have PHP < 7.1, it uses [Spomky-Labs/php-aes-gcm](https://gith
 ### How do I scale?
 Here are some ideas:
 
-1) Upgrade to PHP 7.1
-2) Make sure MultiCurl is available on your server
-3) Find the right balance for your needs between security and performance (see above)
-4) Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
+1. Upgrade to PHP 7.1
+2. Make sure MultiCurl is available on your server
+3. Find the right balance for your needs between security and performance (see above)
+4. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 Your installation lacks some certificates.
