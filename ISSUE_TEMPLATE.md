@@ -26,12 +26,12 @@ helps with diagnosing problems quicker.
 
 - [ ] Chrome
 - [ ] Firefox
+- [ ] Firefox for Mobile
 - [ ] Opera for Android
 - [ ] Samsung Internet Browser
 - [ ] Other
 
-> Please list the browsers you are have tested this, including the version
-> of the browser (i.e. Chrome Beta, Firefox Beta etc).
+> Please specify the versions (i.e. Chrome Beta, Firefox Beta etc).
 
 # Problem
 
