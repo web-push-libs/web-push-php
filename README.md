@@ -123,7 +123,7 @@ serviceWorkerRegistration.pushManager.subscribe({
 })
 ```
 
-### Notification options
+### Notifications and default options
 Each notification can have a specific Time To Live, urgency, and topic.
 You can change the default options with `setDefaultOptions()` or in the constructor:
 
@@ -135,7 +135,8 @@ use Minishlink\WebPush\WebPush;
 $defaultOptions = array(
     'TTL' => 300, // defaults to 4 weeks
     'urgency' => 'normal', // protocol defaults to "normal"
-    'topic' => 'new_event', // not defined by default
+    'topic' => 'new_event', // not defined by default,
+    'batchSize' => 200, // defaults to 1000
 );
 
 // for every notifications
@@ -158,6 +159,12 @@ Urgency can be either "very-low", "low", "normal", or "high". If the browser ven
 
 #### topic
 Similar to the old `collapse_key` on legacy GCM servers, this string will make the vendor show to the user only the last notification of this topic (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.4)).
+
+#### batchSize
+If you send tens of thousands notifications at a time, you may get memory overflows due to how endpoints are called in Guzzle.
+In order to fix this, WebPush sends notifications in batches. The default size is 1000. Depending on your server configuration (memory), you may want
+to decrease this number. Do this while instanciating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
+it as a parameter : `$webPush->flush($batchSize)`.
 
 ### Server errors
 You can see what the browser vendor's server sends back in case it encountered an error (push subscription expiration, wrong parameters...).
@@ -285,8 +292,8 @@ require __DIR__ . '/path/to/vendor/autoload.php';
 ```
 
 ### I must use PHP 5.4 or 5.5. What can I do?
-You won't be able to send any payload, so you'll be only able to use `sendNotification($endpoint)`.
-Install the libray with `composer` using `--ignore-platform-reqs`.
+You won't be able to send any payload, so you'll only be able to use `sendNotification($endpoint)`.
+Install the library with `composer` using `--ignore-platform-reqs`.
 The workaround for getting the payload is to fetch it in the service worker ([example](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js#L75)). 
 
 ### I lost my VAPID keys!
