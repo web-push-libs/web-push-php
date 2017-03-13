@@ -258,6 +258,14 @@ local public and private keys and compute the shared secret.
 Then, if you have a PHP >= 7.1, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
 Otherwise, if you have PHP < 7.1, it uses [Spomky-Labs/php-aes-gcm](https://github.com/Spomky-Labs/php-aes-gcm), which is slower.
 
+### How do I scale?
+Here are some ideas:
+
+1. Upgrade to PHP 7.1
+2. Make sure MultiCurl is available on your server
+3. Find the right balance for your needs between security and performance (see above)
+4. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
+
 ### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 Your installation lacks some certificates.
 

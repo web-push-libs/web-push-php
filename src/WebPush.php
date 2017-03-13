@@ -29,7 +29,7 @@ class WebPush
     /** @var array Array of array of Notifications */
     private $notifications;
 
-    /** @var array Default options : TTL, urgency, topic */
+    /** @var array Default options : TTL, urgency, topic, batchSize */
     private $defaultOptions;
 
     /** @var int Automatic padding of payloads, if disabled, trade security for bandwidth */
@@ -39,7 +39,7 @@ class WebPush
      * WebPush constructor.
      *
      * @param array               $auth           Some servers needs authentication
-     * @param array               $defaultOptions TTL, urgency, topic
+     * @param array               $defaultOptions TTL, urgency, topic, batchSize
      * @param int|null            $timeout        Timeout of POST request
      * @param array               $clientOptions
      */
@@ -113,54 +113,60 @@ class WebPush
     /**
      * Flush notifications. Triggers the requests.
      *
+     * @param int $batchSize Defaults the value defined in defaultOptions during instanciation (which defaults to 1000).
      * @return array|bool If there are no errors, return true.
      *                    If there were no notifications in the queue, return false.
-     *                    Else return an array of information for each notification sent (success, statusCode, headers, content)
-     *
-     * @throws \ErrorException
+     * Else return an array of information for each notification sent (success, statusCode, headers, content)
      */
-    public function flush()
+    public function flush($batchSize = null)
     {
         if (empty($this->notifications)) {
             return false;
         }
 
-        // for each endpoint server type
-        $requests = $this->prepare($this->notifications);
-        $promises = [];
-        foreach ($requests as $request) {
-            $promises[] = $this->client->sendAsync($request);
+        if (!isset($batchSize)) {
+            $batchSize = $this->defaultOptions['batchSize'];
         }
-        $results = Promise\settle($promises)->wait();
 
+        $batches = array_chunk($this->notifications, $batchSize);
         $return = array();
         $completeSuccess = true;
-        foreach ($results as $result) {
-            if ($result['state'] === "rejected") {
-                /** @var RequestException $reason **/
-                $reason = $result['reason'];
+        foreach ($batches as $batch) {
+            // for each endpoint server type
+            $requests = $this->prepare($batch);
+            $promises = [];
+            foreach ($requests as $request) {
+                $promises[] = $this->client->sendAsync($request);
+            }
+            $results = Promise\settle($promises)->wait();
 
-                $error = array(
-                    'success' => false,
-                    'endpoint' => "".$reason->getRequest()->getUri(),
-                    'message' => $reason->getMessage(),
-                );
+            foreach ($results as $result) {
+                if ($result['state'] === "rejected") {
+                    /** @var RequestException $reason **/
+                    $reason = $result['reason'];
 
-                $response = $reason->getResponse();
-                if ($response !== null) {
-                    $statusCode = $response->getStatusCode();
-                    $error['statusCode'] = $statusCode;
-                    $error['expired'] = in_array($statusCode, array(400, 404, 410));
-                    $error['content'] = $response->getBody();
-                    $error['headers'] = $response->getHeaders();
+                    $error = array(
+                        'success' => false,
+                        'endpoint' => "".$reason->getRequest()->getUri(),
+                        'message' => $reason->getMessage(),
+                    );
+
+                    $response = $reason->getResponse();
+                    if ($response !== null) {
+                        $statusCode = $response->getStatusCode();
+                        $error['statusCode'] = $statusCode;
+                        $error['expired'] = in_array($statusCode, array(400, 404, 410));
+                        $error['content'] = $response->getBody();
+                        $error['headers'] = $response->getHeaders();
+                    }
+
+                    $return[] = $error;
+                    $completeSuccess = false;
+                } else {
+                    $return[] = array(
+                        'success' => true,
+                    );
                 }
-
-                $return[] = $error;
-                $completeSuccess = false;
-            } else {
-                $return[] = array(
-                    'success' => true,
-                );
             }
         }
 
@@ -293,12 +299,13 @@ class WebPush
     }
 
     /**
-     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', and 'topic'
+     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
      */
     public function setDefaultOptions(array $defaultOptions)
     {
         $this->defaultOptions['TTL'] = array_key_exists('TTL', $defaultOptions) ? $defaultOptions['TTL'] : 2419200;
         $this->defaultOptions['urgency'] = array_key_exists('urgency', $defaultOptions) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = array_key_exists('topic', $defaultOptions) ? $defaultOptions['topic'] : null;
+        $this->defaultOptions['batchSize'] = array_key_exists('batchSize', $defaultOptions) ? $defaultOptions['batchSize'] : 1000;
     }
 }

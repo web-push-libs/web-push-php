@@ -118,6 +118,23 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($res);
     }
 
+    public function testSendNotificationBatch()
+    {
+        $batchSize = 10;
+        $total = 50;
+
+        $notifications = $this->notificationProvider();
+        $notifications = array_fill(0, $total, $notifications[0]);
+
+        foreach ($notifications as $notification) {
+            $this->webPush->sendNotification($notification[0], $notification[1], $notification[2], $notification[3]);
+        }
+
+        $res = $this->webPush->flush($batchSize);
+
+        $this->assertTrue($res);
+    }
+
     public function testSendNotificationWithTooBigPayload()
     {
         $this->setExpectedException('ErrorException', 'Size of payload must not be greater than 4078 octets.');
