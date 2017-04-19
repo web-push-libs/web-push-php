@@ -281,7 +281,7 @@ Your installation lacks some certificates.
 
 You can also force using a client without peer verification.
 
-### How to solve "Bad key encryption key length"?
+### How to solve "Bad key encryption key length" or "Unsupported key type"?
 Disable `mbstring.func_overload` in your `php.ini`.
 
 ### How to solve "Class 'Minishlink\WebPush\WebPush' not found"
