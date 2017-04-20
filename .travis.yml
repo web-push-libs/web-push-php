@@ -1,6 +1,10 @@
 dist: trusty
 language: php
 
+cache:
+  directories:
+    - ~/.selenium-assistant
+
 php:
   - 5.6
   - hhvm
