@@ -1,6 +1,8 @@
 dist: trusty
 language: php
 
+ # Downloaded browsers will be cached in selenium-assistant by
+ # web-push-testing-service. Caching will speed up build time.
 cache:
   directories:
     - ~/.selenium-assistant
