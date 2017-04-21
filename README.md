@@ -71,8 +71,9 @@ $webPush->sendNotification(
 );
 ```
 
-### Client side implementation of Web Push
-There are several good examples and tutorials on the web:
+### Full examples of Web Push implementations
+* An example with web-push-php: [Minishlink/web-push-php-example](https://github.com/Minishlink/web-push-php-example)
+* Matthew Gaunt's [Web Push Book](https://web-push-book.gauntface.com) - a must read
 * Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload_index_doc.html) (don't mind the `server.js` file: it should be replaced by your PHP server code with this library)
 * Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
 * you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/app/Resources/public/js/app.js)
