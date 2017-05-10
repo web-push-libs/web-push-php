@@ -174,15 +174,19 @@ The `expired` key can be useful to clean your database of expired endpoints.
 
 ```php
 $res = array(
-    array( // first notification
+    array( // first notification (failed)
         'success' => false,
         'endpoint' => $theEndpointToDeleteInYourDatabaseIfExpired
+        'message' => $responseMessage,
         'statusCode' => $responseStatusCode,
         'headers' => $responseHeaders,
         'content' => $responseContent, // you may have more infos here
         'expired' => $isTheEndpointWrongOrExpired,
     ),
-    array( // second notification
+    array( // second notification (succeeded)
+        'success' => true,
+    ),
+    array( // third notification
         ...
     ), ...
 );
