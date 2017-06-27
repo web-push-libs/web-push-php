@@ -68,28 +68,27 @@ class PushServiceTest extends PHPUnit_Framework_TestCase
             // Web Push
             array('firefox', 'stable', array()),
             array('firefox', 'beta', array()),
-            array('firefox', 'unstable', array()),
+
             // Web Push + GCM
             array('chrome', 'stable', array('GCM' => self::$gcmApiKey)),
             array('chrome', 'beta', array('GCM' => self::$gcmApiKey)),
-            array('chrome', 'unstable', array('GCM' => self::$gcmApiKey)),
+
             array('firefox', 'stable', array('GCM' => self::$gcmApiKey)),
             array('firefox', 'beta', array('GCM' => self::$gcmApiKey)),
-            array('firefox', 'unstable', array('GCM' => self::$gcmApiKey)),
+
             // Web Push + VAPID
             array('chrome', 'stable', array('VAPID' => self::$vapidKeys)),
             array('chrome', 'beta', array('VAPID' => self::$vapidKeys)),
-            array('chrome', 'unstable', array('VAPID' => self::$vapidKeys)),
+
             array('firefox', 'stable', array('VAPID' => self::$vapidKeys)),
             array('firefox', 'beta', array('VAPID' => self::$vapidKeys)),
-            array('firefox', 'unstable', array('VAPID' => self::$vapidKeys)),
+
             // Web Push + GCM + VAPID
             array('chrome', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
             array('chrome', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
-            array('chrome', 'unstable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+
             array('firefox', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
             array('firefox', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
-            array('firefox', 'unstable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
         );
     }
 
