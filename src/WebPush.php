@@ -45,6 +45,26 @@ class WebPush
      */
     public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, $clientOptions = array())
     {
+        if (!extension_loaded('curl')) {
+            trigger_error("[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.", E_USER_WARNING);
+        }
+
+        if (!extension_loaded('gmp')) {
+            trigger_error("[WebPush] gmp extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
+        }
+
+        if (!extension_loaded('mbstring')) {
+            trigger_error("[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
+        }
+
+        if (!extension_loaded('openssl')) {
+            trigger_error("[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
+        }
+
+        if (ini_get('mbstring.func_overload') >= 2) {
+            trigger_error("[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.", E_USER_NOTICE);
+        }
+
         if (array_key_exists('VAPID', $auth)) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
         }
