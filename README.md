@@ -16,7 +16,7 @@ As it is standardized, you don't have to worry about what server type it relies 
   * openssl
 
 PHP 7.1+ is recommended for better performance.
-For PHP 5.6 compatibility, use the v1.x releases.
+For PHP 5.6 or HHVM compatibility, use the v1.x releases.
 
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
