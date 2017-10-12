@@ -9,13 +9,14 @@ the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protoc
 As it is standardized, you don't have to worry about what server type it relies on.
 
 ## Requirements
-* PHP 5.6
+* PHP 7.0+
   * gmp
   * mbstring
   * curl
   * openssl
 
-PHP 7.1 is recommended for better performance.
+PHP 7.1+ is recommended for better performance.
+For PHP 5.6 compatibility, use the v1.x releases.
 
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
