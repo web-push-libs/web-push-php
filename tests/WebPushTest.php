@@ -11,7 +11,7 @@
 
 use Minishlink\WebPush\WebPush;
 
-class WebPushTest extends PHPUnit_Framework_TestCase
+class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static $endpoints;
     private static $keys;
@@ -137,7 +137,8 @@ class WebPushTest extends PHPUnit_Framework_TestCase
 
     public function testSendNotificationWithTooBigPayload()
     {
-        $this->setExpectedException('ErrorException', 'Size of payload must not be greater than 4078 octets.');
+        $this->expectException('ErrorException');
+        $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
         $this->webPush->sendNotification(
             self::$endpoints['standard'],
             str_repeat('test', 1020),
@@ -166,7 +167,8 @@ class WebPushTest extends PHPUnit_Framework_TestCase
         }
 
         $webPush = new WebPush();
-        $this->setExpectedException('ErrorException', 'No GCM API Key specified.');
+        $this->expectException('ErrorException');
+        $this->expectExceptionMessage('No GCM API Key specified.');
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 

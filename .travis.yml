@@ -10,6 +10,7 @@ cache:
 php:
   - 7.0
   - 7.1
+  - 7.2
 
 env:
   - TRAVIS_NODE_VERSION="stable"

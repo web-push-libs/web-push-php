@@ -11,7 +11,7 @@
 
 use Minishlink\WebPush\WebPush;
 
-class PushServiceTest extends PHPUnit_Framework_TestCase
+class PushServiceTest extends PHPUnit\Framework\TestCase
 {
     private static $timeout = 30;
     private static $portNumber = 9012;

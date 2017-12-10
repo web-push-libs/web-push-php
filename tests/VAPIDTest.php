@@ -12,7 +12,7 @@
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
 
-class VAPIDTest extends PHPUnit_Framework_TestCase
+class VAPIDTest extends PHPUnit\Framework\TestCase
 {
     public function vapidProvider()
     {
