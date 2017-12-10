@@ -12,7 +12,7 @@
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
 
-class EncryptionTest extends PHPUnit_Framework_TestCase
+class EncryptionTest extends PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider payloadProvider
