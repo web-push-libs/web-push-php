@@ -303,13 +303,13 @@ final class WebPush
     }
 
     /**
-     * @param int $automaticPadding Max padding length
+     * @param int|bool $automaticPadding Max padding length
      *
      * @return WebPush
      *
      * @throws \Exception
      */
-    public function setAutomaticPadding(int $automaticPadding): WebPush
+    public function setAutomaticPadding($automaticPadding): WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
             throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
