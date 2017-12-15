@@ -317,6 +317,8 @@ final class WebPush
             throw new \Exception('Padding length should be positive or zero.');
         } elseif ($automaticPadding === true) {
             $this->automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+        } elseif ($automaticPadding === false) {
+            $this->automaticPadding = 0;
         } else {
             $this->automaticPadding = $automaticPadding;
         }
