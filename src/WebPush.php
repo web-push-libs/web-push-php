@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -16,9 +18,9 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Promise;
 
-class WebPush
+final class WebPush
 {
-    const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    public const GCM_URL = 'https://android.googleapis.com/gcm/send';
 
     /** @var Client */
     protected $client;
@@ -38,12 +40,13 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array               $auth           Some servers needs authentication
-     * @param array               $defaultOptions TTL, urgency, topic, batchSize
-     * @param int|null            $timeout        Timeout of POST request
-     * @param array               $clientOptions
+     * @param array    $auth           Some servers needs authentication
+     * @param array    $defaultOptions TTL, urgency, topic, batchSize
+     * @param int|null $timeout        Timeout of POST request
+     * @param array    $clientOptions
+     * @throws \ErrorException
      */
-    public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, $clientOptions = array())
+    public function __construct(array $auth = [], array $defaultOptions = [], int $timeout = 30, array $clientOptions = [])
     {
         if (!extension_loaded('curl')) {
             trigger_error("[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.", E_USER_WARNING);
@@ -95,7 +98,7 @@ class WebPush
      *
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array(), $auth = array())
+    public function sendNotification(string $endpoint, ?string $payload = null, ?string $userPublicKey = null, ?string $userAuthToken = null, bool $flush = false, array $options = [], array $auth = [])
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
@@ -137,19 +140,21 @@ class WebPush
      * @return array|bool If there are no errors, return true.
      *                    If there were no notifications in the queue, return false.
      * Else return an array of information for each notification sent (success, statusCode, headers, content)
+     *
+     * @throws \ErrorException
      */
-    public function flush($batchSize = null)
+    public function flush(?int $batchSize = null)
     {
         if (empty($this->notifications)) {
             return false;
         }
 
-        if (!isset($batchSize)) {
+        if (null !== $batchSize) {
             $batchSize = $this->defaultOptions['batchSize'];
         }
 
         $batches = array_chunk($this->notifications, $batchSize);
-        $return = array();
+        $return = [];
         $completeSuccess = true;
         foreach ($batches as $batch) {
             // for each endpoint server type
@@ -196,9 +201,16 @@ class WebPush
         return $completeSuccess ? true : $return;
     }
 
-    private function prepare(array $notifications)
+    /**
+     * @param array $notifications
+     *
+     * @return array
+     *
+     * @throws \ErrorException
+     */
+    private function prepare(array $notifications): array
     {
-        $requests = array();
+        $requests = [];
         /** @var Notification $notification */
         foreach ($notifications as $notification) {
             $endpoint = $notification->getEndpoint();
@@ -277,7 +289,7 @@ class WebPush
     /**
      * @return bool
      */
-    public function isAutomaticPadding()
+    public function isAutomaticPadding(): bool
     {
         return $this->automaticPadding !== false && $this->automaticPadding !== 0;
     }
@@ -294,8 +306,10 @@ class WebPush
      * @param int $automaticPadding Max padding length
      *
      * @return WebPush
+     *
+     * @throws \Exception
      */
-    public function setAutomaticPadding($automaticPadding)
+    public function setAutomaticPadding(int $automaticPadding): WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
             throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
@@ -313,7 +327,7 @@ class WebPush
     /**
      * @return array
      */
-    public function getDefaultOptions()
+    public function getDefaultOptions(): array
     {
         return $this->defaultOptions;
     }

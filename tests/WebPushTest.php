@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -20,6 +22,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
 
+    /**
+     * {@inheritdoc}
+     */
     protected function checkRequirements()
     {
         parent::checkRequirements();
@@ -61,6 +66,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public static function setUpBeforeClass()
     {
         self::$endpoints = array(
@@ -79,6 +87,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         );
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setUp()
     {
         $this->webPush = new WebPush(array(
@@ -92,7 +103,10 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
-    public function notificationProvider()
+    /**
+     * @return array
+     */
+    public function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
         return array(
@@ -118,6 +132,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($res);
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendNotificationBatch()
     {
         $batchSize = 10;
@@ -135,6 +152,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($res);
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendNotificationWithTooBigPayload()
     {
         $this->expectException('ErrorException');
@@ -148,6 +168,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         );
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testFlush()
     {
         $this->webPush->sendNotification(self::$endpoints['standard']);
@@ -160,6 +183,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($this->webPush->flush());
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendGCMNotificationWithoutGCMApiKey()
     {
         if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
@@ -172,6 +198,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {

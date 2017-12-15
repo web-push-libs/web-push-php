@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -12,18 +14,21 @@
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
-use Jose\Factory\JWKFactory;
-use Jose\Factory\JWSFactory;
-use Mdanter\Ecc\Crypto\Key\PrivateKeyInterface;
-use Mdanter\Ecc\EccFactory;
-use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
-use Mdanter\Ecc\Serializer\PrivateKey\DerPrivateKeySerializer;
-use Mdanter\Ecc\Serializer\PrivateKey\PemPrivateKeySerializer;
+use Jose\Component\Core\AlgorithmManager;
+use Jose\Component\Core\Converter\StandardConverter;
+use Jose\Component\Core\JWK;
+use Jose\Component\Core\Util\Ecc\NistCurve;
+use Jose\Component\Core\Util\Ecc\Point;
+use Jose\Component\Core\Util\Ecc\PublicKey;
+use Jose\Component\KeyManagement\JWKFactory;
+use Jose\Component\Signature\Algorithm\ES256;
+use Jose\Component\Signature\JWSBuilder;
+use Jose\Component\Signature\Serializer\CompactSerializer;
 
-class VAPID
+final class VAPID
 {
-    const PUBLIC_KEY_LENGTH = 65;
-    const PRIVATE_KEY_LENGTH = 32;
+    private const PUBLIC_KEY_LENGTH = 65;
+    private const PRIVATE_KEY_LENGTH = 32;
 
     /**
      * @param array $vapid
@@ -32,7 +37,7 @@ class VAPID
      *
      * @throws \ErrorException
      */
-    public static function validate(array $vapid)
+    public static function validate(array $vapid): array
     {
         if (!array_key_exists('subject', $vapid)) {
             throw new \ErrorException('[VAPID] You must provide a subject that is either a mailto: or a URL.');
@@ -47,20 +52,16 @@ class VAPID
         }
 
         if (array_key_exists('pem', $vapid)) {
-            $pem = $vapid['pem'];
-            $posStartKey = strpos($pem, '-----BEGIN EC PRIVATE KEY-----');
-            $posEndKey = strpos($pem, '-----END EC PRIVATE KEY-----');
-
-            if ($posStartKey === false || $posEndKey === false) {
+            $jwk = JWKFactory::createFromKey($vapid['pem']);
+            if ($jwk->get('kty') !== 'EC' || !$jwk->has('d') || !$jwk->has('x') || !$jwk->has('y')) {
                 throw new \ErrorException('Invalid PEM data.');
             }
-
-            $posStartKey += 30; // length of '-----BEGIN EC PRIVATE KEY-----'
-
-            $pemSerializer = new PemPrivateKeySerializer(new DerPrivateKeySerializer());
-            $keys = self::getUncompressedKeys($pemSerializer->parse(mb_substr($pem, $posStartKey, $posEndKey - $posStartKey, '8bit')));
-            $vapid['publicKey'] = $keys['publicKey'];
-            $vapid['privateKey'] = $keys['privateKey'];
+            $publicKey = PublicKey::create(Point::create(
+                gmp_init(bin2hex(Base64Url::decode($jwk->get('x'))), 16),
+                gmp_init(bin2hex(Base64Url::decode($jwk->get('y'))), 16)
+            ));
+            $vapid['publicKey'] = base64_encode(Utils::serializePublicKey($publicKey));
+            $vapid['privateKey'] = base64_encode(str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         }
 
         if (!array_key_exists('publicKey', $vapid)) {
@@ -83,55 +84,65 @@ class VAPID
             throw new \ErrorException('[VAPID] Private key should be 32 bytes long when decoded.');
         }
 
-        return array(
+        return [
             'subject' => $vapid['subject'],
             'publicKey' => $publicKey,
             'privateKey' => $privateKey,
-        );
+        ];
     }
 
     /**
      * This method takes the required VAPID parameters and returns the required
      * header to be added to a Web Push Protocol Request.
      *
-     * @param string $audience   This must be the origin of the push service
-     * @param string $subject    This should be a URL or a 'mailto:' email address
-     * @param string $publicKey  The decoded VAPID public key
-     * @param string $privateKey The decoded VAPID private key
-     * @param int    $expiration The expiration of the VAPID JWT. (UNIX timestamp)
+     * @param string   $audience   This must be the origin of the push service
+     * @param string   $subject    This should be a URL or a 'mailto:' email address
+     * @param string   $publicKey  The decoded VAPID public key
+     * @param string   $privateKey The decoded VAPID private key
+     * @param null|int $expiration The expiration of the VAPID JWT. (UNIX timestamp)
      *
      * @return array Returns an array with the 'Authorization' and 'Crypto-Key' values to be used as headers
      */
-    public static function getVapidHeaders($audience, $subject, $publicKey, $privateKey, $expiration = null)
+    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, ?int $expiration = null)
     {
         $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
-        if (!isset($expiration) || $expiration > $expirationLimit) {
+        if (null === $expiration || $expiration > $expirationLimit) {
             $expiration = $expirationLimit;
         }
 
-        $header = array(
+        $header = [
             'typ' => 'JWT',
             'alg' => 'ES256',
-        );
+        ];
 
-        $jwtPayload = json_encode(array(
+        $jwtPayload = json_encode([
             'aud' => $audience,
             'exp' => $expiration,
             'sub' => $subject,
-        ), JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
+        ], JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
 
-        $generator = EccFactory::getNistCurves()->generator256();
-        $privateKeyObject = $generator->getPrivateKeyFrom(gmp_init(bin2hex($privateKey), 16));
-        $pemSerialize = new PemPrivateKeySerializer(new DerPrivateKeySerializer());
-        $pem = $pemSerialize->serialize($privateKeyObject);
+        list($x, $y) = Utils::unserializePublicKey($publicKey);
+        $jwk = JWK::create([
+            'kty' => 'EC',
+            'crv' => 'P-256',
+            'x' => Base64Url::encode($x),
+            'y' => Base64Url::encode($y),
+            'd' => Base64Url::encode($privateKey),
+        ]);
 
-        $jwk = JWKFactory::createFromKey($pem, null);
-        $jws = JWSFactory::createJWSToCompactJSON($jwtPayload, $jwk, $header);
+        $jsonConverter = new StandardConverter();
+        $jwsCompactSerializer = new CompactSerializer($jsonConverter);
+        $jwsBuilder = new JWSBuilder($jsonConverter, AlgorithmManager::create([new ES256()]));
+        $jws = $jwsBuilder
+            ->create()
+            ->withPayload($jwtPayload)
+            ->addSignature($jwk, $header)
+            ->build();
 
-        return array(
-            'Authorization' => 'WebPush '.$jws,
+        return [
+            'Authorization' => 'WebPush '.$jwsCompactSerializer->serialize($jws, 0),
             'Crypto-Key' => 'p256ecdsa='.Base64Url::encode($publicKey),
-        );
+        ];
     }
 
     /**
@@ -140,19 +151,15 @@ class VAPID
      *
      * @return array
      */
-    public static function createVapidKeys()
+    public static function createVapidKeys(): array
     {
-        $privateKeyObject = EccFactory::getNistCurves()->generator256()->createPrivateKey();
+        $curve = NistCurve::curve256();
+        $privateKey = $curve->createPrivateKey();
+        $publicKey = $curve->createPublicKey($privateKey);
 
-        return self::getUncompressedKeys($privateKeyObject);
-    }
-
-    private static function getUncompressedKeys(PrivateKeyInterface $privateKeyObject)
-    {
-        $pointSerializer = new UncompressedPointSerializer(EccFactory::getAdapter());
-        $vapid['publicKey'] = base64_encode(hex2bin($pointSerializer->serialize($privateKeyObject->getPublicKey()->getPoint())));
-        $vapid['privateKey'] = base64_encode(hex2bin(str_pad(gmp_strval($privateKeyObject->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)));
-
-        return $vapid;
+        return [
+            'publicKey' => base64_encode(hex2bin(Utils::serializePublicKey($publicKey))),
+            'privateKey' => base64_encode(hex2bin(str_pad(gmp_strval($privateKey->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)))
+        ];
     }
 }

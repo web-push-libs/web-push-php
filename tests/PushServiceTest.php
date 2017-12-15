@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -19,11 +21,11 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
     private static $testServiceUrl;
     private static $gcmSenderId = '759071690750';
     private static $gcmApiKey = 'AIzaSyBAU0VfXoskxUSg81K5VgLgwblHbZWe6tA';
-    private static $vapidKeys = array(
+    private static $vapidKeys = [
         'subject' => 'http://test.com',
         'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
         'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
-    );
+    ];
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
@@ -33,6 +35,8 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
      * If we can reliably start and stop web-push-testing-service and
      * detect current OS, we can probably run this automatically
      * for Linux and OS X at a later date.
+     *
+     * {@inheritdoc}
      */
     protected function checkRequirements()
     {
@@ -43,20 +47,26 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public static function setUpBeforeClass()
     {
         self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function setUp()
     {
         $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
-        curl_setopt_array($startApiCurl, array(
+        curl_setopt_array($startApiCurl, [
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => array(),
+            CURLOPT_POSTFIELDS => [],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => self::$timeout,
-        ));
+        ]);
 
         $parsedResp = $this->getResponse($startApiCurl);
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
@@ -66,8 +76,8 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
     {
         return array(
             // Web Push
-            array('firefox', 'stable', array()),
-            array('firefox', 'beta', array()),
+            array('firefox', 'stable', []),
+            array('firefox', 'beta', []),
 
             // Web Push + GCM
             array('chrome', 'stable', array('GCM' => self::$gcmApiKey)),
