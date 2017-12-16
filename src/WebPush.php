@@ -143,7 +143,7 @@ final class WebPush
      *
      * @throws \ErrorException
      */
-    public function flush(?int $batchSize = null)
+    public function flush(int $batchSize = 0)
     {
         if (empty($this->notifications)) {
             return false;
