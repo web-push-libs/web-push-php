@@ -14,7 +14,7 @@ declare(strict_types=1);
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
 
-class EncryptionTest extends PHPUnit\Framework\TestCase
+final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
     /**
      * @dataProvider payloadProvider

@@ -9,13 +9,13 @@ the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protoc
 As it is standardized, you don't have to worry about what server type it relies on.
 
 ## Requirements
-* PHP 7.0+
-  * gmp
-  * mbstring
-  * curl
-  * openssl
+* PHP 7.1+
+* gmp
+* mbstring
+* curl
+* openssl
 
-PHP 7.1+ is recommended for better performance.
+PHP 7.2+ is recommended for better performance.
 For PHP 5.6 or HHVM compatibility, use the v1.x releases.
 
 ## Installation
@@ -30,24 +30,24 @@ Use [composer](https://getcomposer.org/) to download and install the library and
 use Minishlink\WebPush\WebPush;
 
 // array of notifications
-$notifications = array(
-    array(
+$notifications = [
+    [
         'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
         'payload' => 'hello !',
         'userPublicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
         'userAuthToken' => 'CxVX6QsVToEGEcjfYPqXQw==', // base 64 encoded, should be 24 chars
-    ), array(
+    ], [
         'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
         'payload' => null,
         'userPublicKey' => null,
         'userAuthToken' => null,
-    ), array(
+    ], [
         'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
         'payload' => '{msg:"test"}',
         'userPublicKey' => '(stringOf88Chars)', 
         'userAuthToken' => '(stringOf24Chars)',
-    ),
-);
+    ],
+];
 
 $webPush = new WebPush();
 
@@ -90,16 +90,16 @@ use Minishlink\WebPush\WebPush;
 
 $endpoint = 'https://android.googleapis.com/gcm/send/abcdef...'; // Chrome
 
-$auth = array(
+$auth = [
     'GCM' => 'MY_GCM_API_KEY', // deprecated and optional, it's here only for compatibility reasons
-    'VAPID' => array(
+    'VAPID' => [
         'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
         'publicKey' => '~88 chars', // (recommended) uncompressed public key P-256 encoded in Base64-URL
         'privateKey' => '~44 chars', // (recommended) in fact the secret multiplier of the private key encoded in Base64-URL
         'pemFile' => 'path/to/pem', // if you have a PEM file and can link to it on your filesystem
         'pem' => 'pemFileContent', // if you have a PEM file and want to hardcode its content
-    ),
-);
+    ],
+];
 
 $webPush = new WebPush($auth);
 $webPush->sendNotification(...);
@@ -134,19 +134,19 @@ You can change the default options with `setDefaultOptions()` or in the construc
 
 use Minishlink\WebPush\WebPush;
 
-$defaultOptions = array(
+$defaultOptions = [
     'TTL' => 300, // defaults to 4 weeks
     'urgency' => 'normal', // protocol defaults to "normal"
     'topic' => 'new_event', // not defined by default,
     'batchSize' => 200, // defaults to 1000
-);
+];
 
 // for every notifications
-$webPush = new WebPush(array(), $defaultOptions);
+$webPush = new WebPush([], $defaultOptions);
 $webPush->setDefaultOptions($defaultOptions);
 
 // or for one notification
-$webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthToken, $flush, array('TTL' => 5000));
+$webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthToken, $flush, ['TTL' => 5000]);
 ```
 
 #### TTL
@@ -174,23 +174,24 @@ You can see what the browser vendor's server sends back in case it encountered a
 The `expired` key can be useful to clean your database of expired endpoints.
 
 ```php
-$res = array(
-    array( // first notification (failed)
+<?php
+$res = [
+    [ // first notification (failed)
         'success' => false,
-        'endpoint' => $theEndpointToDeleteInYourDatabaseIfExpired
+        'endpoint' => $theEndpointToDeleteInYourDatabaseIfExpired,
         'message' => $responseMessage,
         'statusCode' => $responseStatusCode,
         'headers' => $responseHeaders,
         'content' => $responseContent, // you may have more infos here
         'expired' => $isTheEndpointWrongOrExpired,
-    ),
-    array( // second notification (succeeded)
+    ],
+    [ // second notification (succeeded)
         'success' => true,
-    ),
-    array( // third notification
+    ],
+    [ // third notification
         ...
-    ), ...
-);
+    ], ...
+];
 ```
 
 Firefox errors are listed in the [autopush documentation](https://autopush.readthedocs.io/en/latest/http.html#errors).
@@ -243,10 +244,10 @@ You can customize the default request options and timeout when instantiating Web
 use Minishlink\WebPush\WebPush;
 
 $timeout = 20; // seconds
-$clientOptions = array(
+$clientOptions = [
     \GuzzleHttp\RequestOptions::ALLOW_REDIRECTS => false,
-); // see \GuzzleHttp\RequestOptions
-$webPush = new WebPush(array(), array(), $timeout, $clientOptions);
+]; // see \GuzzleHttp\RequestOptions
+$webPush = new WebPush([], [], $timeout, $clientOptions);
 ```
 
 ## Common questions

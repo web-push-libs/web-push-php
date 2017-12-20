@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 use Minishlink\WebPush\WebPush;
 
-class WebPushTest extends PHPUnit\Framework\TestCase
+final class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static $endpoints;
     private static $keys;
@@ -71,20 +71,20 @@ class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public static function setUpBeforeClass()
     {
-        self::$endpoints = array(
+        self::$endpoints = [
             'standard' => getenv('STANDARD_ENDPOINT'),
             'GCM' => getenv('GCM_ENDPOINT'),
-        );
+        ];
 
-        self::$keys = array(
+        self::$keys = [
             'standard' => getenv('USER_PUBLIC_KEY'),
             'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
-        );
+        ];
 
-        self::$tokens = array(
+        self::$tokens = [
             'standard' => getenv('USER_AUTH_TOKEN'),
             'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
-        );
+        ];
     }
 
     /**
@@ -92,14 +92,14 @@ class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function setUp()
     {
-        $this->webPush = new WebPush(array(
+        $this->webPush = new WebPush([
             'GCM' => getenv('GCM_API_KEY'),
-            'VAPID' => array(
+            'VAPID' => [
                 'subject' => 'https://github.com/Minishlink/web-push',
                 'publicKey' => getenv('VAPID_PUBLIC_KEY'),
                 'privateKey' => getenv('VAPID_PRIVATE_KEY'),
-            ),
-        ));
+            ],
+        ]);
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
@@ -109,12 +109,12 @@ class WebPushTest extends PHPUnit\Framework\TestCase
     public function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
-        return array(
-            array(self::$endpoints['standard'], null, null, null),
-            array(self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']),
-            array(self::$endpoints['GCM'], null, null, null),
-            array(self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']),
-        );
+        return [
+            [self::$endpoints['standard'], null, null, null],
+            [self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']],
+            [self::$endpoints['GCM'], null, null, null],
+            [self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']],
+        ];
     }
 
     /**
@@ -207,7 +207,7 @@ class WebPushTest extends PHPUnit\Framework\TestCase
             $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
         }
 
-        $webPush = new WebPush(array('GCM' => 'bar'));
+        $webPush = new WebPush(['GCM' => 'bar']);
 
         $res = $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
 

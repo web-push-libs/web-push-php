@@ -14,23 +14,23 @@ declare(strict_types=1);
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
 
-class VAPIDTest extends PHPUnit\Framework\TestCase
+final class VAPIDTest extends PHPUnit\Framework\TestCase
 {
     public function vapidProvider()
     {
-        return array(
-            array(
+        return [
+            [
                 'http://push.com',
-                array(
+                [
                     'subject' => 'http://test.com',
                     'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
                     'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
-                ),
+                ],
                 1475452165,
                 'WebPush eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJhdWQiOiJodHRwOi8vcHVzaC5jb20iLCJleHAiOjE0NzU0NTIxNjUsInN1YiI6Imh0dHA6Ly90ZXN0LmNvbSJ9.4F3ZKjeru4P9XM20rHPNvGBcr9zxhz8_ViyNfe11_xcuy7A9y7KfEPt6yuNikyW7eT9zYYD5mQZubDGa-5H2cA',
                 'p256ecdsa=BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
-            ),
-        );
+            ],
+        ];
     }
 
     /**

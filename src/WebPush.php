@@ -23,10 +23,10 @@ final class WebPush
     public const GCM_URL = 'https://android.googleapis.com/gcm/send';
 
     /** @var Client */
-    protected $client;
+    private $client;
 
     /** @var array */
-    protected $auth;
+    private $auth;
 
     /** @var array Array of array of Notifications */
     private $notifications;
@@ -48,27 +48,23 @@ final class WebPush
      */
     public function __construct(array $auth = [], array $defaultOptions = [], int $timeout = 30, array $clientOptions = [])
     {
-        if (!extension_loaded('curl')) {
-            trigger_error("[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.", E_USER_WARNING);
-        }
-
-        if (!extension_loaded('gmp')) {
-            trigger_error("[WebPush] gmp extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
-        }
-
-        if (!extension_loaded('mbstring')) {
-            trigger_error("[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
-        }
-
-        if (!extension_loaded('openssl')) {
-            trigger_error("[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
+        $extensions = [
+            'curl' => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
+            'gmp' => '[WebPush] gmp extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'openssl' => '[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+        ];
+        foreach ($extensions as $extension => $message) {
+            if (!extension_loaded($extension)) {
+                trigger_error($message, E_USER_WARNING);
+            }
         }
 
         if (ini_get('mbstring.func_overload') >= 2) {
             trigger_error("[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.", E_USER_NOTICE);
         }
 
-        if (array_key_exists('VAPID', $auth)) {
+        if (isset($auth['VAPID'])) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
         }
 
@@ -136,20 +132,21 @@ final class WebPush
     /**
      * Flush notifications. Triggers the requests.
      *
-     * @param int $batchSize Defaults the value defined in defaultOptions during instanciation (which defaults to 1000).
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     *
      * @return array|bool If there are no errors, return true.
      *                    If there were no notifications in the queue, return false.
      * Else return an array of information for each notification sent (success, statusCode, headers, content)
      *
      * @throws \ErrorException
      */
-    public function flush(int $batchSize = 0)
+    public function flush(?int $batchSize = null)
     {
         if (empty($this->notifications)) {
             return false;
         }
 
-        if (null !== $batchSize) {
+        if (null === $batchSize) {
             $batchSize = $this->defaultOptions['batchSize'];
         }
 
@@ -170,17 +167,17 @@ final class WebPush
                     /** @var RequestException $reason **/
                     $reason = $result['reason'];
 
-                    $error = array(
+                    $error = [
                         'success' => false,
-                        'endpoint' => "".$reason->getRequest()->getUri(),
+                        'endpoint' => $reason->getRequest()->getUri(),
                         'message' => $reason->getMessage(),
-                    );
+                    ];
 
                     $response = $reason->getResponse();
                     if ($response !== null) {
                         $statusCode = $response->getStatusCode();
                         $error['statusCode'] = $statusCode;
-                        $error['expired'] = in_array($statusCode, array(404, 410));
+                        $error['expired'] = in_array($statusCode, [404, 410]);
                         $error['content'] = $response->getBody();
                         $error['headers'] = $response->getHeaders();
                     }
@@ -188,9 +185,9 @@ final class WebPush
                     $return[] = $error;
                     $completeSuccess = false;
                 } else {
-                    $return[] = array(
+                    $return[] = [
                         'success' => true,
-                    );
+                    ];
                 }
             }
         }
@@ -220,22 +217,22 @@ final class WebPush
             $options = $notification->getOptions($this->getDefaultOptions());
             $auth = $notification->getAuth($this->auth);
 
-            if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
+            if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken);
 
-                $headers = array(
+                $headers = [
                     'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'salt='.$encrypted['salt'],
                     'Crypto-Key' => 'dh='.$encrypted['localPublicKey'],
-                );
+                ];
 
                 $content = $encrypted['cipherText'];
             } else {
-                $headers = array(
+                $headers = [
                     'Content-Length' => 0,
-                );
+                ];
 
                 $content = '';
             }
@@ -339,9 +336,9 @@ final class WebPush
      */
     public function setDefaultOptions(array $defaultOptions)
     {
-        $this->defaultOptions['TTL'] = array_key_exists('TTL', $defaultOptions) ? $defaultOptions['TTL'] : 2419200;
-        $this->defaultOptions['urgency'] = array_key_exists('urgency', $defaultOptions) ? $defaultOptions['urgency'] : null;
-        $this->defaultOptions['topic'] = array_key_exists('topic', $defaultOptions) ? $defaultOptions['topic'] : null;
-        $this->defaultOptions['batchSize'] = array_key_exists('batchSize', $defaultOptions) ? $defaultOptions['batchSize'] : 1000;
+        $this->defaultOptions['TTL'] = isset($defaultOptions['TTL']) ? $defaultOptions['TTL'] : 2419200;
+        $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
+        $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
+        $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
     }
 }

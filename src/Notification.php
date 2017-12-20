@@ -18,13 +18,13 @@ final class Notification
     /** @var string */
     private $endpoint;
 
-    /** @var string */
+    /** @var null|string */
     private $payload;
 
-    /** @var string */
+    /** @var null|string */
     private $userPublicKey;
 
-    /** @var string */
+    /** @var null|string */
     private $userAuthToken;
 
     /** @var array Options : TTL, urgency, topic */
@@ -36,14 +36,14 @@ final class Notification
     /**
      * Notification constructor.
      *
-     * @param string $endpoint
-     * @param string $payload
-     * @param string $userPublicKey
-     * @param string $userAuthToken
-     * @param array $options
-     * @param array $auth
+     * @param string      $endpoint
+     * @param null|string $payload
+     * @param null|string $userPublicKey
+     * @param null|string $userAuthToken
+     * @param array       $options
+     * @param array       $auth
      */
-    public function __construct(string $endpoint, string $payload, string $userPublicKey, string $userAuthToken, array $options, array $auth)
+    public function __construct(string $endpoint, ?string $payload, ?string $userPublicKey, ?string $userAuthToken, array $options, array $auth)
     {
         $this->endpoint = $endpoint;
         $this->payload = $payload;
@@ -64,7 +64,7 @@ final class Notification
     /**
      * @return null|string
      */
-    public function getPayload(): string
+    public function getPayload(): ?string
     {
         return $this->payload;
     }
@@ -72,7 +72,7 @@ final class Notification
     /**
      * @return null|string
      */
-    public function getUserPublicKey(): string
+    public function getUserPublicKey(): ?string
     {
         return $this->userPublicKey;
     }
@@ -80,7 +80,7 @@ final class Notification
     /**
      * @return null|string
      */
-    public function getUserAuthToken(): string
+    public function getUserAuthToken(): ?string
     {
         return $this->userAuthToken;
     }

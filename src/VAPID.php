@@ -39,11 +39,11 @@ final class VAPID
      */
     public static function validate(array $vapid): array
     {
-        if (!array_key_exists('subject', $vapid)) {
+        if (!isset($vapid['subject'])) {
             throw new \ErrorException('[VAPID] You must provide a subject that is either a mailto: or a URL.');
         }
 
-        if (array_key_exists('pemFile', $vapid)) {
+        if (isset($vapid['pemFile'])) {
             $vapid['pem'] = file_get_contents($vapid['pemFile']);
 
             if (!$vapid['pem']) {
@@ -51,7 +51,7 @@ final class VAPID
             }
         }
 
-        if (array_key_exists('pem', $vapid)) {
+        if (isset($vapid['pem'])) {
             $jwk = JWKFactory::createFromKey($vapid['pem']);
             if ($jwk->get('kty') !== 'EC' || !$jwk->has('d') || !$jwk->has('x') || !$jwk->has('y')) {
                 throw new \ErrorException('Invalid PEM data.');
@@ -64,7 +64,7 @@ final class VAPID
             $vapid['privateKey'] = base64_encode(str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         }
 
-        if (!array_key_exists('publicKey', $vapid)) {
+        if (!isset($vapid['publicKey'])) {
             throw new \ErrorException('[VAPID] You must provide a public key.');
         }
 
@@ -74,7 +74,7 @@ final class VAPID
             throw new \ErrorException('[VAPID] Public key should be 65 bytes long when decoded.');
         }
 
-        if (!array_key_exists('privateKey', $vapid)) {
+        if (!isset($vapid['privateKey'])) {
             throw new \ErrorException('[VAPID] You must provide a private key.');
         }
 

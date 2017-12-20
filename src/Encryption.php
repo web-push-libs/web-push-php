@@ -23,7 +23,7 @@ final class Encryption
 
     /**
      * @param string $payload
-     * @param int   $maxLengthToPad
+     * @param int    $maxLengthToPad
      *
      * @return string padded payload (plaintext)
      */
