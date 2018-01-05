@@ -254,7 +254,9 @@ $webPush = new WebPush(array(), array(), $timeout, $clientOptions);
 ### Is there any plugin/bundle/extension for my favorite PHP framework?
 The following are available:
 
-- Symfony: [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
+- Symfony: 
+    - [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
+    - [bentools/webpush-bundle](https://github.com/bpolaszek/webpush-bundle) (associate your Symfony users to WebPush subscriptions)
 - Laravel: [laravel-notification-channels/webpush](https://github.com/laravel-notification-channels/webpush)
 
 Feel free to add your own!
