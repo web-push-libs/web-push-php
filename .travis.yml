@@ -1,6 +1,8 @@
 dist: trusty
 language: php
 
+sudo: required
+
  # Downloaded browsers will be cached in selenium-assistant by
  # web-push-testing-service. Caching will speed up build time.
 cache:

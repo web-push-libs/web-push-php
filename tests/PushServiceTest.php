@@ -118,7 +118,7 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
      */
     public function testBrowsers($browserId, $browserVersion, $options)
     {
-        $this->retryTest(4, $this->createClosureTest($browserId, $browserVersion, $options));
+        $this->retryTest(2, $this->createClosureTest($browserId, $browserVersion, $options));
     }
 
     protected function createClosureTest($browserId, $browserVersion, $options)
