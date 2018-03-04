@@ -16,7 +16,7 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 
-final class Encryption
+class Encryption
 {
     public const MAX_PAYLOAD_LENGTH = 4078;
     public const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;

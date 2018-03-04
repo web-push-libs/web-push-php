@@ -15,16 +15,16 @@ namespace Minishlink\WebPush;
 
 use Jose\Component\Core\Util\Ecc\PublicKey;
 
-final class Utils
+class Utils
 {
     /**
-     * @param $string
+     * @param string $value
      *
      * @return int
      */
-    public static function safeStrlen(string $string): int
+    public static function safeStrlen(string $value): int
     {
-        return mb_strlen($string, '8bit');
+        return mb_strlen($value, '8bit');
     }
 
     /**

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-final class Notification
+class Notification
 {
     /** @var string */
     private $endpoint;

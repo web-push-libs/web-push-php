@@ -18,23 +18,33 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Promise;
 
-final class WebPush
+class WebPush
 {
     public const GCM_URL = 'https://android.googleapis.com/gcm/send';
 
-    /** @var Client */
+    /**
+     * @var Client
+     */
     private $client;
 
-    /** @var array */
+    /**
+     * @var array
+     */
     private $auth;
 
-    /** @var array Array of array of Notifications */
+    /**
+     * @var null|array Array of array of Notifications
+     */
     private $notifications;
 
-    /** @var array Default options : TTL, urgency, topic, batchSize */
+    /**
+     * @var array Default options : TTL, urgency, topic, batchSize
+     */
     private $defaultOptions;
 
-    /** @var int Automatic padding of payloads, if disabled, trade security for bandwidth */
+    /**
+     * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
+     */
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /**
@@ -44,9 +54,10 @@ final class WebPush
      * @param array    $defaultOptions TTL, urgency, topic, batchSize
      * @param int|null $timeout        Timeout of POST request
      * @param array    $clientOptions
+     *
      * @throws \ErrorException
      */
-    public function __construct(array $auth = [], array $defaultOptions = [], int $timeout = 30, array $clientOptions = [])
+    public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
     {
         $extensions = [
             'curl' => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
@@ -288,7 +299,7 @@ final class WebPush
      */
     public function isAutomaticPadding(): bool
     {
-        return $this->automaticPadding !== false && $this->automaticPadding !== 0;
+        return $this->automaticPadding !== 0;
     }
 
     /**

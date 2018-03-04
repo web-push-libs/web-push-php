@@ -25,7 +25,7 @@ use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 
-final class VAPID
+class VAPID
 {
     private const PUBLIC_KEY_LENGTH = 65;
     private const PRIVATE_KEY_LENGTH = 32;
