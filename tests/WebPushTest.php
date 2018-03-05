@@ -25,10 +25,29 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * {@inheritdoc}
      */
-    protected function checkRequirements()
+    public static function setUpBeforeClass()
     {
-        parent::checkRequirements();
+        self::$endpoints = [
+            'standard' => getenv('STANDARD_ENDPOINT'),
+            'GCM' => getenv('GCM_ENDPOINT'),
+        ];
 
+        self::$keys = [
+            'standard' => getenv('USER_PUBLIC_KEY'),
+            'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
+        ];
+
+        self::$tokens = [
+            'standard' => getenv('USER_AUTH_TOKEN'),
+            'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUp()
+    {
         if (getenv('TRAVIS') || getenv('CI')) {
             $this->markTestSkipped('This test does not run on Travis.');
         }
@@ -64,34 +83,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         if (!getenv('VAPID_PRIVATE_KEY')) {
             $this->markTestSkipped('No \'VAPID_PRIVATE_KEY\' found in env.');
         }
-    }
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function setUpBeforeClass()
-    {
-        self::$endpoints = [
-            'standard' => getenv('STANDARD_ENDPOINT'),
-            'GCM' => getenv('GCM_ENDPOINT'),
-        ];
-
-        self::$keys = [
-            'standard' => getenv('USER_PUBLIC_KEY'),
-            'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
-        ];
-
-        self::$tokens = [
-            'standard' => getenv('USER_AUTH_TOKEN'),
-            'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setUp()
-    {
         $this->webPush = new WebPush([
             'GCM' => getenv('GCM_API_KEY'),
             'VAPID' => [

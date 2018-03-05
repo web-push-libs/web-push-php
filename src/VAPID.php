@@ -60,7 +60,7 @@ class VAPID
                 gmp_init(bin2hex(Base64Url::decode($jwk->get('x'))), 16),
                 gmp_init(bin2hex(Base64Url::decode($jwk->get('y'))), 16)
             ));
-            $vapid['publicKey'] = base64_encode(Utils::serializePublicKey($publicKey));
+            $vapid['publicKey'] = base64_encode(hex2bin(Utils::serializePublicKey($publicKey)));
             $vapid['privateKey'] = base64_encode(str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         }
 
