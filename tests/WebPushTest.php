@@ -48,40 +48,20 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function setUp()
     {
-        if (getenv('TRAVIS') || getenv('CI')) {
-            $this->markTestSkipped('This test does not run on Travis.');
-        }
-
-        if (!getenv('STANDARD_ENDPOINT')) {
-            $this->markTestSkipped("No 'STANDARD_ENDPOINT' found in env.");
-        }
-
-        if (!getenv('GCM_ENDPOINT')) {
-            $this->markTestSkipped("No 'GCM_ENDPOINT' found in env.");
-        }
-
-        if (!getenv('USER_PUBLIC_KEY')) {
-            $this->markTestSkipped("No 'USER_PUBLIC_KEY' found in env.");
-        }
-
-        if (!getenv('GCM_USER_PUBLIC_KEY')) {
-            $this->markTestSkipped("No 'GCM_USER_PUBLIC_KEY' found in env.");
-        }
-
-        if (!getenv('USER_AUTH_TOKEN')) {
-            $this->markTestSkipped("No 'USER_PUBLIC_KEY' found in env.");
-        }
-
-        if (!getenv('GCM_USER_AUTH_TOKEN')) {
-            $this->markTestSkipped("No 'GCM_USER_AUTH_TOKEN' found in env.");
-        }
-
-        if (!getenv('VAPID_PUBLIC_KEY')) {
-            $this->markTestSkipped("No 'VAPID_PUBLIC_KEY' found in env.");
-        }
-
-        if (!getenv('VAPID_PRIVATE_KEY')) {
-            $this->markTestSkipped("No 'VAPID_PRIVATE_KEY' found in env.");
+        $envs = [
+            'STANDARD_ENDPOINT',
+            'GCM_ENDPOINT',
+            'USER_PUBLIC_KEY',
+            'GCM_API_KEY',
+            'GCM_USER_PUBLIC_KEY',
+            'USER_AUTH_TOKEN',
+            'VAPID_PUBLIC_KEY',
+            'VAPID_PRIVATE_KEY',
+        ];
+        foreach ($envs as $env) {
+            if (!getenv($env)) {
+                $this->markTestSkipped("No '$env' found in env.");
+            }
         }
 
         $this->webPush = new WebPush([
