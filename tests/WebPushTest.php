@@ -48,40 +48,36 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function setUp()
     {
-        if (getenv('TRAVIS') || getenv('CI')) {
-            $this->markTestSkipped('This test does not run on Travis.');
-        }
-
         if (!getenv('STANDARD_ENDPOINT')) {
-            $this->markTestSkipped('No \'STANDARD_ENDPOINT\' found in env.');
+            $this->markTestSkipped("No 'STANDARD_ENDPOINT' found in env.");
         }
 
         if (!getenv('GCM_ENDPOINT')) {
-            $this->markTestSkipped('No \'GCM_ENDPOINT\' found in env.');
+            $this->markTestSkipped("No 'GCM_ENDPOINT' found in env.");
         }
 
         if (!getenv('USER_PUBLIC_KEY')) {
-            $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped("No 'USER_PUBLIC_KEY' found in env.");
         }
 
         if (!getenv('GCM_USER_PUBLIC_KEY')) {
-            $this->markTestSkipped('No \'GCM_USER_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped("No 'GCM_USER_PUBLIC_KEY' found in env.");
         }
 
         if (!getenv('USER_AUTH_TOKEN')) {
-            $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped("No 'USER_PUBLIC_KEY' found in env.");
         }
 
         if (!getenv('GCM_USER_AUTH_TOKEN')) {
-            $this->markTestSkipped('No \'GCM_USER_AUTH_TOKEN\' found in env.');
+            $this->markTestSkipped("No 'GCM_USER_AUTH_TOKEN' found in env.");
         }
 
         if (!getenv('VAPID_PUBLIC_KEY')) {
-            $this->markTestSkipped('No \'VAPID_PUBLIC_KEY\' found in env.');
+            $this->markTestSkipped("No 'VAPID_PUBLIC_KEY' found in env.");
         }
 
         if (!getenv('VAPID_PRIVATE_KEY')) {
-            $this->markTestSkipped('No \'VAPID_PRIVATE_KEY\' found in env.');
+            $this->markTestSkipped("No 'VAPID_PRIVATE_KEY' found in env.");
         }
 
         $this->webPush = new WebPush([
@@ -181,7 +177,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     public function testSendGCMNotificationWithoutGCMApiKey()
     {
         if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
-            $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
+            $this->markTestSkipped("The provided GCM URL is not a GCM URL, but probably a FCM URL.");
         }
 
         $webPush = new WebPush();
@@ -196,7 +192,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
-            $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
+            $this->markTestSkipped("The provided GCM URL is not a GCM URL, but probably a FCM URL.");
         }
 
         $webPush = new WebPush(['GCM' => 'bar']);

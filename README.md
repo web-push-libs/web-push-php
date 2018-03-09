@@ -9,11 +9,12 @@ the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protoc
 As it is standardized, you don't have to worry about what server type it relies on.
 
 ## Requirements
-* PHP 7.1+
-* gmp
-* mbstring
-* curl
-* openssl
+
+    * PHP 7.1+
+    * gmp
+    * mbstring
+    * curl
+    * openssl
 
 PHP 7.2+ is recommended for better performance.
 For PHP 5.6 or HHVM compatibility, use the v1.x releases.
