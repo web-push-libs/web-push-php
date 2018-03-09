@@ -48,6 +48,10 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function setUp()
     {
+        if (getenv('TRAVIS') || getenv('CI')) {
+            $this->markTestSkipped('This test does not run on Travis.');
+        }
+
         if (!getenv('STANDARD_ENDPOINT')) {
             $this->markTestSkipped("No 'STANDARD_ENDPOINT' found in env.");
         }

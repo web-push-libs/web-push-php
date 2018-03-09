@@ -35,7 +35,7 @@ before_script:
 
 script:
   - web-push-testing-service start example -p 9012
-  - ./vendor/bin/phpunit
+  - ./vendor/bin/phpunit -v
   - web-push-testing-service stop example
 
 after_script:
