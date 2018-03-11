@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -18,54 +20,62 @@ use GuzzleHttp\Promise;
 
 class WebPush
 {
-    const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    public const GCM_URL = 'https://android.googleapis.com/gcm/send';
 
-    /** @var Client */
-    protected $client;
+    /**
+     * @var Client
+     */
+    private $client;
 
-    /** @var array */
-    protected $auth;
+    /**
+     * @var array
+     */
+    private $auth;
 
-    /** @var array Array of array of Notifications */
+    /**
+     * @var null|array Array of array of Notifications
+     */
     private $notifications;
 
-    /** @var array Default options : TTL, urgency, topic, batchSize */
+    /**
+     * @var array Default options : TTL, urgency, topic, batchSize
+     */
     private $defaultOptions;
 
-    /** @var int Automatic padding of payloads, if disabled, trade security for bandwidth */
+    /**
+     * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
+     */
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /**
      * WebPush constructor.
      *
-     * @param array               $auth           Some servers needs authentication
-     * @param array               $defaultOptions TTL, urgency, topic, batchSize
-     * @param int|null            $timeout        Timeout of POST request
-     * @param array               $clientOptions
+     * @param array    $auth           Some servers needs authentication
+     * @param array    $defaultOptions TTL, urgency, topic, batchSize
+     * @param int|null $timeout        Timeout of POST request
+     * @param array    $clientOptions
+     *
+     * @throws \ErrorException
      */
-    public function __construct(array $auth = array(), $defaultOptions = array(), $timeout = 30, $clientOptions = array())
+    public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
     {
-        if (!extension_loaded('curl')) {
-            trigger_error("[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.", E_USER_WARNING);
-        }
-
-        if (!extension_loaded('gmp')) {
-            trigger_error("[WebPush] gmp extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
-        }
-
-        if (!extension_loaded('mbstring')) {
-            trigger_error("[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
-        }
-
-        if (!extension_loaded('openssl')) {
-            trigger_error("[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.", E_USER_NOTICE);
+        $extensions = [
+            'curl' => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
+            'gmp' => '[WebPush] gmp extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'openssl' => '[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+        ];
+        foreach ($extensions as $extension => $message) {
+            if (!extension_loaded($extension)) {
+                trigger_error($message, E_USER_WARNING);
+            }
         }
 
         if (ini_get('mbstring.func_overload') >= 2) {
             trigger_error("[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.", E_USER_NOTICE);
         }
 
-        if (array_key_exists('VAPID', $auth)) {
+        if (isset($auth['VAPID'])) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
         }
 
@@ -95,7 +105,7 @@ class WebPush
      *
      * @throws \ErrorException
      */
-    public function sendNotification($endpoint, $payload = null, $userPublicKey = null, $userAuthToken = null, $flush = false, $options = array(), $auth = array())
+    public function sendNotification(string $endpoint, ?string $payload = null, ?string $userPublicKey = null, ?string $userAuthToken = null, bool $flush = false, array $options = [], array $auth = [])
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
@@ -133,23 +143,26 @@ class WebPush
     /**
      * Flush notifications. Triggers the requests.
      *
-     * @param int $batchSize Defaults the value defined in defaultOptions during instanciation (which defaults to 1000).
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     *
      * @return array|bool If there are no errors, return true.
      *                    If there were no notifications in the queue, return false.
      * Else return an array of information for each notification sent (success, statusCode, headers, content)
+     *
+     * @throws \ErrorException
      */
-    public function flush($batchSize = null)
+    public function flush(?int $batchSize = null)
     {
         if (empty($this->notifications)) {
             return false;
         }
 
-        if (!isset($batchSize)) {
+        if (null === $batchSize) {
             $batchSize = $this->defaultOptions['batchSize'];
         }
 
         $batches = array_chunk($this->notifications, $batchSize);
-        $return = array();
+        $return = [];
         $completeSuccess = true;
         foreach ($batches as $batch) {
             // for each endpoint server type
@@ -165,17 +178,17 @@ class WebPush
                     /** @var RequestException $reason **/
                     $reason = $result['reason'];
 
-                    $error = array(
+                    $error = [
                         'success' => false,
-                        'endpoint' => "".$reason->getRequest()->getUri(),
+                        'endpoint' => $reason->getRequest()->getUri(),
                         'message' => $reason->getMessage(),
-                    );
+                    ];
 
                     $response = $reason->getResponse();
                     if ($response !== null) {
                         $statusCode = $response->getStatusCode();
                         $error['statusCode'] = $statusCode;
-                        $error['expired'] = in_array($statusCode, array(404, 410));
+                        $error['expired'] = in_array($statusCode, [404, 410]);
                         $error['content'] = $response->getBody();
                         $error['headers'] = $response->getHeaders();
                     }
@@ -183,9 +196,9 @@ class WebPush
                     $return[] = $error;
                     $completeSuccess = false;
                 } else {
-                    $return[] = array(
+                    $return[] = [
                         'success' => true,
-                    );
+                    ];
                 }
             }
         }
@@ -196,9 +209,16 @@ class WebPush
         return $completeSuccess ? true : $return;
     }
 
-    private function prepare(array $notifications)
+    /**
+     * @param array $notifications
+     *
+     * @return array
+     *
+     * @throws \ErrorException
+     */
+    private function prepare(array $notifications): array
     {
-        $requests = array();
+        $requests = [];
         /** @var Notification $notification */
         foreach ($notifications as $notification) {
             $endpoint = $notification->getEndpoint();
@@ -208,22 +228,22 @@ class WebPush
             $options = $notification->getOptions($this->getDefaultOptions());
             $auth = $notification->getAuth($this->auth);
 
-            if (isset($payload) && isset($userPublicKey) && isset($userAuthToken)) {
+            if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken);
 
-                $headers = array(
+                $headers = [
                     'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => 'aesgcm',
                     'Encryption' => 'salt='.$encrypted['salt'],
                     'Crypto-Key' => 'dh='.$encrypted['localPublicKey'],
-                );
+                ];
 
                 $content = $encrypted['cipherText'];
             } else {
-                $headers = array(
+                $headers = [
                     'Content-Length' => 0,
-                );
+                ];
 
                 $content = '';
             }
@@ -277,9 +297,9 @@ class WebPush
     /**
      * @return bool
      */
-    public function isAutomaticPadding()
+    public function isAutomaticPadding(): bool
     {
-        return $this->automaticPadding !== false && $this->automaticPadding !== 0;
+        return $this->automaticPadding !== 0;
     }
 
     /**
@@ -291,11 +311,13 @@ class WebPush
     }
 
     /**
-     * @param int $automaticPadding Max padding length
+     * @param int|bool $automaticPadding Max padding length
      *
      * @return WebPush
+     *
+     * @throws \Exception
      */
-    public function setAutomaticPadding($automaticPadding)
+    public function setAutomaticPadding($automaticPadding): WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
             throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
@@ -303,6 +325,8 @@ class WebPush
             throw new \Exception('Padding length should be positive or zero.');
         } elseif ($automaticPadding === true) {
             $this->automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+        } elseif ($automaticPadding === false) {
+            $this->automaticPadding = 0;
         } else {
             $this->automaticPadding = $automaticPadding;
         }
@@ -313,7 +337,7 @@ class WebPush
     /**
      * @return array
      */
-    public function getDefaultOptions()
+    public function getDefaultOptions(): array
     {
         return $this->defaultOptions;
     }
@@ -323,9 +347,9 @@ class WebPush
      */
     public function setDefaultOptions(array $defaultOptions)
     {
-        $this->defaultOptions['TTL'] = array_key_exists('TTL', $defaultOptions) ? $defaultOptions['TTL'] : 2419200;
-        $this->defaultOptions['urgency'] = array_key_exists('urgency', $defaultOptions) ? $defaultOptions['urgency'] : null;
-        $this->defaultOptions['topic'] = array_key_exists('topic', $defaultOptions) ? $defaultOptions['topic'] : null;
-        $this->defaultOptions['batchSize'] = array_key_exists('batchSize', $defaultOptions) ? $defaultOptions['batchSize'] : 1000;
+        $this->defaultOptions['TTL'] = isset($defaultOptions['TTL']) ? $defaultOptions['TTL'] : 2419200;
+        $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
+        $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
+        $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
     }
 }

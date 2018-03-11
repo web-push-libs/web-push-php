@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -11,7 +13,7 @@
 
 use Minishlink\WebPush\WebPush;
 
-class WebPushTest extends PHPUnit\Framework\TestCase
+final class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static $endpoints;
     private static $keys;
@@ -20,87 +22,71 @@ class WebPushTest extends PHPUnit\Framework\TestCase
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
 
-    protected function checkRequirements()
-    {
-        parent::checkRequirements();
-
-        if (getenv('TRAVIS') || getenv('CI')) {
-            $this->markTestSkipped('This test does not run on Travis.');
-        }
-
-        if (!getenv('STANDARD_ENDPOINT')) {
-            $this->markTestSkipped('No \'STANDARD_ENDPOINT\' found in env.');
-        }
-
-        if (!getenv('GCM_ENDPOINT')) {
-            $this->markTestSkipped('No \'GCM_ENDPOINT\' found in env.');
-        }
-
-        if (!getenv('USER_PUBLIC_KEY')) {
-            $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
-        }
-
-        if (!getenv('GCM_USER_PUBLIC_KEY')) {
-            $this->markTestSkipped('No \'GCM_USER_PUBLIC_KEY\' found in env.');
-        }
-
-        if (!getenv('USER_AUTH_TOKEN')) {
-            $this->markTestSkipped('No \'USER_PUBLIC_KEY\' found in env.');
-        }
-
-        if (!getenv('GCM_USER_AUTH_TOKEN')) {
-            $this->markTestSkipped('No \'GCM_USER_AUTH_TOKEN\' found in env.');
-        }
-
-        if (!getenv('VAPID_PUBLIC_KEY')) {
-            $this->markTestSkipped('No \'VAPID_PUBLIC_KEY\' found in env.');
-        }
-
-        if (!getenv('VAPID_PRIVATE_KEY')) {
-            $this->markTestSkipped('No \'VAPID_PRIVATE_KEY\' found in env.');
-        }
-    }
-
+    /**
+     * {@inheritdoc}
+     */
     public static function setUpBeforeClass()
     {
-        self::$endpoints = array(
+        self::$endpoints = [
             'standard' => getenv('STANDARD_ENDPOINT'),
             'GCM' => getenv('GCM_ENDPOINT'),
-        );
+        ];
 
-        self::$keys = array(
+        self::$keys = [
             'standard' => getenv('USER_PUBLIC_KEY'),
             'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
-        );
+        ];
 
-        self::$tokens = array(
+        self::$tokens = [
             'standard' => getenv('USER_AUTH_TOKEN'),
             'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
-        );
+        ];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setUp()
     {
-        $this->webPush = new WebPush(array(
+        $envs = [
+            'STANDARD_ENDPOINT',
+            'GCM_ENDPOINT',
+            'USER_PUBLIC_KEY',
+            'GCM_API_KEY',
+            'GCM_USER_PUBLIC_KEY',
+            'USER_AUTH_TOKEN',
+            'VAPID_PUBLIC_KEY',
+            'VAPID_PRIVATE_KEY',
+        ];
+        foreach ($envs as $env) {
+            if (!getenv($env)) {
+                $this->markTestSkipped("No '$env' found in env.");
+            }
+        }
+
+        $this->webPush = new WebPush([
             'GCM' => getenv('GCM_API_KEY'),
-            'VAPID' => array(
+            'VAPID' => [
                 'subject' => 'https://github.com/Minishlink/web-push',
                 'publicKey' => getenv('VAPID_PUBLIC_KEY'),
                 'privateKey' => getenv('VAPID_PRIVATE_KEY'),
-            ),
-        ));
+            ],
+        ]);
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
     }
 
-    public function notificationProvider()
+    /**
+     * @return array
+     */
+    public function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
-        return array(
-            array(self::$endpoints['standard'], null, null, null),
-            array(self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']),
-            array(self::$endpoints['GCM'], null, null, null),
-            array(self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']),
-        );
+        return [
+            [self::$endpoints['standard'], null, null, null],
+            [self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']],
+            [self::$endpoints['GCM'], null, null, null],
+            [self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']],
+        ];
     }
 
     /**
@@ -118,6 +104,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($res);
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendNotificationBatch()
     {
         $batchSize = 10;
@@ -135,6 +124,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($res);
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendNotificationWithTooBigPayload()
     {
         $this->expectException('ErrorException');
@@ -148,6 +140,9 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         );
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testFlush()
     {
         $this->webPush->sendNotification(self::$endpoints['standard']);
@@ -160,10 +155,13 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($this->webPush->flush());
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendGCMNotificationWithoutGCMApiKey()
     {
         if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
-            $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
+            $this->markTestSkipped("The provided GCM URL is not a GCM URL, but probably a FCM URL.");
         }
 
         $webPush = new WebPush();
@@ -172,13 +170,16 @@ class WebPushTest extends PHPUnit\Framework\TestCase
         $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
     }
 
+    /**
+     * @throws ErrorException
+     */
     public function testSendGCMNotificationWithWrongGCMApiKey()
     {
         if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
-            $this->markTestSkipped('The provided GCM URL is not a GCM URL, but probably a FCM URL.');
+            $this->markTestSkipped("The provided GCM URL is not a GCM URL, but probably a FCM URL.");
         }
 
-        $webPush = new WebPush(array('GCM' => 'bar'));
+        $webPush = new WebPush(['GCM' => 'bar']);
 
         $res = $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
 

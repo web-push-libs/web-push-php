@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -12,35 +14,37 @@
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
 
-class VAPIDTest extends PHPUnit\Framework\TestCase
+final class VAPIDTest extends PHPUnit\Framework\TestCase
 {
     public function vapidProvider()
     {
-        return array(
-            array(
+        return [
+            [
                 'http://push.com',
-                array(
+                [
                     'subject' => 'http://test.com',
                     'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
                     'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
-                ),
-                '1475452165',
+                ],
+                1475452165,
                 'WebPush eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJhdWQiOiJodHRwOi8vcHVzaC5jb20iLCJleHAiOjE0NzU0NTIxNjUsInN1YiI6Imh0dHA6Ly90ZXN0LmNvbSJ9.4F3ZKjeru4P9XM20rHPNvGBcr9zxhz8_ViyNfe11_xcuy7A9y7KfEPt6yuNikyW7eT9zYYD5mQZubDGa-5H2cA',
                 'p256ecdsa=BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
-            ),
-        );
+            ],
+        ];
     }
 
     /**
      * @dataProvider vapidProvider
      *
-     * @param $audience
-     * @param $vapid
-     * @param $expiration
-     * @param $expectedAuthorization
-     * @param $expectedCryptoKey
+     * @param string $audience
+     * @param array  $vapid
+     * @param int    $expiration
+     * @param string $expectedAuthorization
+     * @param string $expectedCryptoKey
+     *
+     * @throws ErrorException
      */
-    public function testGetVapidHeaders($audience, $vapid, $expiration, $expectedAuthorization, $expectedCryptoKey)
+    public function testGetVapidHeaders(string $audience, array $vapid, int $expiration, string $expectedAuthorization, string $expectedCryptoKey)
     {
         $vapid = VAPID::validate($vapid);
         $headers = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $expiration);
@@ -52,7 +56,12 @@ class VAPIDTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($expectedCryptoKey, $headers['Crypto-Key']);
     }
 
-    private function explodeAuthorization($auth)
+    /**
+     * @param string $auth
+     *
+     * @return array|string
+     */
+    private function explodeAuthorization(string $auth)
     {
         $auth = explode('.', $auth);
         array_pop($auth); // delete the signature which changes each time

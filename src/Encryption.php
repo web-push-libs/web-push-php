@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -12,21 +14,20 @@
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
-use Mdanter\Ecc\EccFactory;
-use Mdanter\Ecc\Serializer\Point\UncompressedPointSerializer;
+use Jose\Component\Core\Util\Ecc\NistCurve;
 
-final class Encryption
+class Encryption
 {
-    const MAX_PAYLOAD_LENGTH = 4078;
-    const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;
+    public const MAX_PAYLOAD_LENGTH = 4078;
+    public const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;
 
     /**
      * @param string $payload
-     * @param bool   $maxLengthToPad
+     * @param int    $maxLengthToPad
      *
      * @return string padded payload (plaintext)
      */
-    public static function padPayload($payload, $maxLengthToPad)
+    public static function padPayload(string $payload, int $maxLengthToPad): string
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
@@ -35,37 +36,30 @@ final class Encryption
     }
 
     /**
-     * @param string $payload          With padding
-     * @param string $userPublicKey    Base 64 encoded (MIME or URL-safe)
-     * @param string $userAuthToken    Base 64 encoded (MIME or URL-safe)
+     * @param string $payload       With padding
+     * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
+     * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
      *
      * @return array
+     *
+     * @throws \ErrorException
      */
-    public static function encrypt($payload, $userPublicKey, $userAuthToken)
+    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken): array
     {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
-        // initialize utilities
-        $math = EccFactory::getAdapter();
-        $pointSerializer = new UncompressedPointSerializer($math);
-        $generator = EccFactory::getNistCurves()->generator256();
-        $curve = EccFactory::getNistCurves()->curve256();
-
-        // get local key pair
-        $localPrivateKeyObject = $generator->createPrivateKey();
-        $localPublicKeyObject = $localPrivateKeyObject->getPublicKey();
-        $localPublicKey = hex2bin($pointSerializer->serialize($localPublicKeyObject->getPoint()));
-
-        // get user public key object
-        $pointUserPublicKey = $pointSerializer->unserialize($curve, bin2hex($userPublicKey));
-        $userPublicKeyObject = $generator->getPublicKeyFrom($pointUserPublicKey->getX(), $pointUserPublicKey->getY(), $generator->getOrder());
+        $curve = NistCurve::curve256();
+        $privateKey = $curve->createPrivateKey();
+        $publicKey = $curve->createPublicKey($privateKey);
+        $localPublicKey = hex2bin(Utils::serializePublicKey($publicKey));
 
         // get shared secret from user public key and local private key
-        $sharedSecret = hex2bin($math->decHex(gmp_strval($userPublicKeyObject->getPoint()->mul($localPrivateKeyObject->getSecret())->getX())));
+        $sharedSecret = $curve->mul($publicKey->getPoint(), $privateKey->getSecret())->getX();
+        $sharedSecret = hex2bin(gmp_strval($sharedSecret, 16));
 
         // generate salt
-        $salt = openssl_random_pseudo_bytes(16);
+        $salt = random_bytes(16);
 
         // section 4.3
         $ikm = !empty($userAuthToken) ?
@@ -85,14 +79,14 @@ final class Encryption
 
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
-        list($encryptedText, $tag) = \AESGCM\AESGCM::encrypt($contentEncryptionKey, $nonce, $payload, '');
+        $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
 
         // return values in url safe base64
-        return array(
+        return [
             'localPublicKey' => Base64Url::encode($localPublicKey),
             'salt' => Base64Url::encode($salt),
             'cipherText' => $encryptedText.$tag,
-        );
+        ];
     }
 
     /**
@@ -108,14 +102,14 @@ final class Encryption
      * See {@link https://www.rfc-editor.org/rfc/rfc5869.txt}
      * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}
      *
-     * @param $salt string A non-secret random value
-     * @param $ikm string Input keying material
-     * @param $info string Application-specific context
-     * @param $length int The length (in bytes) of the required output key
+     * @param string $salt   A non-secret random value
+     * @param string $ikm    Input keying material
+     * @param string $info   Application-specific context
+     * @param int    $length The length (in bytes) of the required output key
      *
      * @return string
      */
-    private static function hkdf($salt, $ikm, $info, $length)
+    private static function hkdf(string $salt, string $ikm, string $info, int $length): string
     {
         // extract
         $prk = hash_hmac('sha256', $ikm, $salt, true);
@@ -125,19 +119,19 @@ final class Encryption
     }
 
     /**
-     * Creates a context for deriving encyption parameters.
+     * Creates a context for deriving encryption parameters.
      * See section 4.2 of
      * {@link https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding-00}
      * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}.
      *
-     * @param $clientPublicKey string The client's public key
-     * @param $serverPublicKey string Our public key
+     * @param string $clientPublicKey The client's public key
+     * @param string $serverPublicKey Our public key
      *
      * @return string
      *
      * @throws \ErrorException
      */
-    private static function createContext($clientPublicKey, $serverPublicKey)
+    private static function createContext(string $clientPublicKey, string $serverPublicKey): string
     {
         if (Utils::safeStrlen($clientPublicKey) !== 65) {
             throw new \ErrorException('Invalid client public key length');
@@ -158,14 +152,14 @@ final class Encryption
      * {@link https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding-00}
      * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}.
      *
-     * @param $type string The type of the info record
-     * @param $context string The context for the record
+     * @param string $type    The type of the info record
+     * @param string $context The context for the record
      *
      * @return string
      *
      * @throws \ErrorException
      */
-    private static function createInfo($type, $context)
+    private static function createInfo(string $type, string $context): string
     {
         if (Utils::safeStrlen($context) !== 135) {
             throw new \ErrorException('Context argument has invalid size');

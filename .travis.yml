@@ -9,10 +9,14 @@ cache:
   directories:
     - ~/.selenium-assistant
 
-php:
-  - 7.0
-  - 7.1
-  - 7.2
+matrix:
+    allow_failures:
+        - php: nightly
+    fast_finish: true
+    include:
+        - php: 7.1
+        - php: 7.2
+        - php: nightly
 
 env:
   - TRAVIS_NODE_VERSION="stable"
@@ -21,7 +25,7 @@ before_install:
   - nvm install node
 
 install:
-  - npm install https://github.com/GoogleChromeLabs/web-push-testing-service -g
+  - npm install web-push-testing-service -g
 
 before_script:
   - composer install --prefer-source -n
@@ -31,5 +35,8 @@ before_script:
 
 script:
   - web-push-testing-service start example -p 9012
-  - php ./vendor/phpunit/phpunit/phpunit -c phpunit.travis.xml
+  - ./vendor/bin/phpunit
   - web-push-testing-service stop example
+
+after_script:
+  - ./vendor/bin/phpstan analyse --level max src

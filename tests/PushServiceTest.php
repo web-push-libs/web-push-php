@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the WebPush library.
  *
@@ -11,7 +13,7 @@
 
 use Minishlink\WebPush\WebPush;
 
-class PushServiceTest extends PHPUnit\Framework\TestCase
+final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
     private static $timeout = 30;
     private static $portNumber = 9012;
@@ -19,44 +21,39 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
     private static $testServiceUrl;
     private static $gcmSenderId = '759071690750';
     private static $gcmApiKey = 'AIzaSyBAU0VfXoskxUSg81K5VgLgwblHbZWe6tA';
-    private static $vapidKeys = array(
+    private static $vapidKeys = [
         'subject' => 'http://test.com',
         'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
         'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
-    );
+    ];
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
 
     /**
-     * This check forces these tests to only run on Travis.
-     * If we can reliably start and stop web-push-testing-service and
-     * detect current OS, we can probably run this automatically
-     * for Linux and OS X at a later date.
+     * {@inheritdoc}
      */
-    protected function checkRequirements()
-    {
-        parent::checkRequirements();
-
-        if (!(getenv('TRAVIS') || getenv('CI'))) {
-            $this->markTestSkipped('This test does not run on Travis.');
-        }
-    }
-
     public static function setUpBeforeClass()
     {
         self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function setUp()
     {
+        if (!(getenv('TRAVIS') || getenv('CI'))) {
+            $this->markTestSkipped('This test does not run on Travis.');
+        }
+
         $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
-        curl_setopt_array($startApiCurl, array(
+        curl_setopt_array($startApiCurl, [
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => array(),
+            CURLOPT_POSTFIELDS => [],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => self::$timeout,
-        ));
+        ]);
 
         $parsedResp = $this->getResponse($startApiCurl);
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
@@ -64,32 +61,32 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
 
     public function browserProvider()
     {
-        return array(
+        return [
             // Web Push
-            array('firefox', 'stable', array()),
-            array('firefox', 'beta', array()),
+            ['firefox', 'stable', []],
+            ['firefox', 'beta', []],
 
             // Web Push + GCM
-            array('chrome', 'stable', array('GCM' => self::$gcmApiKey)),
-            array('chrome', 'beta', array('GCM' => self::$gcmApiKey)),
+            ['chrome', 'stable', ['GCM' => self::$gcmApiKey]],
+            ['chrome', 'beta', ['GCM' => self::$gcmApiKey]],
 
-            array('firefox', 'stable', array('GCM' => self::$gcmApiKey)),
-            array('firefox', 'beta', array('GCM' => self::$gcmApiKey)),
+            ['firefox', 'stable', ['GCM' => self::$gcmApiKey]],
+            ['firefox', 'beta', ['GCM' => self::$gcmApiKey]],
 
             // Web Push + VAPID
-            array('chrome', 'stable', array('VAPID' => self::$vapidKeys)),
-            array('chrome', 'beta', array('VAPID' => self::$vapidKeys)),
+            ['chrome', 'stable', ['VAPID' => self::$vapidKeys]],
+            ['chrome', 'beta', ['VAPID' => self::$vapidKeys]],
 
-            array('firefox', 'stable', array('VAPID' => self::$vapidKeys)),
-            array('firefox', 'beta', array('VAPID' => self::$vapidKeys)),
+            ['firefox', 'stable', ['VAPID' => self::$vapidKeys]],
+            ['firefox', 'beta', ['VAPID' => self::$vapidKeys]],
 
             // Web Push + GCM + VAPID
-            array('chrome', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
-            array('chrome', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
+            ['chrome', 'stable', ['GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys]],
+            ['chrome', 'beta', ['GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys]],
 
-            array('firefox', 'stable', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
-            array('firefox', 'beta', array('GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys)),
-        );
+            ['firefox', 'stable', ['GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys]],
+            ['firefox', 'beta', ['GCM' => self::$gcmApiKey, 'VAPID' => self::$vapidKeys]],
+        ];
     }
 
     /**
@@ -127,11 +124,11 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
             $this->webPush = new WebPush($options);
             $this->webPush->setAutomaticPadding(false);
 
-            $subscriptionParameters = array(
+            $subscriptionParameters = [
                 'testSuiteId' => self::$testSuiteId,
                 'browserName' => $browserId,
                 'browserVersion' => $browserVersion,
-            );
+            ];
 
             if (array_key_exists('GCM', $options)) {
                 $subscriptionParameters['gcmSenderId'] = self::$gcmSenderId;
@@ -144,16 +141,16 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
             $subscriptionParameters = json_encode($subscriptionParameters);
 
             $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
-            curl_setopt_array($getSubscriptionCurl, array(
+            curl_setopt_array($getSubscriptionCurl, [
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $subscriptionParameters,
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => array(
+                CURLOPT_HTTPHEADER => [
                     'Content-Type: application/json',
                     'Content-Length: '.strlen($subscriptionParameters),
-                ),
+                ],
                 CURLOPT_TIMEOUT => self::$timeout,
-            ));
+            ]);
 
             $parsedResp = $this->getResponse($getSubscriptionCurl);
             $testId = $parsedResp->{'data'}->{'testId'};
@@ -169,22 +166,22 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
                 $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
                 $this->assertTrue($sendResp);
 
-                $dataString = json_encode(array(
+                $dataString = json_encode([
                     'testSuiteId' => self::$testSuiteId,
                     'testId' => $testId,
-                ));
+                ]);
 
                 $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
-                curl_setopt_array($getNotificationCurl, array(
+                curl_setopt_array($getNotificationCurl, [
                     CURLOPT_POST => true,
                     CURLOPT_POSTFIELDS => $dataString,
                     CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HTTPHEADER => array(
+                    CURLOPT_HTTPHEADER => [
                         'Content-Type: application/json',
                         'Content-Length: '.strlen($dataString),
-                    ),
+                    ],
                     CURLOPT_TIMEOUT => self::$timeout,
-                ));
+                ]);
 
                 $parsedResp = $this->getResponse($getSubscriptionCurl);
 
@@ -211,16 +208,16 @@ class PushServiceTest extends PHPUnit\Framework\TestCase
     {
         $dataString = '{ "testSuiteId": '.self::$testSuiteId.' }';
         $curl = curl_init(self::$testServiceUrl.'/api/end-test-suite/');
-        curl_setopt_array($curl, array(
+        curl_setopt_array($curl, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $dataString,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => array(
+            CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Content-Length: '.strlen($dataString),
-            ),
+            ],
             CURLOPT_TIMEOUT => self::$timeout,
-        ));
+        ]);
         $this->getResponse($curl);
         self::$testSuiteId = null;
     }
