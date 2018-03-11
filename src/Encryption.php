@@ -52,7 +52,7 @@ class Encryption
         $curve = NistCurve::curve256();
         $privateKey = $curve->createPrivateKey();
         $publicKey = $curve->createPublicKey($privateKey);
-        $localPublicKey = Utils::serializePublicKey($publicKey);
+        $localPublicKey = hex2bin(Utils::serializePublicKey($publicKey));
 
         // get shared secret from user public key and local private key
         $sharedSecret = $curve->mul($publicKey->getPoint(), $privateKey->getSecret())->getX();
