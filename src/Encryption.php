@@ -56,7 +56,11 @@ class Encryption
 
         // get shared secret from user public key and local private key
         $sharedSecret = $curve->mul($publicKey->getPoint(), $privateKey->getSecret())->getX();
-        $sharedSecret = hex2bin(gmp_strval($sharedSecret, 16));
+        $hexSecret = gmp_strval($sharedSecret, 16);
+        if (strlen($hexSecret) % 2 !== 0) {
+            $hexSecret = '0'.$hexSecret;
+        }
+        $sharedSecret = hex2bin($hexSecret );
 
         // generate salt
         $salt = random_bytes(16);
