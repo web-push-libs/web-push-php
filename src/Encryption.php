@@ -50,12 +50,21 @@ class Encryption
         $userAuthToken = Base64Url::decode($userAuthToken);
 
         $curve = NistCurve::curve256();
-        $privateKey = $curve->createPrivateKey();
-        $publicKey = $curve->createPublicKey($privateKey);
-        $localPublicKey = hex2bin(Utils::serializePublicKey($publicKey));
+
+        // get local key pair
+        $localPrivateKeyObject = $curve->createPrivateKey();
+        $localPublicKeyObject = $curve->createPublicKey($localPrivateKeyObject);
+        $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
+
+        // get user public key object
+        [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
+        $userPublicKeyObject = $curve->getPublicKeyFrom(
+            gmp_init(bin2hex($userPublicKeyObjectX), 16),
+            gmp_init(bin2hex($userPublicKeyObjectY), 16)
+        );
 
         // get shared secret from user public key and local private key
-        $sharedSecret = $curve->mul($publicKey->getPoint(), $privateKey->getSecret())->getX();
+        $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
         $sharedSecret = hex2bin(gmp_strval($sharedSecret, 16));
 
         // generate salt
