@@ -161,7 +161,6 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
             $p256dh = $keys->{'p256dh'};
 
             $payload = 'hello';
-            $getNotificationCurl = null;
             try {
                 $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
                 $this->assertTrue($sendResp);
@@ -183,7 +182,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                     CURLOPT_TIMEOUT => self::$timeout,
                 ]);
 
-                $parsedResp = $this->getResponse($getSubscriptionCurl);
+                $parsedResp = $this->getResponse($getNotificationCurl);
 
                 if (!property_exists($parsedResp->{'data'}, 'messages')) {
                     throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
@@ -199,6 +198,8 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                         echo $e;
                     }
                     $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
+                } else {
+                    throw $e;
                 }
             }
         };
