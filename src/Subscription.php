@@ -24,31 +24,48 @@ class Subscription
     /** @var null|string */
     private $authToken;
 
+    /** @var string */
+    private $contentEncoding;
+
     /**
      * Subscription constructor.
      *
-     * @param string      $endpoint
+     * @param string $endpoint
      * @param null|string $publicKey
      * @param null|string $authToken
+     * @param string $contentEncoding (Optional) Must be "aesgcm"
+     * @throws \ErrorException
      */
-    public function __construct(string $endpoint, ?string $publicKey = null, ?string $authToken = null)
-    {
+    public function __construct(
+        string $endpoint,
+        ?string $publicKey = null,
+        ?string $authToken = null,
+        string $contentEncoding = "aesgcm"
+    ) {
+        $supportedContentEncodings = ['aesgcm'];
+        if (in_array($contentEncoding, $supportedContentEncodings)) {
+            throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+        }
+
         $this->endpoint = $endpoint;
         $this->publicKey = $publicKey;
         $this->authToken = $authToken;
+        $this->contentEncoding = $contentEncoding;
     }
 
     /**
      * Subscription factory.
      *
-     * @param array $associativeArray (with keys endpoint, publicKey, authToken)
+     * @param array $associativeArray (with keys endpoint, publicKey, authToken, contentEncoding)
      * @return Subscription
+     * @throws \ErrorException
      */
     public static function create(array $associativeArray): Subscription {
         $instance = new self(
             $associativeArray['endpoint'],
             $associativeArray['publicKey'],
-            $associativeArray['authToken']
+            $associativeArray['authToken'],
+            $associativeArray['contentEncoding']
         );
 
         return $instance;
@@ -76,5 +93,13 @@ class Subscription
     public function getAuthToken(): ?string
     {
         return $this->authToken;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContentEncoding(): string
+    {
+        return $this->contentEncoding;
     }
 }
