@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
@@ -229,20 +230,28 @@ class WebPush
             $auth = $notification->getAuth($this->auth);
 
             if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken);
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
+                $cipherText = $encrypted['cipherText'];
+                $salt = $encrypted['salt'];
+                $localPublicKey = $encrypted['localPublicKey'];
 
                 $headers = [
-                    'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
                     'Content-Encoding' => $contentEncoding,
                 ];
 
                 if ($contentEncoding === "aesgcm") {
-                    $headers['Encryption'] = 'salt='.$encrypted['salt'];
-                    $headers['Crypto-Key'] = 'dh='.$encrypted['localPublicKey'];
+                    $content = $cipherText;
+                    $headers['Encryption'] = 'salt='.Base64Url::encode($salt);
+                    $headers['Crypto-Key'] = 'dh='.Base64Url::encode($localPublicKey);
+                } else if ($contentEncoding === "aes128gcm") {
+                    $encryptionContentCodingHeader = "TODO";
+                    $content = $encryptionContentCodingHeader.$cipherText;
+                } else {
+                    throw new \ErrorException("This content encoding is not supported.");
                 }
 
-                $content = $encrypted['cipherText'];
+                $headers['Content-Length'] = Utils::safeStrlen($content);
             } else {
                 $headers = [
                     'Content-Length' => 0,
