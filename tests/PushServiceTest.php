@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
 
 final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
@@ -162,7 +163,8 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
             $payload = 'hello';
             try {
-                $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
+                $subscription = new Subscription($endpoint, $p256dh, $auth);
+                $sendResp = $this->webPush->sendNotification($subscription, $payload, true);
                 $this->assertTrue($sendResp);
 
                 $dataString = json_encode([

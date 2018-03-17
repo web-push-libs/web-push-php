@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
 
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
@@ -82,24 +83,23 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
         return [
-            [self::$endpoints['standard'], null, null, null],
-            [self::$endpoints['standard'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['standard'], self::$tokens['standard']],
-            [self::$endpoints['GCM'], null, null, null],
-            [self::$endpoints['GCM'], '{"message":"Comment ça va ?","tag":"general"}', self::$keys['GCM'], self::$tokens['GCM']],
+            [new Subscription(self::$endpoints['standard']), null],
+            [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
+            [new Subscription(self::$endpoints['GCM']), null],
+            [new Subscription(self::$endpoints['GCM'], self::$keys['GCM'], self::$tokens['GCM']), '{"message":"Comment ça va ?","tag":"general"}'],
         ];
     }
 
     /**
      * @dataProvider notificationProvider
      *
-     * @param string $endpoint
+     * @param Subscription $subscription
      * @param string $payload
-     * @param string $userPublicKey
-     * @param string $userAuthKey
+     * @throws ErrorException
      */
-    public function testSendNotification($endpoint, $payload, $userPublicKey, $userAuthKey)
+    public function testSendNotification($subscription, $payload)
     {
-        $res = $this->webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthKey, true);
+        $res = $this->webPush->sendNotification($subscription, $payload, true);
 
         $this->assertTrue($res);
     }
@@ -116,7 +116,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $notifications = array_fill(0, $total, $notifications[0]);
 
         foreach ($notifications as $notification) {
-            $this->webPush->sendNotification($notification[0], $notification[1], $notification[2], $notification[3]);
+            $this->webPush->sendNotification($notification[0], $notification[1]);
         }
 
         $res = $this->webPush->flush($batchSize);
@@ -131,11 +131,11 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     {
         $this->expectException('ErrorException');
         $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
+
+        $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);
         $this->webPush->sendNotification(
-            self::$endpoints['standard'],
+            $subscription,
             str_repeat('test', 1020),
-            self::$keys['standard'],
-            null,
             true
         );
     }
@@ -145,13 +145,15 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function testFlush()
     {
-        $this->webPush->sendNotification(self::$endpoints['standard']);
+        $subscription = new Subscription(self::$endpoints['standard']);
+
+        $this->webPush->sendNotification($subscription);
         $this->assertTrue($this->webPush->flush());
 
         // queue has been reset
         $this->assertFalse($this->webPush->flush());
 
-        $this->webPush->sendNotification(self::$endpoints['standard']);
+        $this->webPush->sendNotification($subscription);
         $this->assertTrue($this->webPush->flush());
     }
 
@@ -167,7 +169,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $webPush = new WebPush();
         $this->expectException('ErrorException');
         $this->expectExceptionMessage('No GCM API Key specified.');
-        $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
+
+        $subscription = new Subscription(self::$endpoints['GCM']);
+        $webPush->sendNotification($subscription, null, true);
     }
 
     /**
@@ -181,7 +185,8 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 
         $webPush = new WebPush(['GCM' => 'bar']);
 
-        $res = $webPush->sendNotification(self::$endpoints['GCM'], null, null, null, true);
+        $subscription = new Subscription(self::$endpoints['GCM']);
+        $res = $webPush->sendNotification($subscription, null, true);
 
         $this->assertTrue(is_array($res)); // there has been an error
         $this->assertArrayHasKey('success', $res);
