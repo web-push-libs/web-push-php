@@ -234,10 +234,13 @@ class WebPush
                 $headers = [
                     'Content-Length' => Utils::safeStrlen($encrypted['cipherText']),
                     'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => 'aesgcm',
-                    'Encryption' => 'salt='.$encrypted['salt'],
-                    'Crypto-Key' => 'dh='.$encrypted['localPublicKey'],
+                    'Content-Encoding' => $contentEncoding,
                 ];
+
+                if ($contentEncoding === "aesgcm") {
+                    $headers['Encryption'] = 'salt='.$encrypted['salt'];
+                    $headers['Crypto-Key'] = 'dh='.$encrypted['localPublicKey'];
+                }
 
                 $content = $encrypted['cipherText'];
             } else {
