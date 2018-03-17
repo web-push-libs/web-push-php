@@ -280,11 +280,12 @@ class WebPush
 
                 $headers['Authorization'] = $vapidHeaders['Authorization'];
 
-                if (array_key_exists('Crypto-Key', $headers)) {
-                    // FUTURE replace ';' with ','
-                    $headers['Crypto-Key'] .= ';'.$vapidHeaders['Crypto-Key'];
-                } else {
-                    $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
+                if ($contentEncoding === 'aesgcm') {
+                    if (array_key_exists('Crypto-Key', $headers)) {
+                        $headers['Crypto-Key'] .= ';'.$vapidHeaders['Crypto-Key'];
+                    } else {
+                        $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
+                    }
                 }
             }
 

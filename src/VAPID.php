@@ -149,6 +149,10 @@ class VAPID
                 'Authorization' => 'WebPush '.$jwt,
                 'Crypto-Key' => 'p256ecdsa='.$encodedPublicKey,
             ];
+        } else if ($contentEncoding === 'aes128gcm') {
+            return [
+                'Authorization' => 'vapid t='.$jwt.', k='.$encodedPublicKey,
+            ];
         }
 
         throw new \ErrorException('This content encoding is not supported');
