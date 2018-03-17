@@ -27,20 +27,19 @@ class Encryption
     /**
      * @param string $payload
      * @param int $maxLengthToPad
-     *
+     * @param string $contentEncoding
      * @return string padded payload (plaintext)
      * @throws \ErrorException
      */
-    public static function padPayload(string $payload, int $maxLengthToPad, $contentEncoding): string
+    public static function padPayload(string $payload, int $maxLengthToPad, string $contentEncoding): string
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
 
-        $paddedPayload = str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
         if ($contentEncoding === "aesgcm") {
-            return pack('n*', $padLen).$paddedPayload;
+            return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
         } else if ($contentEncoding === "aes128gcm") {
-            return $paddedPayload.chr(2);
+            return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
         } else {
             throw new \ErrorException("This content encoding is not supported");
         }

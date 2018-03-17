@@ -204,8 +204,8 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                     }
 
                     $messages = $parsedResp->{'data'}->{'messages'};
-                    $this->assertEquals(count($messages), 1);
-                    $this->assertEquals($messages[0], $payload);
+                    $this->assertEquals(1, count($messages));
+                    $this->assertEquals($payload, $messages[0]);
                 } catch (Exception $e) {
                     if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
                         && !array_key_exists('GCM', $options)) {
