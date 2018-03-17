@@ -15,6 +15,9 @@ namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
 use Jose\Component\Core\Util\Ecc\NistCurve;
+use Jose\Component\Core\Util\Ecc\Point;
+use Jose\Component\Core\Util\Ecc\PrivateKey;
+use Jose\Component\Core\Util\Ecc\PublicKey;
 
 class Encryption
 {
@@ -52,8 +55,7 @@ class Encryption
         $curve = NistCurve::curve256();
 
         // get local key pair
-        $localPrivateKeyObject = $curve->createPrivateKey();
-        $localPublicKeyObject = $curve->createPublicKey($localPrivateKeyObject);
+        list($localPublicKeyObject, $localPrivateKeyObject) = self::createLocalKey();
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
 
         // get user public key object
@@ -175,5 +177,57 @@ class Encryption
         }
 
         return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
+    }
+
+    /**
+     * @return array
+     */
+    private static function createLocalKey(): array
+    {
+        try {
+            return self::createLocalKeyUsingOpenSSL();
+        } catch (\Exception $e) {
+            return self::createLocalKeyUsingPurePhpMethod();
+        }
+    }
+
+    /**
+     * @return array
+     */
+    private static function createLocalKeyUsingPurePhpMethod(): array
+    {
+        $curve = NistCurve::curve256();
+        $privateKey = $curve->createPrivateKey();
+
+        return [
+            $curve->createPublicKey($privateKey),
+            $privateKey,
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    private static function createLocalKeyUsingOpenSSL(): array
+    {
+        $key = openssl_pkey_new([
+            'curve_name'       => 'prime256v1',
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+        ]);
+        $res = openssl_pkey_export($key, $out);
+        if (false === $res) {
+            throw new \RuntimeException('Unable to create the key');
+        }
+        $res = openssl_pkey_get_private($out);
+
+        $details = openssl_pkey_get_details($res);
+
+        return [
+            PublicKey::create(Point::create(
+                gmp_init(bin2hex($details['ec']['x']), 16),
+                gmp_init(bin2hex($details['ec']['y']), 16)
+            )),
+            PrivateKey::create(gmp_init(bin2hex($details['ec']['d']), 16))
+        ];
     }
 }
