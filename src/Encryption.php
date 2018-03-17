@@ -219,21 +219,8 @@ class Encryption
             throw new \RuntimeException('Unable to create the key');
         }
 
-        $isPemExportSuccessful = openssl_pkey_export($keyResource, $pem);
+        $details = openssl_pkey_get_details($keyResource);
         openssl_pkey_free($keyResource);
-
-        if (!$isPemExportSuccessful) {
-            throw new \RuntimeException('Unable to export the key');
-        }
-
-        $privateKeyResource = openssl_pkey_get_private($pem);
-
-        if (!$privateKeyResource) {
-            throw new \RuntimeException('Unable to get the private key');
-        }
-
-        $details = openssl_pkey_get_details($privateKeyResource);
-        openssl_pkey_free($privateKeyResource);
 
         if (!$details) {
             throw new \RuntimeException('Unable to get the key details');
