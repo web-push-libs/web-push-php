@@ -112,7 +112,7 @@ class WebPush
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
-            $payload = Encryption::padPayload($payload, $this->automaticPadding);
+            $payload = Encryption::padPayload($payload, $this->automaticPadding, $subscription->getContentEncoding());
         }
 
         if (array_key_exists('VAPID', $auth)) {

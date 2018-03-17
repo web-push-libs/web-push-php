@@ -26,16 +26,24 @@ class Encryption
 
     /**
      * @param string $payload
-     * @param int    $maxLengthToPad
+     * @param int $maxLengthToPad
      *
      * @return string padded payload (plaintext)
+     * @throws \ErrorException
      */
-    public static function padPayload(string $payload, int $maxLengthToPad): string
+    public static function padPayload(string $payload, int $maxLengthToPad, $contentEncoding): string
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
 
-        return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
+        $paddedPayload = str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
+        if ($contentEncoding === "aesgcm") {
+            return pack('n*', $padLen).$paddedPayload;
+        } else if ($contentEncoding === "aes128gcm") {
+            return $paddedPayload.chr(2);
+        } else {
+            throw new \ErrorException("This content encoding is not supported");
+        }
     }
 
     /**
@@ -49,13 +57,36 @@ class Encryption
      */
     public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding): array
     {
+        return self::deterministicEncrypt(
+            $payload,
+            $userPublicKey,
+            $userAuthToken,
+            $contentEncoding,
+            self::createLocalKeyObject(),
+            random_bytes(16)
+        );
+    }
+
+    /**
+     * @param string $payload
+     * @param string $userPublicKey
+     * @param string $userAuthToken
+     * @param string $contentEncoding
+     * @param array $localKeyObject
+     * @param string $salt
+     * @return array
+     *
+     * @throws \ErrorException
+     */
+    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
+    {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
         $curve = NistCurve::curve256();
 
         // get local key pair
-        list($localPublicKeyObject, $localPrivateKeyObject) = self::createLocalKeyObject();
+        list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
 
         // get user public key object
@@ -68,9 +99,6 @@ class Encryption
         // get shared secret from user public key and local private key
         $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
         $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
-
-        // generate salt
-        $salt = random_bytes(16);
 
         // section 4.3
         $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
