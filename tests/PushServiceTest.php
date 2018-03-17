@@ -156,7 +156,11 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
             $parsedResp = $this->getResponse($getSubscriptionCurl);
             $testId = $parsedResp->{'data'}->{'testId'};
             $subscription = $parsedResp->{'data'}->{'subscription'};
-            $supportedContentEncodings = $subscription->{'supportedContentEncodings'};
+
+            $supportedContentEncodings = property_exists($subscription, 'supportedContentEncodings') ?
+                $subscription->{'supportedContentEncodings'} :
+                ["aesgcm"];
+
             $endpoint = $subscription->{'endpoint'};
             $keys = $subscription->{'keys'};
             $auth = $keys->{'auth'};
