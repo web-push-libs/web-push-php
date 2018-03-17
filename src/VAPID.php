@@ -95,15 +95,17 @@ class VAPID
      * This method takes the required VAPID parameters and returns the required
      * header to be added to a Web Push Protocol Request.
      *
-     * @param string   $audience   This must be the origin of the push service
-     * @param string   $subject    This should be a URL or a 'mailto:' email address
-     * @param string   $publicKey  The decoded VAPID public key
-     * @param string   $privateKey The decoded VAPID private key
+     * @param string $audience This must be the origin of the push service
+     * @param string $subject This should be a URL or a 'mailto:' email address
+     * @param string $publicKey The decoded VAPID public key
+     * @param string $privateKey The decoded VAPID private key
+     * @param string $contentEncoding
      * @param null|int $expiration The expiration of the VAPID JWT. (UNIX timestamp)
      *
      * @return array Returns an array with the 'Authorization' and 'Crypto-Key' values to be used as headers
+     * @throws \ErrorException
      */
-    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, ?int $expiration = null)
+    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, string $contentEncoding, ?int $expiration = null)
     {
         $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
         if (null === $expiration || $expiration > $expirationLimit) {
@@ -139,10 +141,17 @@ class VAPID
             ->addSignature($jwk, $header)
             ->build();
 
-        return [
-            'Authorization' => 'WebPush '.$jwsCompactSerializer->serialize($jws, 0),
-            'Crypto-Key' => 'p256ecdsa='.Base64Url::encode($publicKey),
-        ];
+        $jwt = $jwsCompactSerializer->serialize($jws, 0);
+        $encodedPublicKey = Base64Url::encode($publicKey);
+
+        if ($contentEncoding === "aesgcm") {
+            return [
+                'Authorization' => 'WebPush '.$jwt,
+                'Crypto-Key' => 'p256ecdsa='.$encodedPublicKey,
+            ];
+        }
+
+        throw new \ErrorException('This content encoding is not supported');
     }
 
     /**

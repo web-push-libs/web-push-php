@@ -223,6 +223,7 @@ class WebPush
             $endpoint = $subscription->getEndpoint();
             $userPublicKey = $subscription->getPublicKey();
             $userAuthToken = $subscription->getAuthToken();
+            $contentEncoding = $subscription->getContentEncoding();
             $payload = $notification->getPayload();
             $options = $notification->getOptions($this->getDefaultOptions());
             $auth = $notification->getAuth($this->auth);
@@ -275,7 +276,7 @@ class WebPush
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
                 }
 
-                $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey']);
+                $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
 
                 $headers['Authorization'] = $vapidHeaders['Authorization'];
 

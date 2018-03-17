@@ -47,7 +47,7 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
     public function testGetVapidHeaders(string $audience, array $vapid, int $expiration, string $expectedAuthorization, string $expectedCryptoKey)
     {
         $vapid = VAPID::validate($vapid);
-        $headers = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $expiration);
+        $headers = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], "aesgcm", $expiration);
 
         $this->assertArrayHasKey('Authorization', $headers);
         $this->assertEquals(Utils::safeStrlen($expectedAuthorization), Utils::safeStrlen($headers['Authorization']));
