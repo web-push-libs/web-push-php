@@ -82,6 +82,10 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     public function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
+
+        // ignore in TravisCI
+        if (getenv('CI')) return [];
+
         return [
             [new Subscription(self::$endpoints['standard']), null],
             [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
