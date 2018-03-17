@@ -32,24 +32,30 @@ Use [composer](https://getcomposer.org/) to download and install the library and
 <?php
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
 
 // array of notifications
 $notifications = [
     [
-        'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+
+        'subscription' => Subscription::create([
+            'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+,
+            'publicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
+            'authToken' => 'CxVX6QsVToEGEcjfYPqXQw==', // base 64 encoded, should be 24 chars
+        ]),
         'payload' => 'hello !',
-        'userPublicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
-        'userAuthToken' => 'CxVX6QsVToEGEcjfYPqXQw==', // base 64 encoded, should be 24 chars
     ], [
-        'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
+        'subscription' => Subscription::create([
+            'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
+        ]),
         'payload' => null,
-        'userPublicKey' => null,
-        'userAuthToken' => null,
     ], [
-        'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+        'subscription' => Subscription::create([
+            'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+            'publicKey' => '(stringOf88Chars)',
+            'authToken' => '(stringOf24Chars)',
+            'contentEncoding' => 'aesgcm', // one of PushManager.supportedContentEncodings
+        ]),
         'payload' => '{msg:"test"}',
-        'userPublicKey' => '(stringOf88Chars)', 
-        'userAuthToken' => '(stringOf24Chars)',
     ],
 ];
 
@@ -58,20 +64,16 @@ $webPush = new WebPush();
 // send multiple notifications with payload
 foreach ($notifications as $notification) {
     $webPush->sendNotification(
-        $notification['endpoint'],
-        $notification['payload'], // optional (defaults null)
-        $notification['userPublicKey'], // optional (defaults null)
-        $notification['userAuthToken'] // optional (defaults null)
+        $notification['subscription'],
+        $notification['payload'] // optional (defaults null)
     );
 }
 $webPush->flush();
 
 // send one notification and flush directly
 $webPush->sendNotification(
-    $notifications[0]['endpoint'],
+    $notifications[0]['subscription'],
     $notifications[0]['payload'], // optional (defaults null)
-    $notifications[0]['userPublicKey'], // optional (defaults null)
-    $notifications[0]['userAuthToken'], // optional (defaults null)
     true // optional (defaults false)
 );
 ```
@@ -150,7 +152,7 @@ $webPush = new WebPush([], $defaultOptions);
 $webPush->setDefaultOptions($defaultOptions);
 
 // or for one notification
-$webPush->sendNotification($endpoint, $payload, $userPublicKey, $userAuthToken, $flush, ['TTL' => 5000]);
+$webPush->sendNotification($subscription, $payload, $flush, ['TTL' => 5000]);
 ```
 
 #### TTL
@@ -302,7 +304,7 @@ require __DIR__ . '/path/to/vendor/autoload.php';
 ```
 
 ### I must use PHP 5.4 or 5.5. What can I do?
-You won't be able to send any payload, so you'll only be able to use `sendNotification($endpoint)`.
+You won't be able to send any payload, so you'll only be able to use `sendNotification($subscription)`.
 Install the library with `composer` using `--ignore-platform-reqs`.
 The workaround for getting the payload is to fetch it in the service worker ([example](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js#L75)). 
 

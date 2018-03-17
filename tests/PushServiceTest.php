@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
 
 final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
@@ -155,51 +156,66 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
             $parsedResp = $this->getResponse($getSubscriptionCurl);
             $testId = $parsedResp->{'data'}->{'testId'};
             $subscription = $parsedResp->{'data'}->{'subscription'};
+
+            $supportedContentEncodings = property_exists($subscription, 'supportedContentEncodings') ?
+                $subscription->{'supportedContentEncodings'} :
+                ["aesgcm"];
+
             $endpoint = $subscription->{'endpoint'};
             $keys = $subscription->{'keys'};
             $auth = $keys->{'auth'};
             $p256dh = $keys->{'p256dh'};
-
             $payload = 'hello';
-            try {
-                $sendResp = $this->webPush->sendNotification($endpoint, $payload, $p256dh, $auth, true);
-                $this->assertTrue($sendResp);
 
-                $dataString = json_encode([
-                    'testSuiteId' => self::$testSuiteId,
-                    'testId' => $testId,
-                ]);
-
-                $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
-                curl_setopt_array($getNotificationCurl, [
-                    CURLOPT_POST => true,
-                    CURLOPT_POSTFIELDS => $dataString,
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HTTPHEADER => [
-                        'Content-Type: application/json',
-                        'Content-Length: '.strlen($dataString),
-                    ],
-                    CURLOPT_TIMEOUT => self::$timeout,
-                ]);
-
-                $parsedResp = $this->getResponse($getNotificationCurl);
-
-                if (!property_exists($parsedResp->{'data'}, 'messages')) {
-                    throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
+            foreach ($supportedContentEncodings as $contentEncoding) {
+                if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'])) {
+                    $this->expectException('ErrorException');
+                    $this->expectExceptionMessage('This content encoding ('.$contentEncoding.') is not supported.');
+                    $this->markTestIncomplete('Unsupported content encoding: '.$contentEncoding);
                 }
 
-                $messages = $parsedResp->{'data'}->{'messages'};
-                $this->assertEquals(count($messages), 1);
-                $this->assertEquals($messages[0], $payload);
-            } catch (Exception $e) {
-                if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
-                    && !array_key_exists('GCM', $options)) {
-                    if ($e->getMessage() !== 'No GCM API Key specified.') {
-                        echo $e;
+                $subscription = new Subscription($endpoint, $p256dh, $auth, $contentEncoding);
+
+                try {
+                    $sendResp = $this->webPush->sendNotification($subscription, $payload, true);
+                    $this->assertTrue($sendResp);
+
+                    $dataString = json_encode([
+                        'testSuiteId' => self::$testSuiteId,
+                        'testId' => $testId,
+                    ]);
+
+                    $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
+                    curl_setopt_array($getNotificationCurl, [
+                        CURLOPT_POST => true,
+                        CURLOPT_POSTFIELDS => $dataString,
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER => [
+                            'Content-Type: application/json',
+                            'Content-Length: '.strlen($dataString),
+                        ],
+                        CURLOPT_TIMEOUT => self::$timeout,
+                    ]);
+
+                    $parsedResp = $this->getResponse($getNotificationCurl);
+
+                    if (!property_exists($parsedResp->{'data'}, 'messages')) {
+                        throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
                     }
-                    $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
-                } else {
-                    throw $e;
+
+                    $messages = $parsedResp->{'data'}->{'messages'};
+                    $this->assertEquals(1, count($messages));
+                    $this->assertEquals($payload, $messages[0]);
+                } catch (Exception $e) {
+                    if (strpos($endpoint, 'https://android.googleapis.com/gcm/send') === 0
+                        && !array_key_exists('GCM', $options)) {
+                        if ($e->getMessage() !== 'No GCM API Key specified.') {
+                            echo $e;
+                        }
+                        $this->assertEquals($e->getMessage(), 'No GCM API Key specified.');
+                    } else {
+                        throw $e;
+                    }
                 }
             }
         };

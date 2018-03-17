@@ -26,28 +26,58 @@ class Encryption
 
     /**
      * @param string $payload
-     * @param int    $maxLengthToPad
-     *
+     * @param int $maxLengthToPad
+     * @param string $contentEncoding
      * @return string padded payload (plaintext)
+     * @throws \ErrorException
      */
-    public static function padPayload(string $payload, int $maxLengthToPad): string
+    public static function padPayload(string $payload, int $maxLengthToPad, string $contentEncoding): string
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
 
-        return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
+        if ($contentEncoding === "aesgcm") {
+            return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
+        } else if ($contentEncoding === "aes128gcm") {
+            return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
+        } else {
+            throw new \ErrorException("This content encoding is not supported");
+        }
     }
 
     /**
-     * @param string $payload       With padding
+     * @param string $payload With padding
      * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
      * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
-     *
+     * @param string $contentEncoding
      * @return array
      *
      * @throws \ErrorException
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken): array
+    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding): array
+    {
+        return self::deterministicEncrypt(
+            $payload,
+            $userPublicKey,
+            $userAuthToken,
+            $contentEncoding,
+            self::createLocalKeyObject(),
+            random_bytes(16)
+        );
+    }
+
+    /**
+     * @param string $payload
+     * @param string $userPublicKey
+     * @param string $userAuthToken
+     * @param string $contentEncoding
+     * @param array $localKeyObject
+     * @param string $salt
+     * @return array
+     *
+     * @throws \ErrorException
+     */
+    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
     {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
@@ -55,7 +85,7 @@ class Encryption
         $curve = NistCurve::curve256();
 
         // get local key pair
-        list($localPublicKeyObject, $localPrivateKeyObject) = self::createLocalKeyObject();
+        list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
 
         // get user public key object
@@ -69,23 +99,18 @@ class Encryption
         $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
         $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
 
-        // generate salt
-        $salt = random_bytes(16);
-
         // section 4.3
-        $ikm = !empty($userAuthToken) ?
-            self::hkdf($userAuthToken, $sharedSecret, 'Content-Encoding: auth'.chr(0), 32) :
-            $sharedSecret;
+        $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
 
         // section 4.2
-        $context = self::createContext($userPublicKey, $localPublicKey);
+        $context = self::createContext($userPublicKey, $localPublicKey, $contentEncoding);
 
         // derive the Content Encryption Key
-        $contentEncryptionKeyInfo = self::createInfo('aesgcm', $context);
+        $contentEncryptionKeyInfo = self::createInfo($contentEncoding, $context, $contentEncoding);
         $contentEncryptionKey = self::hkdf($salt, $ikm, $contentEncryptionKeyInfo, 16);
 
         // section 3.3, derive the nonce
-        $nonceInfo = self::createInfo('nonce', $context);
+        $nonceInfo = self::createInfo('nonce', $context, $contentEncoding);
         $nonce = self::hkdf($salt, $ikm, $nonceInfo, 12);
 
         // encrypt
@@ -94,10 +119,22 @@ class Encryption
 
         // return values in url safe base64
         return [
-            'localPublicKey' => Base64Url::encode($localPublicKey),
-            'salt' => Base64Url::encode($salt),
+            'localPublicKey' => $localPublicKey,
+            'salt' => $salt,
             'cipherText' => $encryptedText.$tag,
         ];
+    }
+
+    public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
+    {
+        if ($contentEncoding === "aes128gcm") {
+            return $salt
+                .pack('N*', 4096)
+                .pack('C*', Utils::safeStrlen($localPublicKey))
+                .$localPublicKey;
+        }
+
+        return "";
     }
 
     /**
@@ -138,12 +175,16 @@ class Encryption
      * @param string $clientPublicKey The client's public key
      * @param string $serverPublicKey Our public key
      *
-     * @return string
+     * @return null|string
      *
      * @throws \ErrorException
      */
-    private static function createContext(string $clientPublicKey, string $serverPublicKey): string
+    private static function createContext(string $clientPublicKey, string $serverPublicKey, $contentEncoding): ?string
     {
+        if ($contentEncoding === "aes128gcm") {
+            return null;
+        }
+
         if (Utils::safeStrlen($clientPublicKey) !== 65) {
             throw new \ErrorException('Invalid client public key length');
         }
@@ -163,20 +204,30 @@ class Encryption
      * {@link https://tools.ietf.org/html/draft-ietf-httpbis-encryption-encoding-00}
      * From {@link https://github.com/GoogleChrome/push-encryption-node/blob/master/src/encrypt.js}.
      *
-     * @param string $type    The type of the info record
-     * @param string $context The context for the record
-     *
+     * @param string $type The type of the info record
+     * @param string|null $context The context for the record
+     * @param string $contentEncoding
      * @return string
      *
      * @throws \ErrorException
      */
-    private static function createInfo(string $type, string $context): string
+    private static function createInfo(string $type, ?string $context, string $contentEncoding): string
     {
-        if (Utils::safeStrlen($context) !== 135) {
-            throw new \ErrorException('Context argument has invalid size');
+        if ($contentEncoding === "aesgcm") {
+            if (!$context) {
+                throw new \ErrorException('Context must exist');
+            }
+
+            if (Utils::safeStrlen($context) !== 135) {
+                throw new \ErrorException('Context argument has invalid size');
+            }
+
+            return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
+        } else if ($contentEncoding === "aes128gcm") {
+            return 'Content-Encoding: '.$type.chr(0);
         }
 
-        return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
+        throw new \ErrorException('This content encoding is not supported.');
     }
 
     /**
@@ -233,5 +284,31 @@ class Encryption
             )),
             PrivateKey::create(gmp_init(bin2hex($details['ec']['d']), 16))
         ];
+    }
+
+    /**
+     * @param string $userAuthToken
+     * @param string $userPublicKey
+     * @param string $localPublicKey
+     * @param string $sharedSecret
+     * @param string $contentEncoding
+     * @return string
+     * @throws \ErrorException
+     */
+    private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, string $contentEncoding): string
+    {
+        if (!empty($userAuthToken)) {
+            if ($contentEncoding === "aesgcm") {
+                $info = 'Content-Encoding: auth'.chr(0);
+            } else if ($contentEncoding === "aes128gcm") {
+                $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
+            } else {
+                throw new \ErrorException("This content encoding is not supported");
+            }
+
+            return self::hkdf($userAuthToken, $sharedSecret, $info, 32);
+        }
+
+        return $sharedSecret;
     }
 }

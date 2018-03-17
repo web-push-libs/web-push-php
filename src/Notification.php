@@ -15,17 +15,11 @@ namespace Minishlink\WebPush;
 
 class Notification
 {
-    /** @var string */
-    private $endpoint;
+    /** @var Subscription */
+    private $subscription;
 
     /** @var null|string */
     private $payload;
-
-    /** @var null|string */
-    private $userPublicKey;
-
-    /** @var null|string */
-    private $userAuthToken;
 
     /** @var array Options : TTL, urgency, topic */
     private $options;
@@ -36,29 +30,25 @@ class Notification
     /**
      * Notification constructor.
      *
-     * @param string      $endpoint
+     * @param Subscription $subscription
      * @param null|string $payload
-     * @param null|string $userPublicKey
-     * @param null|string $userAuthToken
-     * @param array       $options
-     * @param array       $auth
+     * @param array $options
+     * @param array $auth
      */
-    public function __construct(string $endpoint, ?string $payload, ?string $userPublicKey, ?string $userAuthToken, array $options, array $auth)
+    public function __construct(Subscription $subscription, ?string $payload, array $options, array $auth)
     {
-        $this->endpoint = $endpoint;
+        $this->subscription = $subscription;
         $this->payload = $payload;
-        $this->userPublicKey = $userPublicKey;
-        $this->userAuthToken = $userAuthToken;
         $this->options = $options;
         $this->auth = $auth;
     }
 
     /**
-     * @return string
+     * @return Subscription
      */
-    public function getEndpoint(): string
+    public function getSubscription(): Subscription
     {
-        return $this->endpoint;
+        return $this->subscription;
     }
 
     /**
@@ -67,22 +57,6 @@ class Notification
     public function getPayload(): ?string
     {
         return $this->payload;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getUserPublicKey(): ?string
-    {
-        return $this->userPublicKey;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getUserAuthToken(): ?string
-    {
-        return $this->userAuthToken;
     }
 
     /**
