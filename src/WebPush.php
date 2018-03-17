@@ -247,8 +247,8 @@ class WebPush
                 } else if ($contentEncoding === "aes128gcm") {
                     $encryptionContentCodingHeader =
                         $salt
-                        .pack('N', Utils::safeStrlen($cipherText))
-                        .pack('C', Utils::safeStrlen($localPublicKey))
+                        .pack('N*', Utils::safeStrlen($cipherText))
+                        .pack('C*', Utils::safeStrlen($localPublicKey))
                         .$localPublicKey;
 
                     $content = $encryptionContentCodingHeader.$cipherText;
