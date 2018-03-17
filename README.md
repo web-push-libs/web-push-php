@@ -273,15 +273,12 @@ Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
 Payload is encrypted according to the [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption-01) standard,
 using the user public key and authentication secret that you can get by following the [Web Push API](http://www.w3.org/TR/push-api/) specification.
 
-Internally, WebPush uses the [phpecc](https://github.com/phpecc/phpecc) Elliptic Curve Cryptography library to create 
-local public and private keys and compute the shared secret.
-Then, if you have a PHP >= 7.1, WebPush uses `openssl` in order to encrypt the payload with the encryption key.
-Otherwise, if you have PHP < 7.1, it uses [Spomky-Labs/php-aes-gcm](https://github.com/Spomky-Labs/php-aes-gcm), which is slower.
+Internally, WebPush uses the [WebToken](https://github.com/web-token) framework or OpenSSL to handle encryption keys generation and encryption.
 
 ### How do I scale?
 Here are some ideas:
 
-1. Upgrade to PHP 7.1
+1. Upgrade to PHP 7.2
 2. Make sure MultiCurl is available on your server
 3. Find the right balance for your needs between security and performance (see above)
 4. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
