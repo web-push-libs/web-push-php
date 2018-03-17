@@ -78,6 +78,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 
     /**
      * @return array
+     * @throws ErrorException
      */
     public function notificationProvider(): array
     {
