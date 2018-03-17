@@ -22,6 +22,7 @@ use GuzzleHttp\Promise;
 class WebPush
 {
     public const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    public const FCM_BASE_URL = 'https://fcm.googleapis.com';
 
     /**
      * @var Client
@@ -303,6 +304,8 @@ class WebPush
                     } else {
                         $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
                     }
+                } else if ($contentEncoding === 'aes128gcm' && substr($endpoint, 0, strlen(self::FCM_BASE_URL)) === self::FCM_BASE_URL) {
+                    $endpoint = str_replace('fcm/send', 'wp', $endpoint);
                 }
             }
 
