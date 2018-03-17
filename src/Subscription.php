@@ -42,7 +42,7 @@ class Subscription
         ?string $authToken = null,
         string $contentEncoding = "aesgcm"
     ) {
-        $supportedContentEncodings = ['aesgcm'];
+        $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
         if (!in_array($contentEncoding, $supportedContentEncodings)) {
             throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
         }
