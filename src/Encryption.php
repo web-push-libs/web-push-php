@@ -55,7 +55,7 @@ class Encryption
         $curve = NistCurve::curve256();
 
         // get local key pair
-        list($localPublicKeyObject, $localPrivateKeyObject) = self::createLocalKey();
+        list($localPublicKeyObject, $localPrivateKeyObject) = self::createLocalKeyObject();
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
 
         // get user public key object
@@ -182,19 +182,19 @@ class Encryption
     /**
      * @return array
      */
-    private static function createLocalKey(): array
+    private static function createLocalKeyObject(): array
     {
         try {
-            return self::createLocalKeyUsingOpenSSL();
+            return self::createLocalKeyObjectUsingOpenSSL();
         } catch (\Exception $e) {
-            return self::createLocalKeyUsingPurePhpMethod();
+            return self::createLocalKeyObjectUsingPurePhpMethod();
         }
     }
 
     /**
      * @return array
      */
-    private static function createLocalKeyUsingPurePhpMethod(): array
+    private static function createLocalKeyObjectUsingPurePhpMethod(): array
     {
         $curve = NistCurve::curve256();
         $privateKey = $curve->createPrivateKey();
@@ -208,19 +208,23 @@ class Encryption
     /**
      * @return array
      */
-    private static function createLocalKeyUsingOpenSSL(): array
+    private static function createLocalKeyObjectUsingOpenSSL(): array
     {
-        $key = openssl_pkey_new([
+        $keyResource = openssl_pkey_new([
             'curve_name'       => 'prime256v1',
             'private_key_type' => OPENSSL_KEYTYPE_EC,
         ]);
-        $res = openssl_pkey_export($key, $out);
-        if (false === $res) {
+
+        if (!$keyResource) {
             throw new \RuntimeException('Unable to create the key');
         }
-        $res = openssl_pkey_get_private($out);
 
-        $details = openssl_pkey_get_details($res);
+        $details = openssl_pkey_get_details($keyResource);
+        openssl_pkey_free($keyResource);
+
+        if (!$details) {
+            throw new \RuntimeException('Unable to get the key details');
+        }
 
         return [
             PublicKey::create(Point::create(
