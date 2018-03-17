@@ -46,8 +46,6 @@ $notifications = [
     ], [
         'subscription' => Subscription::create([
             'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
-            'publicKey' => null,
-            'authToken' => null,
         ]),
         'payload' => null,
     ], [
@@ -55,6 +53,7 @@ $notifications = [
             'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
             'publicKey' => '(stringOf88Chars)',
             'authToken' => '(stringOf24Chars)',
+            'contentEncoding' => 'aesgcm', // one of PushManager.supportedContentEncodings
         ]),
         'payload' => '{msg:"test"}',
     ],
