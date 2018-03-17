@@ -202,7 +202,6 @@ class Encryption
         return [
             $curve->createPublicKey($privateKey),
             $privateKey,
-
         ];
     }
 
@@ -229,6 +228,6 @@ class Encryption
                 gmp_init(bin2hex($details['ec']['y']), 16)
             )),
             PrivateKey::create(gmp_init(bin2hex($details['ec']['d']), 16))
-            ];
+        ];
     }
 }
