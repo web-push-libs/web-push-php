@@ -126,6 +126,18 @@ class Encryption
         ];
     }
 
+    public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
+    {
+        if ($contentEncoding === "aes128gcm") {
+            return $salt
+                .pack('N*', 4096)
+                .pack('C*', Utils::safeStrlen($localPublicKey))
+                .$localPublicKey;
+        }
+
+        return "";
+    }
+
     /**
      * HMAC-based Extract-and-Expand Key Derivation Function (HKDF).
      *

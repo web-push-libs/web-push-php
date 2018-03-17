@@ -242,20 +242,12 @@ class WebPush
                 ];
 
                 if ($contentEncoding === "aesgcm") {
-                    $content = $cipherText;
                     $headers['Encryption'] = 'salt='.Base64Url::encode($salt);
                     $headers['Crypto-Key'] = 'dh='.Base64Url::encode($localPublicKey);
-                } else if ($contentEncoding === "aes128gcm") {
-                    $encryptionContentCodingHeader =
-                        $salt
-                        .pack('N*', Utils::safeStrlen($cipherText))
-                        .pack('C*', Utils::safeStrlen($localPublicKey))
-                        .$localPublicKey;
-
-                    $content = $encryptionContentCodingHeader.$cipherText;
-                } else {
-                    throw new \ErrorException("This content encoding is not supported.");
                 }
+
+                $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey, $contentEncoding);
+                $content = $encryptionContentCodingHeader.$cipherText;
 
                 $headers['Content-Length'] = Utils::safeStrlen($content);
             } else {

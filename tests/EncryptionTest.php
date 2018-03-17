@@ -63,6 +63,18 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $result);
     }
 
+    public function testGetContentCodingHeader()
+    {
+        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
+
+        $result = Encryption::getContentCodingHeader($salt, $localPublicKey, "aes128gcm");
+        $expected = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+
+        $this->assertEquals(Utils::safeStrlen($expected), Utils::safeStrlen($result));
+        $this->assertEquals($expected, $result);
+    }
+
     /**
      * @dataProvider payloadProvider
      *
