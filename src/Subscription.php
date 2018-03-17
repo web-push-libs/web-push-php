@@ -43,7 +43,7 @@ class Subscription
         string $contentEncoding = "aesgcm"
     ) {
         $supportedContentEncodings = ['aesgcm'];
-        if (in_array($contentEncoding, $supportedContentEncodings)) {
+        if (!in_array($contentEncoding, $supportedContentEncodings)) {
             throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
         }
 
