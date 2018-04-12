@@ -188,6 +188,7 @@ class WebPush
                     if ($response !== null) {
                         $statusCode = $response->getStatusCode();
                         $error['statusCode'] = $statusCode;
+                        $error['reasonPhrase'] = $response->getReasonPhrase();
                         $error['expired'] = in_array($statusCode, [404, 410]);
                         $error['content'] = $response->getBody();
                         $error['headers'] = $response->getHeaders();
