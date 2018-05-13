@@ -24,7 +24,7 @@ class Subscription
     /** @var null|string */
     private $authToken;
 
-    /** @var string */
+    /** @var null|string */
     private $contentEncoding;
 
     /**
@@ -40,17 +40,20 @@ class Subscription
         string $endpoint,
         ?string $publicKey = null,
         ?string $authToken = null,
-        string $contentEncoding = "aesgcm"
+        ?string $contentEncoding = null
     ) {
-        $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
-        if (!in_array($contentEncoding, $supportedContentEncodings)) {
-            throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
-        }
-
         $this->endpoint = $endpoint;
-        $this->publicKey = $publicKey;
-        $this->authToken = $authToken;
-        $this->contentEncoding = $contentEncoding;
+
+        if ($publicKey || $authToken || $contentEncoding) {
+            $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
+            if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings)) {
+                throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+            }
+
+            $this->publicKey = $publicKey;
+            $this->authToken = $authToken;
+            $this->contentEncoding = $contentEncoding ?: "aesgcm";
+        }
     }
 
     /**
@@ -61,14 +64,18 @@ class Subscription
      * @throws \ErrorException
      */
     public static function create(array $associativeArray): Subscription {
-        $instance = new self(
-            $associativeArray['endpoint'],
-            $associativeArray['publicKey'],
-            $associativeArray['authToken'],
-            $associativeArray['contentEncoding']
-        );
+        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
+            return new self(
+                $associativeArray['endpoint'],
+                $associativeArray['publicKey'] ?? null,
+                $associativeArray['authToken'] ?? null,
+                $associativeArray['contentEncoding'] ?? "aesgcm"
+            );
+        }
 
-        return $instance;
+        return new self(
+            $associativeArray['endpoint']
+        );
     }
 
     /**
@@ -96,9 +103,9 @@ class Subscription
     }
 
     /**
-     * @return string
+     * @return null|string
      */
-    public function getContentEncoding(): string
+    public function getContentEncoding(): ?string
     {
         return $this->contentEncoding;
     }
