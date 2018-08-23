@@ -8,6 +8,8 @@ sudo: required
 cache:
   directories:
     - ~/.selenium-assistant
+    - node_modules                  # cache modules too
+    - $HOME/.composer/cache/files   # and composer packages
 
 matrix:
     allow_failures:
