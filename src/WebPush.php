@@ -27,27 +27,27 @@ class WebPush
     /**
      * @var Client
      */
-    private $client;
+    protected $client;
 
     /**
      * @var array
      */
-    private $auth;
+	protected $auth;
 
     /**
      * @var null|array Array of array of Notifications
      */
-    private $notifications;
+	protected $notifications;
 
     /**
      * @var array Default options : TTL, urgency, topic, batchSize
      */
-    private $defaultOptions;
+	protected $defaultOptions;
 
     /**
      * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
      */
-    private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+	protected $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /**
      * WebPush constructor.
@@ -365,5 +365,12 @@ class WebPush
         $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+    }
+
+	/**
+	 * @return int
+	 */
+	public function getNotificationsCount() : int {
+		return null === $this->notifications ? 0 : \count($this->notifications);
     }
 }
