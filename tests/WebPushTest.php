@@ -148,18 +148,38 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testFlush()
-    {
-        $subscription = new Subscription(self::$endpoints['standard']);
+    public function testFlush() {
+	    $subscription = new Subscription(self::$endpoints['standard']);
 
-        $this->webPush->sendNotification($subscription);
-        $this->assertTrue($this->webPush->flush());
+	    $this->webPush->sendNotification($subscription);
+	    $this->assertNotEmpty(iterator_to_array($this->webPush->flush()));
 
-        // queue has been reset
-        $this->assertFalse($this->webPush->flush());
+	    // queue has been reset
+	    $this->assertEmpty(iterator_to_array($this->webPush->flush()));
 
-        $this->webPush->sendNotification($subscription);
-        $this->assertTrue($this->webPush->flush());
+	    $this->webPush->sendNotification($subscription);
+	    $this->assertNotEmpty(iterator_to_array($this->webPush->flush()));
+
+	    $sub = Subscription::create([
+		    'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
+		    'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
+		    'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
+		    'contentEncoding' => 'aes128gcm',
+	    ]);
+
+	    // test multiple requests
+	    $this->webPush->sendNotification($sub, json_encode(['test' => 1]));
+	    $this->webPush->sendNotification($sub, json_encode(['test' => 2]));
+	    $this->webPush->sendNotification($sub, json_encode(['test' => 3]));
+
+	    /** @var \Minishlink\WebPush\MessageSentReport $report */
+	    foreach ($this->webPush->flush() as $report) {
+	    	$this->assertFalse($report->isSuccess());
+	    	$this->assertFalse($report->isSubscriptionExpired());
+	    	$this->assertEquals(404, $report->getResponse()->getStatusCode());
+	    	$this->assertNotEmpty($report->getReason());
+	    	$this->assertNotFalse(filter_var($report->getEndpoint(), FILTER_VALIDATE_URL));
+	    }
     }
 
     /**

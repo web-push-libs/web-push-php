@@ -5,3 +5,5 @@ phpunit.xml
 # web-push-testing-service logs
 cli.log
 module.log
+.vagrant
+Vagrantfile # temp, may be?

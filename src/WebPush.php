@@ -121,23 +121,7 @@ class WebPush
 
         $this->notifications[] = new Notification($subscription, $payload, $options, $auth);
 
-        if ($flush) {
-            $res = $this->flush();
-
-            // if there has been a problem with at least one notification
-            if (is_array($res)) {
-                // if there was only one notification, return the information directly
-                if (count($res) === 1) {
-                    return $res[0];
-                }
-
-                return $res;
-            }
-
-            return true;
-        }
-
-        return true;
+	    return false !== $flush ? $this->flush() : true;
     }
 
 	/**
@@ -145,13 +129,13 @@ class WebPush
 	 *
 	 * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
 	 *
-	 * @return bool|MessageSentReport|\Generator
+	 * @return \Generator
 	 * @throws \ErrorException
 	 */
-    public function flush(?int $batchSize = null)
+    public function flush(?int $batchSize = null) : \Generator
     {
         if (empty($this->notifications)) {
-            return false;
+	        yield from [];
         }
 
         if (null === $batchSize) {
@@ -159,6 +143,9 @@ class WebPush
         }
 
         $batches = array_chunk($this->notifications, $batchSize);
+
+	    // reset queue
+	    $this->notifications = [];
 
         foreach ($batches as $batch) {
 	        // for each endpoint server type
@@ -181,9 +168,6 @@ class WebPush
 		        yield $result;
 	        }
         }
-
-        // reset queue
-        $this->notifications = null;
     }
 
     /**
