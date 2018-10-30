@@ -72,4 +72,18 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("authToken", $subscription->getAuthToken());
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
     }
+
+    public function testCreatePartialWithNewStructure()
+    {
+        $subscription = Subscription::create([
+            "endpoint" => "http://toto.com",
+            "keys" => [
+                'p256dh' => 'publicKey',
+                'auth' => 'authToken'
+            ]
+        ]);
+        $this->assertEquals("http://toto.com", $subscription->getEndpoint());
+        $this->assertEquals("publicKey", $subscription->getPublicKey());
+        $this->assertEquals("authToken", $subscription->getAuthToken());
+    }
 }
