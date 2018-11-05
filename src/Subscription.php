@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Minishlink\WebPush\Notification\EnumContentEncoding;
+
 class Subscription
 {
     /** @var string */
@@ -45,14 +47,13 @@ class Subscription
         $this->endpoint = $endpoint;
 
         if ($publicKey || $authToken || $contentEncoding) {
-            $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
-            if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings)) {
+            if ($contentEncoding && !EnumContentEncoding::isSupported($contentEncoding)) {
                 throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
             }
 
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
-            $this->contentEncoding = $contentEncoding ?: "aesgcm";
+            $this->contentEncoding = $contentEncoding ?: EnumContentEncoding::AES_GCM;
         }
     }
 
@@ -69,7 +70,7 @@ class Subscription
                 $associativeArray['endpoint'],
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? EnumContentEncoding::AES_GCM
             );
         }
 
