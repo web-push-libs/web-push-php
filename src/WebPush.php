@@ -129,10 +129,10 @@ class WebPush
 	 *
 	 * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
 	 *
-	 * @return \iterable
+	 * @return iterable
 	 * @throws \ErrorException
 	 */
-    public function flush(?int $batchSize = null) : \iterable
+    public function flush(?int $batchSize = null) : iterable
     {
         if (empty($this->notifications)) {
 	        yield from [];
