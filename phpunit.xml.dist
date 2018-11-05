@@ -8,6 +8,17 @@
          convertWarningsToExceptions="true"
          processIsolation="false"
          stopOnFailure="false">
+    <php>
+        <env name="STANDARD_ENDPOINT" value="https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg" />
+        <env name="USER_PUBLIC_KEY" value="BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q" />
+        <env name="USER_AUTH_TOKEN" value="hUIGbmiypj9_EQea8AnCKA" />
+        <env name="GCM_ENDPOINT" value="https://fcm.googleapis.com/fcm/send" />
+        <env name="GCM_API_KEY" value="eWs0bOvVLLFcaWiX-daOTjP_628nzA9Qf0pY_p14k1M" />
+        <env name="GCM_USER_PUBLIC_KEY" value="BE5fPAIt-f3APazVd_WP-k8B-ef33FbF4R-YYJzctuYo10WNvBzJMbuPsL6KKup3u3xN2aZ2B0J_w9YzU0B1DmY" />
+        <env name="GCM_USER_AUTH_TOKEN" value="AIzaSyCGco81Spjt-Tf_tHiSiSaTeStVaLuE_UJK7U" />
+        <env name="VAPID_PUBLIC_KEY" value="BE5fPAIt-f3APazVd_WP-k8B-ef33FbF4R-YYJzctuYo10WNvBzJMbuPsL6KKup3u3xN2aZ2B0J_w9YzU0B1DmY" />
+        <env name="VAPID_PRIVATE_KEY" value="eWs0bOvVLLFcaWiX-daOTjP_628nzA9Qf0pY_p14k1M" />
+    </php>
     <testsuites>
         <testsuite name="WebPush Test Suite">
             <directory suffix=".php">./tests/</directory>

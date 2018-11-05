@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Minishlink\WebPush\Notification\EnumNotificationOption;
+
 class Notification
 {
     /** @var Subscription */
@@ -67,9 +69,16 @@ class Notification
     public function getOptions(array $defaultOptions = []): array
     {
         $options = $this->options;
-        $options['TTL'] = array_key_exists('TTL', $options) ? $options['TTL'] : $defaultOptions['TTL'];
-        $options['urgency'] = array_key_exists('urgency', $options) ? $options['urgency'] : $defaultOptions['urgency'];
-        $options['topic'] = array_key_exists('topic', $options) ? $options['topic'] : $defaultOptions['topic'];
+
+        $mergeOptions = [
+	        EnumNotificationOption::TTL,
+	        EnumNotificationOption::URGENCY,
+	        EnumNotificationOption::TOPIC,
+        ];
+
+        foreach ($mergeOptions as $name) {
+	        $options[$name] = array_key_exists($name, $options) ? $options[$name] : $defaultOptions[$name];
+        }
 
         return $options;
     }

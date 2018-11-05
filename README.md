@@ -139,12 +139,14 @@ You can change the default options with `setDefaultOptions()` or in the construc
 <?php
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Notification\EnumNotificationOption;
+use Minishlink\WebPush\Notification\EnumNotificationUrgency;
 
 $defaultOptions = [
-    'TTL' => 300, // defaults to 4 weeks
-    'urgency' => 'normal', // protocol defaults to "normal"
-    'topic' => 'new_event', // not defined by default,
-    'batchSize' => 200, // defaults to 1000
+    EnumNotificationOption::TTL => 300, // defaults to 4 weeks
+    EnumNotificationOption::URGENCY => EnumNotificationUrgency::NORMAL, // protocol defaults to "normal"
+    EnumNotificationOption::TOPIC => 'new_event', // not defined by default,
+    EnumNotificationOption::BATCH_SIZE => 200, // defaults to 1000
 ];
 
 // for every notifications
@@ -152,7 +154,7 @@ $webPush = new WebPush([], $defaultOptions);
 $webPush->setDefaultOptions($defaultOptions);
 
 // or for one notification
-$webPush->sendNotification($subscription, $payload, $flush, ['TTL' => 5000]);
+$webPush->sendNotification($subscription, $payload, $flush, [ EnumNotificationOption::TTL => 5000]);
 ```
 
 #### TTL

@@ -18,6 +18,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Promise;
+use Minishlink\WebPush\Notification\EnumNotificationOption;
 
 class WebPush
 {
@@ -158,7 +159,7 @@ class WebPush
         }
 
         if (null === $batchSize) {
-            $batchSize = $this->defaultOptions['batchSize'];
+            $batchSize = $this->defaultOptions[EnumNotificationOption::BATCH_SIZE];
         }
 
         $batches = array_chunk($this->notifications, $batchSize);
@@ -259,14 +260,14 @@ class WebPush
                 $content = '';
             }
 
-            $headers['TTL'] = $options['TTL'];
+            $headers['TTL'] = $options[EnumNotificationOption::TTL];
 
-            if (isset($options['urgency'])) {
-                $headers['Urgency'] = $options['urgency'];
+            if (isset($options[EnumNotificationOption::URGENCY])) {
+                $headers['Urgency'] = $options[EnumNotificationOption::URGENCY];
             }
 
-            if (isset($options['topic'])) {
-                $headers['Topic'] = $options['topic'];
+            if (isset($options[EnumNotificationOption::TOPIC])) {
+                $headers['Topic'] = $options[EnumNotificationOption::TOPIC];
             }
 
             // if GCM
@@ -359,11 +360,11 @@ class WebPush
     /**
      * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
      */
-    public function setDefaultOptions(array $defaultOptions)
+    public function setDefaultOptions(array $defaultOptions): void
     {
-        $this->defaultOptions['TTL'] = isset($defaultOptions['TTL']) ? $defaultOptions['TTL'] : 2419200;
-        $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
-        $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
-        $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+        $this->defaultOptions[EnumNotificationOption::TTL] = $defaultOptions[EnumNotificationOption::TTL] ?? 2419200;
+        $this->defaultOptions[EnumNotificationOption::URGENCY] = $defaultOptions[EnumNotificationOption::URGENCY] ?? null;
+        $this->defaultOptions[EnumNotificationOption::TOPIC] = $defaultOptions[EnumNotificationOption::TOPIC] ?? null;
+        $this->defaultOptions[EnumNotificationOption::BATCH_SIZE] = $defaultOptions[EnumNotificationOption::BATCH_SIZE] ?? 1000;
     }
 }
