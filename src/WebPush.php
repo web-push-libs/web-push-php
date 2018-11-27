@@ -17,7 +17,7 @@ use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Promise;
+use Psr\Http\Message\ResponseInterface;
 
 class WebPush
 {
@@ -121,40 +121,21 @@ class WebPush
 
         $this->notifications[] = new Notification($subscription, $payload, $options, $auth);
 
-        if ($flush) {
-            $res = $this->flush();
-
-            // if there has been a problem with at least one notification
-            if (is_array($res)) {
-                // if there was only one notification, return the information directly
-                if (count($res) === 1) {
-                    return $res[0];
-                }
-
-                return $res;
-            }
-
-            return true;
-        }
-
-        return true;
+	    return false !== $flush ? $this->flush() : true;
     }
 
-    /**
-     * Flush notifications. Triggers the requests.
-     *
-     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
-     *
-     * @return array|bool If there are no errors, return true.
-     *                    If there were no notifications in the queue, return false.
-     * Else return an array of information for each notification sent (success, statusCode, headers, content)
-     *
-     * @throws \ErrorException
-     */
-    public function flush(?int $batchSize = null)
+	/**
+	 * Flush notifications. Triggers the requests.
+	 *
+	 * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+	 *
+	 * @return iterable
+	 * @throws \ErrorException
+	 */
+    public function flush(?int $batchSize = null) : iterable
     {
         if (empty($this->notifications)) {
-            return false;
+	        yield from [];
         }
 
         if (null === $batchSize) {
@@ -162,52 +143,31 @@ class WebPush
         }
 
         $batches = array_chunk($this->notifications, $batchSize);
-        $return = [];
-        $completeSuccess = true;
+
+	    // reset queue
+	    $this->notifications = [];
+
         foreach ($batches as $batch) {
-            // for each endpoint server type
-            $requests = $this->prepare($batch);
-            $promises = [];
-            foreach ($requests as $request) {
-                $promises[] = $this->client->sendAsync($request);
-            }
-            $results = Promise\settle($promises)->wait();
+	        // for each endpoint server type
+	        $requests = $this->prepare($batch);
 
-            foreach ($results as $result) {
-                if ($result['state'] === "rejected") {
-                    /** @var RequestException $reason **/
-                    $reason = $result['reason'];
+	        foreach ($requests as $request) {
+	        	$result = null;
 
-                    $error = [
-                        'success' => false,
-                        'endpoint' => $reason->getRequest()->getUri(),
-                        'message' => $reason->getMessage(),
-                    ];
+		        $this->client->sendAsync($request)
+			        ->then(function ($response) use ($request, &$result) {
+				        /** @var ResponseInterface $response * */
+				        $result = new MessageSentReport($request, $response);
+			        })
+			        ->otherwise(function ($reason) use (&$result) {
+				        /** @var RequestException $reason **/
+				        $result = new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+			        })
+			        ->wait(false);
 
-                    $response = $reason->getResponse();
-                    if ($response !== null) {
-                        $statusCode = $response->getStatusCode();
-                        $error['statusCode'] = $statusCode;
-                        $error['reasonPhrase'] = $response->getReasonPhrase();
-                        $error['expired'] = in_array($statusCode, [404, 410]);
-                        $error['content'] = $response->getBody();
-                        $error['headers'] = $response->getHeaders();
-                    }
-
-                    $return[] = $error;
-                    $completeSuccess = false;
-                } else {
-                    $return[] = [
-                        'success' => true,
-                    ];
-                }
-            }
+		        yield $result;
+	        }
         }
-
-        // reset queue
-        $this->notifications = null;
-
-        return $completeSuccess ? true : $return;
     }
 
     /**
