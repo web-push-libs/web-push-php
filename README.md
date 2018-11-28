@@ -192,29 +192,39 @@ it as a parameter : `$webPush->flush($batchSize)`.
 
 ### Server errors
 You can see what the browser vendor's server sends back in case it encountered an error (push subscription expiration, wrong parameters...).
-`sendNotification()` (with flush as true) and `flush()` returns true if there were no errors. If there are errors it returns an array like the following.
-The `expired` key can be useful to clean your database of expired endpoints.
+`sendNotification()` (with `$flush` as `true`) and `flush()` **always** returns a [`\Generator`](http://php.net/manual/en/language.generators.php) with [`MessageSentReport`](https://github.com/web-push-libs/web-push-php/blob/master/src/MessageSentReport.php) objects, even if you just send one notification.
+To loop through the results, just pass it into `foreach`. You can also use [`iterator_to_array`](http://php.net/manual/en/function.iterator-to-array.php) to check the contents while debugging.
 
 ```php
 <?php
-$res = [
-    [ // first notification (failed)
-        'success' => false,
-        'endpoint' => $theEndpointToDeleteInYourDatabaseIfExpired,
-        'message' => $responseMessage,
-        'statusCode' => $responseStatusCode,
-        'headers' => $responseHeaders,
-        'content' => $responseContent, // you may have more infos here
-        'expired' => $isTheEndpointWrongOrExpired,
-    ],
-    [ // second notification (succeeded)
-        'success' => true,
-    ],
-    [ // third notification
-        ...
-    ], ...
-];
+
+/** @var \Minishlink\WebPush\MessageSentReport $report */
+foreach ($webPush->flush() as $report) {
+    $endpoint = $report->getEndpoint();
+
+    if ($report->isSuccess()) {
+        echo "[v] Message sent successfully for subscription {$endpoint}.";
+    } else {
+        echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReason()}";
+        
+        // also available (to get more info)
+        
+        /** @var \Psr\Http\Message\RequestInterface $requestToPushService */
+        $requestToPushService = $report->getRequest();
+        
+        /** @var \Psr\Http\Message\ResponseInterface $responseOfPushService */
+        $responseOfPushService = $report->getResponse();
+        
+        /** @var string $failReason */
+        $failReason = $report->getReason();
+        
+        /** @var bool $isTheEndpointWrongOrExpired */
+        $isTheEndpointWrongOrExpired = $report->isSubscriptionExpired();
+    }
+}
 ```
+
+**PLEASE NOTE:** You can only iterate **once** over the `\Generator` object.
 
 Firefox errors are listed in the [autopush documentation](https://autopush.readthedocs.io/en/latest/http.html#errors).
 
