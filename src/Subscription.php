@@ -73,6 +73,15 @@ class Subscription
             );
         }
 
+        if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
+            return new self(
+                $associativeArray['endpoint'],
+                $associativeArray['keys']['p256dh'] ?? null,
+                $associativeArray['keys']['auth'] ?? null,
+                $associativeArray['contentEncoding'] ?? "aesgcm"
+            );
+        }
+
         return new self(
             $associativeArray['endpoint']
         );
