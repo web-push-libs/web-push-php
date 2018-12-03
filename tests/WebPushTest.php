@@ -182,6 +182,24 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 	    }
     }
 
+	public function testFlushEmpty(): void {
+		$this->webPush->flush(300);
+    }
+
+	/**
+	 * @throws ErrorException
+	 */
+	public function testCount(): void {
+		$subscription = new Subscription(self::$endpoints['standard']);
+
+		$this->webPush->sendNotification($subscription);
+		$this->webPush->sendNotification($subscription);
+		$this->webPush->sendNotification($subscription);
+		$this->webPush->sendNotification($subscription);
+
+		$this->assertCount(4, $this->webPush);
+    }
+
     /**
      * @throws ErrorException
      */
