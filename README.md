@@ -56,7 +56,16 @@ $notifications = [
             'contentEncoding' => 'aesgcm', // one of PushManager.supportedContentEncodings
         ]),
         'payload' => '{msg:"test"}',
-    ],
+    ], [
+          'subscription' => Subscription::create([ // this is the structure for the working draft from october 2018 (https://www.w3.org/TR/2018/WD-push-api-20181026/) 
+              "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
+              "keys" => [
+                  'p256dh' => '(stringOf88Chars)',
+                  'auth' => '(stringOf24Chars)'
+              ],
+          ]),
+          'payload' => '{msg:"Hello World!"}',
+      ],
 ];
 
 $webPush = new WebPush();
