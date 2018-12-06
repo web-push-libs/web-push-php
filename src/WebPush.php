@@ -19,7 +19,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 
-class WebPush implements \Countable
+class WebPush
 {
     public const GCM_URL = 'https://android.googleapis.com/gcm/send';
     public const FCM_BASE_URL = 'https://fcm.googleapis.com';
@@ -330,7 +330,7 @@ class WebPush implements \Countable
 	/**
 	 * @return int
 	 */
-	public function count(): int {
+	public function countPendingNotifications(): int {
 		return null !== $this->notifications ? count($this->notifications) : 0;
     }
 }
