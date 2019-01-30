@@ -50,6 +50,16 @@ class WebPush
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /**
+     * @var bool Reuse VAPID headers in the same flush session to improve performance
+     */
+    private $reuseVAPIDHeaders = true;
+
+    /**
+     * @var array Dictionary for VAPID headers cache
+     */
+    private $vapidHeaders = [];
+
+    /**
      * WebPush constructor.
      *
      * @param array    $auth           Some servers needs authentication
@@ -168,6 +178,10 @@ class WebPush
 		        yield $result;
 	        }
         }
+
+        if ($this->reuseVAPIDHeaders) {
+            $this->vapidHeaders = [];
+        }
     }
 
     /**
@@ -247,7 +261,22 @@ class WebPush
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
                 }
 
-                $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
+                $vapidHeaders = null;
+                $cache_key = null;
+                if ($this->reuseVAPIDHeaders) {
+                    $cache_key = implode('#', [$audience, $contentEncoding, crc32(serialize($vapid))]);
+                    if (array_key_exists($cache_key, $this->vapidHeaders)) {
+                        $vapidHeaders = $this->vapidHeaders[$cache_key];
+                    }
+                }
+
+                if (!$vapidHeaders) {
+                    $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
+                }
+
+                if ($this->reuseVAPIDHeaders) {
+                    $this->vapidHeaders[$cache_key] = $vapidHeaders;
+                }
 
                 $headers['Authorization'] = $vapidHeaders['Authorization'];
 
@@ -306,6 +335,22 @@ class WebPush
         }
 
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getReuseVAPIDHeaders()
+    {
+        return $this->reuseVAPIDHeaders;
+    }
+
+    /**
+     * Reuse VAPID headers in the same flush session to improve performance
+     */
+    public function setReuseVAPIDHeaders($enabled)
+    {
+        $this->reuseVAPIDHeaders = $enabled;
     }
 
     /**
