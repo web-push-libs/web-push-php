@@ -52,7 +52,7 @@ class WebPush
     /**
      * @var bool Reuse VAPID headers in the same flush session to improve performance
      */
-    private $reuseVAPIDHeaders = true;
+    private $reuseVAPIDHeaders = false;
 
     /**
      * @var array Dictionary for VAPID headers cache
