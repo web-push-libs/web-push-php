@@ -16,6 +16,7 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 
@@ -151,22 +152,24 @@ class WebPush
 	        // for each endpoint server type
 	        $requests = $this->prepare($batch);
 
-	        foreach ($requests as $request) {
-	        	$result = null;
+	        /** @var Promise[] $promises */
+            $promises = [];
 
-		        $this->client->sendAsync($request)
-			        ->then(function ($response) use ($request, &$result) {
+	        foreach ($requests as $request) {
+                $promises[] = $this->client->sendAsync($request)
+			        ->then(function ($response) use ($request) {
 				        /** @var ResponseInterface $response * */
-				        $result = new MessageSentReport($request, $response);
+				        return new MessageSentReport($request, $response);
 			        })
 			        ->otherwise(function ($reason) use (&$result) {
 				        /** @var RequestException $reason **/
-				        $result = new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
-			        })
-			        ->wait(false);
-
-		        yield $result;
+				        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+			        });
 	        }
+
+	        foreach ($promises as $promise) {
+	            yield $promise->wait();
+            }
         }
     }
 
