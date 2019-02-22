@@ -152,7 +152,6 @@ class WebPush
 	        // for each endpoint server type
 	        $requests = $this->prepare($batch);
 
-	        /** @var Promise[] $promises */
             $promises = [];
 
 	        foreach ($requests as $request) {
@@ -161,7 +160,7 @@ class WebPush
 				        /** @var ResponseInterface $response * */
 				        return new MessageSentReport($request, $response);
 			        })
-			        ->otherwise(function ($reason) use (&$result) {
+			        ->otherwise(function ($reason) {
 				        /** @var RequestException $reason **/
 				        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
 			        });
