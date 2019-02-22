@@ -36,6 +36,16 @@ class WebPush
     private $auth;
 
     /**
+     * @var string
+     */
+    private $localPublicKey;
+
+    /**
+     * @var string
+     */
+    private $localPrivateKey;
+
+    /**
      * @var null|array Array of array of Notifications
      */
     private $notifications;
@@ -53,14 +63,16 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array    $auth           Some servers needs authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize
-     * @param int|null $timeout        Timeout of POST request
-     * @param array    $clientOptions
+     * @param string|null $localPublicKey
+     * @param string|null $localPrivateKey
+     * @param array       $auth           Some servers needs authentication
+     * @param array       $defaultOptions TTL, urgency, topic, batchSize
+     * @param int|null    $timeout        Timeout of POST request
+     * @param array       $clientOptions
      *
      * @throws \ErrorException
      */
-    public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
+    public function __construct(string $localPublicKey = null, string $localPrivateKey = null, array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
     {
         $extensions = [
             'curl' => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
@@ -83,6 +95,8 @@ class WebPush
         }
 
         $this->auth = $auth;
+        $this->localPublicKey = $localPublicKey;
+        $this->localPrivateKey = $localPrivateKey;
 
         $this->setDefaultOptions($defaultOptions);
 
@@ -152,6 +166,7 @@ class WebPush
 	        // for each endpoint server type
 	        $requests = $this->prepare($batch);
 
+	        /** @var Promise[] $promises */
             $promises = [];
 
 	        foreach ($requests as $request) {
@@ -189,12 +204,13 @@ class WebPush
             $userPublicKey = $subscription->getPublicKey();
             $userAuthToken = $subscription->getAuthToken();
             $contentEncoding = $subscription->getContentEncoding();
+            $sharedSecret = $subscription->getSharedSecret();
             $payload = $notification->getPayload();
             $options = $notification->getOptions($this->getDefaultOptions());
             $auth = $notification->getAuth($this->auth);
 
             if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding, $sharedSecret, $this->localPublicKey, $this->localPrivateKey);
                 $cipherText = $encrypted['cipherText'];
                 $salt = $encrypted['salt'];
                 $localPublicKey = $encrypted['localPublicKey'];

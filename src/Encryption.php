@@ -46,39 +46,48 @@ class Encryption
     }
 
     /**
-     * @param string $payload With padding
-     * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
-     * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
-     * @param string $contentEncoding
+     * @param string      $payload         With padding
+     * @param string      $userPublicKey   Base 64 encoded (MIME or URL-safe)
+     * @param string      $userAuthToken   Base 64 encoded (MIME or URL-safe)
+     * @param string      $contentEncoding
+     * @param string|null $sharedSecret
+     * @param string|null $localPublicKey  Base 64 encoded (MIME or URL-safe)
+     * @param string|null $localPrivateKey Base 64 encoded (MIME or URL-safe)
+     *
      * @return array
      *
      * @throws \ErrorException
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding): array
+    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding = null, string $sharedSecret = null, string $localPublicKey = null, string $localPrivateKey = null): array
     {
         return self::deterministicEncrypt(
             $payload,
             $userPublicKey,
             $userAuthToken,
             $contentEncoding,
-            self::createLocalKeyObject(),
-            random_bytes(16)
+            self::createLocalKeyObject($localPublicKey, $localPrivateKey),
+            random_bytes(16),
+            $sharedSecret
         );
     }
 
     /**
-     * @param string $payload
-     * @param string $userPublicKey
-     * @param string $userAuthToken
-     * @param string $contentEncoding
-     * @param array $localKeyObject
-     * @param string $salt
+     * @param string      $payload
+     * @param string      $userPublicKey
+     * @param string      $userAuthToken
+     * @param string      $contentEncoding
+     * @param array       $localKeyObject
+     * @param string      $salt
+     * @param string|null $sharedSecret
+     *
      * @return array
      *
      * @throws \ErrorException
      */
-    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
+    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt, string $sharedSecret = null): array
     {
+        \App\Profiler::getInstance()->startTimer('deterministicEncrypt (total)');
+
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
@@ -95,9 +104,14 @@ class Encryption
             gmp_init(bin2hex($userPublicKeyObjectY), 16)
         );
 
-        // get shared secret from user public key and local private key
-        $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
-        $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+        \App\Profiler::getInstance()->startTimer('deterministicEncrypt (Busy part)');
+        if (!$sharedSecret) {
+            // get shared secret from user public key and local private key
+            $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
+            $sharedSecret = str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT);
+        }
+        $sharedSecret = hex2bin($sharedSecret);
+        \App\Profiler::getInstance()->stopTimer('deterministicEncrypt (Busy part)');
 
         // section 4.3
         $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
@@ -116,6 +130,8 @@ class Encryption
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+
+        \App\Profiler::getInstance()->stopTimer('deterministicEncrypt (total)');
 
         // return values in url safe base64
         return [
@@ -231,10 +247,40 @@ class Encryption
     }
 
     /**
+     * @param string $encodedSerializedPublicKey
+     * @param        $encodedSerializedPrivateKey
+     *
      * @return array
      */
-    private static function createLocalKeyObject(): array
+    public static function createLocalKeyObjectUsingProvidedKeys(string $encodedSerializedPublicKey, $encodedSerializedPrivateKey): array
     {
+        $decodedSerializedPublicKey = Base64Url::decode($encodedSerializedPublicKey);
+        $decodedSerializedPrivateKey = Base64Url::decode($encodedSerializedPrivateKey);
+
+        [$x, $y] = Utils::unserializePublicKey(hex2bin($decodedSerializedPublicKey));
+        $secret = Utils::unserializePrivateKey($decodedSerializedPrivateKey);
+
+        return [
+            NistCurve::curve256()->getPublicKeyFrom(
+                gmp_init(bin2hex($x), 16),
+                gmp_init(bin2hex($y), 16)
+            ),
+            PrivateKey::create($secret)
+        ];
+    }
+
+    /**
+     * @param string|null $localPublicKey
+     * @param string|null $localPrivateKey
+     *
+     * @return array
+     */
+    public static function createLocalKeyObject(string $localPublicKey = null, string $localPrivateKey = null): array
+    {
+        if ($localPublicKey&& $localPrivateKey) {
+            return self::createLocalKeyObjectUsingProvidedKeys($localPublicKey, $localPrivateKey);
+        }
+
         try {
             return self::createLocalKeyObjectUsingOpenSSL();
         } catch (\Exception $e) {
