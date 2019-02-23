@@ -111,7 +111,7 @@ class WebPush
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
-     * @return iterable|bool Return an array of information if $flush is set to true and the queued requests has failed.
+     * @return \Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true
      *
      * @throws \ErrorException
@@ -145,10 +145,10 @@ class WebPush
      *
      * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
      *
-     * @return iterable
+     * @return \Generator|MessageSentReport[]
      * @throws \ErrorException
      */
-    public function flush(?int $batchSize = null) : iterable
+    public function flush(?int $batchSize = null): \Generator
     {
         if (null === $this->notifications || empty($this->notifications)) {
             yield from [];
