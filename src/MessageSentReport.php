@@ -109,6 +109,10 @@ class MessageSentReport {
 	 * @return bool
 	 */
 	public function isSubscriptionExpired(): bool {
+		if (!$this->response) {
+			return false;
+		}
+
 		return \in_array($this->response->getStatusCode(), [404, 410], true);
 	}
 
