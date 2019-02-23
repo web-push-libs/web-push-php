@@ -30,17 +30,14 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     {
         self::$endpoints = [
             'standard' => getenv('STANDARD_ENDPOINT'),
-            'GCM' => getenv('GCM_ENDPOINT'),
         ];
 
         self::$keys = [
             'standard' => getenv('USER_PUBLIC_KEY'),
-            'GCM' => getenv('GCM_USER_PUBLIC_KEY'),
         ];
 
         self::$tokens = [
             'standard' => getenv('USER_AUTH_TOKEN'),
-            'GCM' => getenv('GCM_USER_AUTH_TOKEN'),
         ];
     }
 
@@ -51,10 +48,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     {
         $envs = [
             'STANDARD_ENDPOINT',
-            'GCM_ENDPOINT',
             'USER_PUBLIC_KEY',
-            'GCM_API_KEY',
-            'GCM_USER_PUBLIC_KEY',
             'USER_AUTH_TOKEN',
             'VAPID_PUBLIC_KEY',
             'VAPID_PRIVATE_KEY',
@@ -66,7 +60,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         }
 
         $this->webPush = new WebPush([
-            'GCM' => getenv('GCM_API_KEY'),
             'VAPID' => [
                 'subject' => 'https://github.com/Minishlink/web-push',
                 'publicKey' => getenv('VAPID_PUBLIC_KEY'),
@@ -88,10 +81,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         if (getenv('CI')) return [];
 
         return [
-            [new Subscription(self::$endpoints['standard']), null],
             [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
-            [new Subscription(self::$endpoints['GCM']), null],
-            [new Subscription(self::$endpoints['GCM'], self::$keys['GCM'], self::$tokens['GCM']), '{"message":"Comment ça va ?","tag":"general"}'],
         ];
     }
 
@@ -104,9 +94,11 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function testSendNotification($subscription, $payload)
     {
-        $res = $this->webPush->sendNotification($subscription, $payload, true);
+        $reports = $this->webPush->sendNotification($subscription, $payload, true);
 
-        $this->assertTrue($res);
+        foreach ($reports as $report) {
+            $this->assertTrue($report->isSuccess());
+        }
     }
 
     /**
@@ -124,9 +116,11 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             $this->webPush->sendNotification($notification[0], $notification[1]);
         }
 
-        $res = $this->webPush->flush($batchSize);
+        $reports = $this->webPush->flush($batchSize);
 
-        $this->assertTrue($res);
+        foreach ($reports as $report) {
+            $this->assertTrue($report->isSuccess());
+        }
     }
 
     /**
@@ -160,7 +154,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 	    $this->webPush->sendNotification($subscription);
 	    $this->assertNotEmpty(iterator_to_array($this->webPush->flush()));
 
-	    $sub = Subscription::create([
+	    $nonExistantSubscription = Subscription::create([
 		    'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
 		    'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
 		    'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
@@ -168,22 +162,22 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 	    ]);
 
 	    // test multiple requests
-	    $this->webPush->sendNotification($sub, json_encode(['test' => 1]));
-	    $this->webPush->sendNotification($sub, json_encode(['test' => 2]));
-	    $this->webPush->sendNotification($sub, json_encode(['test' => 3]));
+	    $this->webPush->sendNotification($nonExistantSubscription, json_encode(['test' => 1]));
+	    $this->webPush->sendNotification($nonExistantSubscription, json_encode(['test' => 2]));
+	    $this->webPush->sendNotification($nonExistantSubscription, json_encode(['test' => 3]));
 
 	    /** @var \Minishlink\WebPush\MessageSentReport $report */
 	    foreach ($this->webPush->flush() as $report) {
 	    	$this->assertFalse($report->isSuccess());
-	    	$this->assertFalse($report->isSubscriptionExpired());
-	    	$this->assertEquals(404, $report->getResponse()->getStatusCode());
+	    	$this->assertTrue($report->isSubscriptionExpired());
+	    	$this->assertEquals(410, $report->getResponse()->getStatusCode());
 	    	$this->assertNotEmpty($report->getReason());
 	    	$this->assertNotFalse(filter_var($report->getEndpoint(), FILTER_VALIDATE_URL));
 	    }
     }
 
 	public function testFlushEmpty(): void {
-		$this->webPush->flush(300);
+        $this->assertEmpty(iterator_to_array($this->webPush->flush(300)));
     }
 
 	/**
@@ -197,50 +191,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 		$this->webPush->sendNotification($subscription);
 		$this->webPush->sendNotification($subscription);
 
-		$this->assertCount(4, $this->webPush);
-    }
-
-    /**
-     * @throws ErrorException
-     */
-    public function testSendGCMNotificationWithoutGCMApiKey()
-    {
-        if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
-            $this->markTestSkipped("The provided GCM URL is not a GCM URL, but probably a FCM URL.");
-        }
-
-        $webPush = new WebPush();
-        $this->expectException('ErrorException');
-        $this->expectExceptionMessage('No GCM API Key specified.');
-
-        $subscription = new Subscription(self::$endpoints['GCM']);
-        $webPush->sendNotification($subscription, null, true);
-    }
-
-    /**
-     * @throws ErrorException
-     */
-    public function testSendGCMNotificationWithWrongGCMApiKey()
-    {
-        if (substr(self::$endpoints['GCM'], 0, strlen(WebPush::GCM_URL)) !== WebPush::GCM_URL) {
-            $this->markTestSkipped("The provided GCM URL is not a GCM URL, but probably a FCM URL.");
-        }
-
-        $webPush = new WebPush(['GCM' => 'bar']);
-
-        $subscription = new Subscription(self::$endpoints['GCM']);
-        $res = $webPush->sendNotification($subscription, null, true);
-
-        $this->assertTrue(is_array($res)); // there has been an error
-        $this->assertArrayHasKey('success', $res);
-        $this->assertFalse($res['success']);
-
-        $this->assertArrayHasKey('statusCode', $res);
-        $this->assertEquals(400, $res['statusCode']);
-
-        $this->assertArrayHasKey('headers', $res);
-
-        $this->assertArrayHasKey('endpoint', $res);
-        $this->assertEquals(self::$endpoints['GCM'], $res['endpoint']);
+		$this->assertEquals(4, $this->webPush->countPendingNotifications());
     }
 }
