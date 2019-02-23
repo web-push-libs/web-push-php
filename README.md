@@ -94,9 +94,9 @@ foreach ($webPush->flush() as $report) {
 
 /**
  * send one notification and flush directly
- * @var \Generator<MessageSentReport> $sent
+ * @var MessageSentReport $report
  */
-$sent = $webPush->sendOneNotification(
+$report = $webPush->sendOneNotification(
     $notifications[0]['subscription'],
     $notifications[0]['payload'] // optional (defaults null)
 );
