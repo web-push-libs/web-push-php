@@ -38,7 +38,7 @@ class Encryption
 
         if ($contentEncoding === "aesgcm") {
             return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
-        } else if ($contentEncoding === "aes128gcm") {
+        } elseif ($contentEncoding === "aes128gcm") {
             return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
         } else {
             throw new \ErrorException("This content encoding is not supported");
@@ -223,7 +223,7 @@ class Encryption
             }
 
             return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
-        } else if ($contentEncoding === "aes128gcm") {
+        } elseif ($contentEncoding === "aes128gcm") {
             return 'Content-Encoding: '.$type.chr(0);
         }
 
@@ -300,7 +300,7 @@ class Encryption
         if (!empty($userAuthToken)) {
             if ($contentEncoding === "aesgcm") {
                 $info = 'Content-Encoding: auth'.chr(0);
-            } else if ($contentEncoding === "aes128gcm") {
+            } elseif ($contentEncoding === "aes128gcm") {
                 $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
             } else {
                 throw new \ErrorException("This content encoding is not supported");

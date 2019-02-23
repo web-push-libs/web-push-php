@@ -137,21 +137,21 @@ class WebPush
 
         $this->notifications[] = new Notification($subscription, $payload, $options, $auth);
 
-	    return false !== $flush ? $this->flush() : true;
+        return false !== $flush ? $this->flush() : true;
     }
 
-	/**
-	 * Flush notifications. Triggers the requests.
-	 *
-	 * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
-	 *
-	 * @return iterable
-	 * @throws \ErrorException
-	 */
+    /**
+     * Flush notifications. Triggers the requests.
+     *
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     *
+     * @return iterable
+     * @throws \ErrorException
+     */
     public function flush(?int $batchSize = null) : iterable
     {
         if (null === $this->notifications || empty($this->notifications)) {
-	        yield from [];
+            yield from [];
         }
 
         if (null === $batchSize) {
@@ -160,29 +160,29 @@ class WebPush
 
         $batches = array_chunk($this->notifications, $batchSize);
 
-	    // reset queue
-	    $this->notifications = [];
+        // reset queue
+        $this->notifications = [];
 
         foreach ($batches as $batch) {
-	        // for each endpoint server type
-	        $requests = $this->prepare($batch);
+            // for each endpoint server type
+            $requests = $this->prepare($batch);
 
             $promises = [];
 
-	        foreach ($requests as $request) {
+            foreach ($requests as $request) {
                 $promises[] = $this->client->sendAsync($request)
-			        ->then(function ($response) use ($request) {
-				        /** @var ResponseInterface $response * */
-				        return new MessageSentReport($request, $response);
-			        })
-			        ->otherwise(function ($reason) {
-				        /** @var RequestException $reason **/
-				        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
-			        });
-	        }
+                    ->then(function ($response) use ($request) {
+                        /** @var ResponseInterface $response * */
+                        return new MessageSentReport($request, $response);
+                    })
+                    ->otherwise(function ($reason) {
+                        /** @var RequestException $reason **/
+                        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+                    });
+            }
 
-	        foreach ($promises as $promise) {
-	            yield $promise->wait();
+            foreach ($promises as $promise) {
+                yield $promise->wait();
             }
         }
 
@@ -279,7 +279,7 @@ class WebPush
                     } else {
                         $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
                     }
-                } else if ($contentEncoding === 'aes128gcm' && substr($endpoint, 0, strlen(self::FCM_BASE_URL)) === self::FCM_BASE_URL) {
+                } elseif ($contentEncoding === 'aes128gcm' && substr($endpoint, 0, strlen(self::FCM_BASE_URL)) === self::FCM_BASE_URL) {
                     $endpoint = str_replace('fcm/send', 'wp', $endpoint);
                 }
             }
@@ -365,11 +365,12 @@ class WebPush
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
     }
 
-	/**
-	 * @return int
-	 */
-	public function countPendingNotifications(): int {
-		return null !== $this->notifications ? count($this->notifications) : 0;
+    /**
+     * @return int
+     */
+    public function countPendingNotifications(): int
+    {
+        return null !== $this->notifications ? count($this->notifications) : 0;
     }
 
     /**

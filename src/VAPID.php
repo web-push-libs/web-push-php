@@ -149,7 +149,7 @@ class VAPID
                 'Authorization' => 'WebPush '.$jwt,
                 'Crypto-Key' => 'p256ecdsa='.$encodedPublicKey,
             ];
-        } else if ($contentEncoding === 'aes128gcm') {
+        } elseif ($contentEncoding === 'aes128gcm') {
             return [
                 'Authorization' => 'vapid t='.$jwt.', k='.$encodedPublicKey,
             ];
