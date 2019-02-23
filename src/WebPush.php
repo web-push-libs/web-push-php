@@ -263,7 +263,7 @@ class WebPush
                 }
             }
             // if VAPID (GCM doesn't support it but FCM does)
-            elseif (array_key_exists('VAPID', $auth)) {
+            elseif (array_key_exists('VAPID', $auth) && $contentEncoding) {
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
@@ -373,12 +373,12 @@ class WebPush
 
     /**
      * @param string $audience
-     * @param string|null $contentEncoding
+     * @param string $contentEncoding
      * @param array $vapid
      * @return array
      * @throws \ErrorException
      */
-    private function getVAPIDHeaders(string $audience, ?string $contentEncoding, array $vapid)
+    private function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid)
     {
         $vapidHeaders = null;
 
@@ -391,10 +391,6 @@ class WebPush
         }
 
         if (!$vapidHeaders) {
-            if (!$contentEncoding) {
-                throw new \ErrorException('Subscription should have a content encoding');
-            }
-
             $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
         }
 
