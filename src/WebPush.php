@@ -100,7 +100,7 @@ class WebPush
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
-     * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
+     * @return iterable|bool Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true
      *
      * @throws \ErrorException
@@ -112,7 +112,12 @@ class WebPush
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
-            $payload = Encryption::padPayload($payload, $this->automaticPadding, $subscription->getContentEncoding());
+            $contentEncoding = $subscription->getContentEncoding();
+            if (!$contentEncoding) {
+                throw new \ErrorException('Subscription should have a content encoding');
+            }
+
+            $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
         }
 
         if (array_key_exists('VAPID', $auth)) {
@@ -192,6 +197,10 @@ class WebPush
             $auth = $notification->getAuth($this->auth);
 
             if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
+                if (!$contentEncoding) {
+                    throw new \ErrorException('Subscription should have a content encoding');
+                }
+
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
                 $cipherText = $encrypted['cipherText'];
                 $salt = $encrypted['salt'];
@@ -245,6 +254,10 @@ class WebPush
 
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
+                }
+
+                if (!$contentEncoding) {
+                    throw new \ErrorException('Subscription should have a content encoding');
                 }
 
                 $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);

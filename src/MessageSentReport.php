@@ -20,12 +20,12 @@ class MessageSentReport {
 	protected $success;
 
 	/**
-	 * @var RequestInterface
+	 * @var RequestInterface | null
 	 */
 	protected $request;
 
 	/**
-	 * @var ResponseInterface
+	 * @var ResponseInterface | null
 	 */
 	protected $response;
 
@@ -65,9 +65,9 @@ class MessageSentReport {
 	}
 
 	/**
-	 * @return RequestInterface
+	 * @return RequestInterface | null
 	 */
-	public function getRequest(): RequestInterface {
+	public function getRequest(): ?RequestInterface {
 		return $this->request;
 	}
 
@@ -82,9 +82,9 @@ class MessageSentReport {
 	}
 
 	/**
-	 * @return ResponseInterface
+	 * @return ResponseInterface | null
 	 */
-	public function getResponse(): ResponseInterface {
+	public function getResponse(): ?ResponseInterface {
 		return $this->response;
 	}
 
@@ -99,9 +99,13 @@ class MessageSentReport {
 	}
 
 	/**
-	 * @return string
+	 * @return string | null
 	 */
-	public function getEndpoint(): string {
+	public function getEndpoint(): ?string {
+        if (!$this->request) {
+            return null;
+        }
+
 		return $this->request->getUri()->__toString();
 	}
 
