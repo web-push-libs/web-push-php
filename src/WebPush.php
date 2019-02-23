@@ -262,34 +262,12 @@ class WebPush
             }
             // if VAPID (GCM doesn't support it but FCM does)
             elseif (array_key_exists('VAPID', $auth)) {
-                $vapid = $auth['VAPID'];
-
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
-
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
                 }
 
-                $vapidHeaders = null;
-                $cache_key = null;
-                if ($this->reuseVAPIDHeaders) {
-                    $cache_key = implode('#', [$audience, $contentEncoding, crc32(serialize($vapid))]);
-                    if (array_key_exists($cache_key, $this->vapidHeaders)) {
-                        $vapidHeaders = $this->vapidHeaders[$cache_key];
-                    }
-                }
-
-                if (!$vapidHeaders) {
-                    if (!$contentEncoding) {
-                        throw new \ErrorException('Subscription should have a content encoding');
-                    }
-
-                    $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
-                }
-
-                if ($this->reuseVAPIDHeaders) {
-                    $this->vapidHeaders[$cache_key] = $vapidHeaders;
-                }
+                $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth['VAPID']);
 
                 $headers['Authorization'] = $vapidHeaders['Authorization'];
 
@@ -390,5 +368,39 @@ class WebPush
 	 */
 	public function countPendingNotifications(): int {
 		return null !== $this->notifications ? count($this->notifications) : 0;
+    }
+
+    /**
+     * @param string $audience
+     * @param string|null $contentEncoding
+     * @param array $vapid
+     * @return array
+     * @throws \ErrorException
+     */
+    private function getVAPIDHeaders(string $audience, ?string $contentEncoding, array $vapid)
+    {
+        $vapidHeaders = null;
+
+        $cache_key = null;
+        if ($this->reuseVAPIDHeaders) {
+            $cache_key = implode('#', [$audience, $contentEncoding, crc32(serialize($vapid))]);
+            if (array_key_exists($cache_key, $this->vapidHeaders)) {
+                $vapidHeaders = $this->vapidHeaders[$cache_key];
+            }
+        }
+
+        if (!$vapidHeaders) {
+            if (!$contentEncoding) {
+                throw new \ErrorException('Subscription should have a content encoding');
+            }
+
+            $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
+        }
+
+        if ($this->reuseVAPIDHeaders) {
+            $this->vapidHeaders[$cache_key] = $vapidHeaders;
+        }
+
+        return $vapidHeaders;
     }
 }
