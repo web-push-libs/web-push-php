@@ -270,8 +270,6 @@ class WebPush
                     } else {
                         $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
                     }
-                } else if ($contentEncoding === 'aes128gcm' && substr($endpoint, 0, strlen(self::FCM_BASE_URL)) === self::FCM_BASE_URL) {
-                    $endpoint = str_replace('fcm/send', 'wp', $endpoint);
                 }
             }
 
