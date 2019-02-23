@@ -177,13 +177,9 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $subscription = new Subscription($endpoint, $p256dh, $auth, $contentEncoding);
 
                 try {
-                    $sendResp = $this->webPush->sendNotification($subscription, $payload, true);
-                    $this->assertInstanceOf(\Generator::class, $sendResp);
-
-                    /** @var \Minishlink\WebPush\MessageSentReport $report */
-	                foreach ($sendResp as $report) {
-                    	$this->assertTrue($report->isSuccess());
-                    }
+                    $report = $this->webPush->sendOneNotification($subscription, $payload);
+                    $this->assertInstanceOf(\Minishlink\WebPush\MessageSentReport::class, $report);
+                    $this->assertTrue($report->isSuccess());
 
                     $dataString = json_encode([
                         'testSuiteId' => self::$testSuiteId,
