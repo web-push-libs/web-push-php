@@ -37,8 +37,7 @@ before_script:
 
 script:
   - web-push-testing-service start example -p 9012
-  - ./vendor/bin/phpunit
+  - composer test:unit
   - web-push-testing-service stop example
-
-after_script:
-  - ./vendor/bin/phpstan analyse --level max src
+  - composer test:typing
+  - composer test:syntax
