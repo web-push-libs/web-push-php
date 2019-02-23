@@ -139,7 +139,7 @@ class WebPush
 	 */
     public function flush(?int $batchSize = null) : iterable
     {
-        if (empty($this->notifications)) {
+        if (null === $this->notifications || empty($this->notifications)) {
 	        yield from [];
         }
 
@@ -338,5 +338,12 @@ class WebPush
         $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+    }
+
+	/**
+	 * @return int
+	 */
+	public function countPendingNotifications(): int {
+		return null !== $this->notifications ? count($this->notifications) : 0;
     }
 }

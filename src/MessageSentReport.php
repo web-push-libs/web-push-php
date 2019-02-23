@@ -12,7 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Standardized response from sending a message
  */
-class MessageSentReport {
+class MessageSentReport implements \JsonSerializable {
 
 	/**
 	 * @var boolean
@@ -135,5 +135,32 @@ class MessageSentReport {
 	public function setReason(string $reason): MessageSentReport {
 		$this->reason = $reason;
 		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getRequestPayload(): string {
+		return $this->request->getBody()->getContents();
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getResponseContent(): string {
+		return $this->response->getBody()->getContents();
+	}
+
+	/**
+	 * @return array|mixed
+	 */
+	public function jsonSerialize() {
+		return [
+			'success'  => $this->isSuccess(),
+			'expired'  => $this->isSubscriptionExpired(),
+			'reason'   => $this->reason,
+			'endpoint' => $this->getEndpoint(),
+			'payload'  => $this->request->getBody()->getContents(),
+		];
 	}
 }

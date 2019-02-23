@@ -12,8 +12,13 @@
       "homepage": "https://github.com/Minishlink"
     }
   ],
+  "scripts": {
+    "test": "./vendor/bin/phpunit --color"
+  },
   "require": {
     "php": "^7.1",
+    "ext-json": "*",
+    "ext-gmp": "*",
     "lib-openssl": "*",
     "guzzlehttp/guzzle": "^6.2",
     "web-token/jwt-signature": "^1.0",
