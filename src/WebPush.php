@@ -152,6 +152,7 @@ class WebPush
     {
         if (null === $this->notifications || empty($this->notifications)) {
             yield from [];
+            return;
         }
 
         if (null === $batchSize) {
