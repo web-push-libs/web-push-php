@@ -20,7 +20,7 @@ class MessageSentReport implements \JsonSerializable {
 	protected $success;
 
 	/**
-	 * @var RequestInterface | null
+	 * @var RequestInterface
 	 */
 	protected $request;
 
@@ -40,10 +40,10 @@ class MessageSentReport implements \JsonSerializable {
 	 * @param bool              $success
 	 * @param string            $reason
 	 */
-	public function __construct(?RequestInterface $request = null, ?ResponseInterface $response = null, bool $success = true, $reason = 'OK') {
-		$this->success  = $success;
-		$this->request  = $request;
-		$this->response = $response;
+	public function __construct(RequestInterface $request, ?ResponseInterface $response = null, bool $success = true, $reason = 'OK') {
+        $this->request  = $request;
+        $this->response = $response;
+	    $this->success  = $success;
 		$this->reason   = $reason;
 	}
 
@@ -65,9 +65,9 @@ class MessageSentReport implements \JsonSerializable {
 	}
 
 	/**
-	 * @return RequestInterface | null
+	 * @return RequestInterface
 	 */
-	public function getRequest(): ?RequestInterface {
+	public function getRequest(): RequestInterface {
 		return $this->request;
 	}
 
@@ -99,13 +99,9 @@ class MessageSentReport implements \JsonSerializable {
 	}
 
 	/**
-	 * @return string | null
+	 * @return string
 	 */
-	public function getEndpoint(): ?string {
-        if (!$this->request) {
-            return null;
-        }
-
+	public function getEndpoint(): string {
 		return $this->request->getUri()->__toString();
 	}
 
@@ -145,9 +141,13 @@ class MessageSentReport implements \JsonSerializable {
 	}
 
 	/**
-	 * @return string
+	 * @return string | null
 	 */
-	public function getResponseContent(): string {
+	public function getResponseContent(): ?string {
+        if (!$this->response) {
+            return null;
+        }
+
 		return $this->response->getBody()->getContents();
 	}
 
