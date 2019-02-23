@@ -26,11 +26,12 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 	 * @return array
 	 */
 	public function generateReportsWithExpiration(): array {
+	    $request = new Request('POST', 'https://example.com');
 		return [
-			[new MessageSentReport(null, new Response(404)), true],
-			[new MessageSentReport(null, new Response(410)), true],
-			[new MessageSentReport(null, new Response(500)), false],
-			[new MessageSentReport(null, new Response(200)), false]
+			[new MessageSentReport($request, new Response(404)), true],
+			[new MessageSentReport($request, new Response(410)), true],
+			[new MessageSentReport($request, new Response(500)), false],
+			[new MessageSentReport($request, new Response(200)), false]
 		];
 	}
 
@@ -130,10 +131,11 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 	 * @return array
 	 */
 	public function generateReportsWithSuccess(): array {
+        $request = new Request('POST', 'https://example.com');
 		return [
-			[new MessageSentReport(), true],
-			[new MessageSentReport(null, null, true), true],
-			[new MessageSentReport(null, null, false), false],
+			[new MessageSentReport($request), true],
+			[new MessageSentReport($request, null, true), true],
+			[new MessageSentReport($request, null, false), false],
 		];
 	}
 }
