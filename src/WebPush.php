@@ -338,10 +338,15 @@ class WebPush
 
     /**
      * Reuse VAPID headers in the same flush session to improve performance
+     * @param bool $enabled
+     *
+     * @return WebPush
      */
-    public function setReuseVAPIDHeaders($enabled)
+    public function setReuseVAPIDHeaders(bool $enabled)
     {
         $this->reuseVAPIDHeaders = $enabled;
+
+        return $this;
     }
 
     /**
@@ -354,6 +359,8 @@ class WebPush
 
     /**
      * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
+     *
+     * @return WebPush
      */
     public function setDefaultOptions(array $defaultOptions)
     {
@@ -361,6 +368,8 @@ class WebPush
         $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+
+        return $this;
     }
 
     /**
