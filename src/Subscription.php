@@ -63,7 +63,8 @@ class Subscription
      * @return Subscription
      * @throws \ErrorException
      */
-    public static function create(array $associativeArray): Subscription {
+    public static function create(array $associativeArray): Subscription
+    {
         if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
             return new self(
                 $associativeArray['endpoint'],
