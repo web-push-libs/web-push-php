@@ -50,7 +50,6 @@ class Utils
     {
         $data = bin2hex($data);
         if (mb_substr($data, 0, 2, '8bit') !== '04') {
-            var_dump($data);
             throw new \InvalidArgumentException('Invalid data: only uncompressed keys are supported.');
         }
         $data = mb_substr($data, 2, null, '8bit');
