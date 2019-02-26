@@ -16,7 +16,6 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise\Promise;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\ResponseInterface;
 
@@ -49,6 +48,16 @@ class WebPush
      * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
      */
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+
+    /**
+     * @var bool Reuse VAPID headers in the same flush session to improve performance
+     */
+    private $reuseVAPIDHeaders = false;
+
+    /**
+     * @var array Dictionary for VAPID headers cache
+     */
+    private $vapidHeaders = [];
 
     /**
      * WebPush constructor.
@@ -101,7 +110,7 @@ class WebPush
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
-     * @return array|bool Return an array of information if $flush is set to true and the queued requests has failed.
+     * @return \Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the queued requests has failed.
      *                    Else return true
      *
      * @throws \ErrorException
@@ -113,7 +122,12 @@ class WebPush
                 throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
-            $payload = Encryption::padPayload($payload, $this->automaticPadding, $subscription->getContentEncoding());
+            $contentEncoding = $subscription->getContentEncoding();
+            if (!$contentEncoding) {
+                throw new \ErrorException('Subscription should have a content encoding');
+            }
+
+            $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
         }
 
         if (array_key_exists('VAPID', $auth)) {
@@ -122,21 +136,22 @@ class WebPush
 
         $this->notifications[] = new Notification($subscription, $payload, $options, $auth);
 
-	    return false !== $flush ? $this->flush() : true;
+        return false !== $flush ? $this->flush() : true;
     }
 
-	/**
-	 * Flush notifications. Triggers the requests.
-	 *
-	 * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
-	 *
-	 * @return iterable
-	 * @throws \ErrorException
-	 */
-    public function flush(?int $batchSize = null) : iterable
+    /**
+     * Flush notifications. Triggers the requests.
+     *
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     *
+     * @return \Generator|MessageSentReport[]
+     * @throws \ErrorException
+     */
+    public function flush(?int $batchSize = null): \Generator
     {
-        if (empty($this->notifications)) {
-	        yield from [];
+        if (null === $this->notifications || empty($this->notifications)) {
+            yield from [];
+            return;
         }
 
         if (null === $batchSize) {
@@ -145,30 +160,34 @@ class WebPush
 
         $batches = array_chunk($this->notifications, $batchSize);
 
-	    // reset queue
-	    $this->notifications = [];
+        // reset queue
+        $this->notifications = [];
 
         foreach ($batches as $batch) {
-	        // for each endpoint server type
-	        $requests = $this->prepare($batch);
+            // for each endpoint server type
+            $requests = $this->prepare($batch);
 
             $promises = [];
 
-	        foreach ($requests as $request) {
+            foreach ($requests as $request) {
                 $promises[] = $this->client->sendAsync($request)
-			        ->then(function ($response) use ($request) {
-				        /** @var ResponseInterface $response * */
-				        return new MessageSentReport($request, $response);
-			        })
-			        ->otherwise(function ($reason) {
-				        /** @var RequestException $reason **/
-				        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
-			        });
-	        }
-
-	        foreach ($promises as $promise) {
-	            yield $promise->wait();
+                    ->then(function ($response) use ($request) {
+                        /** @var ResponseInterface $response * */
+                        return new MessageSentReport($request, $response);
+                    })
+                    ->otherwise(function ($reason) {
+                        /** @var RequestException $reason **/
+                        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+                    });
             }
+
+            foreach ($promises as $promise) {
+                yield $promise->wait();
+            }
+        }
+
+        if ($this->reuseVAPIDHeaders) {
+            $this->vapidHeaders = [];
         }
     }
 
@@ -194,6 +213,10 @@ class WebPush
             $auth = $notification->getAuth($this->auth);
 
             if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
+                if (!$contentEncoding) {
+                    throw new \ErrorException('Subscription should have a content encoding');
+                }
+
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
                 $cipherText = $encrypted['cipherText'];
                 $salt = $encrypted['salt'];
@@ -240,16 +263,13 @@ class WebPush
                 }
             }
             // if VAPID (GCM doesn't support it but FCM does)
-            elseif (array_key_exists('VAPID', $auth)) {
-                $vapid = $auth['VAPID'];
-
+            elseif (array_key_exists('VAPID', $auth) && $contentEncoding) {
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
-
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
                 }
 
-                $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
+                $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth['VAPID']);
 
                 $headers['Authorization'] = $vapidHeaders['Authorization'];
 
@@ -259,8 +279,6 @@ class WebPush
                     } else {
                         $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
                     }
-                } else if ($contentEncoding === 'aes128gcm' && substr($endpoint, 0, strlen(self::FCM_BASE_URL)) === self::FCM_BASE_URL) {
-                    $endpoint = str_replace('fcm/send', 'wp', $endpoint);
                 }
             }
 
@@ -311,6 +329,27 @@ class WebPush
     }
 
     /**
+     * @return bool
+     */
+    public function getReuseVAPIDHeaders()
+    {
+        return $this->reuseVAPIDHeaders;
+    }
+
+    /**
+     * Reuse VAPID headers in the same flush session to improve performance
+     * @param bool $enabled
+     *
+     * @return WebPush
+     */
+    public function setReuseVAPIDHeaders(bool $enabled)
+    {
+        $this->reuseVAPIDHeaders = $enabled;
+
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function getDefaultOptions(): array
@@ -320,6 +359,8 @@ class WebPush
 
     /**
      * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
+     *
+     * @return WebPush
      */
     public function setDefaultOptions(array $defaultOptions)
     {
@@ -327,5 +368,45 @@ class WebPush
         $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function countPendingNotifications(): int
+    {
+        return null !== $this->notifications ? count($this->notifications) : 0;
+    }
+
+    /**
+     * @param string $audience
+     * @param string $contentEncoding
+     * @param array $vapid
+     * @return array
+     * @throws \ErrorException
+     */
+    private function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid)
+    {
+        $vapidHeaders = null;
+
+        $cache_key = null;
+        if ($this->reuseVAPIDHeaders) {
+            $cache_key = implode('#', [$audience, $contentEncoding, crc32(serialize($vapid))]);
+            if (array_key_exists($cache_key, $this->vapidHeaders)) {
+                $vapidHeaders = $this->vapidHeaders[$cache_key];
+            }
+        }
+
+        if (!$vapidHeaders) {
+            $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
+        }
+
+        if ($this->reuseVAPIDHeaders) {
+            $this->vapidHeaders[$cache_key] = $vapidHeaders;
+        }
+
+        return $vapidHeaders;
     }
 }

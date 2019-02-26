@@ -63,21 +63,22 @@ class Subscription
      * @return Subscription
      * @throws \ErrorException
      */
-    public static function create(array $associativeArray): Subscription {
-        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
-            return new self(
-                $associativeArray['endpoint'],
-                $associativeArray['publicKey'] ?? null,
-                $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
-            );
-        }
-
+    public static function create(array $associativeArray): Subscription
+    {
         if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
             return new self(
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
+                $associativeArray['contentEncoding'] ?? "aesgcm"
+            );
+        }
+
+        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
+            return new self(
+                $associativeArray['endpoint'],
+                $associativeArray['publicKey'] ?? null,
+                $associativeArray['authToken'] ?? null,
                 $associativeArray['contentEncoding'] ?? "aesgcm"
             );
         }

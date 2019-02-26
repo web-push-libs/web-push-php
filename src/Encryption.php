@@ -87,6 +87,9 @@ class Encryption
         // get local key pair
         list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
+        if (!$localPublicKey) {
+            throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
+        }
 
         // get user public key object
         [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
@@ -98,6 +101,9 @@ class Encryption
         // get shared secret from user public key and local private key
         $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
         $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+        if (!$sharedSecret) {
+            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
+        }
 
         // section 4.3
         $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
@@ -115,6 +121,7 @@ class Encryption
 
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
+        $tag = '';
         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
 
         // return values in url safe base64
@@ -300,7 +307,7 @@ class Encryption
         if (!empty($userAuthToken)) {
             if ($contentEncoding === "aesgcm") {
                 $info = 'Content-Encoding: auth'.chr(0);
-            } else if ($contentEncoding === "aes128gcm") {
+            } elseif ($contentEncoding === "aes128gcm") {
                 $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
             } else {
                 throw new \ErrorException("This content encoding is not supported");
