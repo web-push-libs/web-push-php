@@ -254,7 +254,7 @@ class Encryption
      *
      * @return array
      */
-    public static function createLocalKeyObjectUsingProvidedKeys(string $encodedSerializedPublicKey, $encodedSerializedPrivateKey): array
+    private static function createLocalKeyObjectUsingProvidedKeys(string $encodedSerializedPublicKey, $encodedSerializedPrivateKey): array
     {
         $decodedSerializedPublicKey = Base64Url::decode($encodedSerializedPublicKey);
         $decodedSerializedPrivateKey = Base64Url::decode($encodedSerializedPrivateKey);
