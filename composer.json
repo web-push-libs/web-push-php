@@ -12,8 +12,15 @@
       "homepage": "https://github.com/Minishlink"
     }
   ],
+  "scripts": {
+    "test:unit": "./vendor/bin/phpunit --color",
+    "test:typing": "./vendor/bin/phpstan analyse --level max src",
+    "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no"
+  },
   "require": {
     "php": "^7.1",
+    "ext-json": "*",
+    "ext-gmp": "*",
     "lib-openssl": "*",
     "guzzlehttp/guzzle": "^6.2",
     "web-token/jwt-signature": "^1.0",
@@ -21,7 +28,8 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^7.0",
-    "phpstan/phpstan": "^0.9.2"
+    "phpstan/phpstan": "^0.11",
+    "friendsofphp/php-cs-fixer": "^2.14"
   },
   "autoload": {
     "psr-4" : {

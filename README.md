@@ -156,6 +156,14 @@ serviceWorkerRegistration.pushManager.subscribe({
 })
 ```
 
+#### Reusing VAPID headers
+
+VAPID headers make use of a JSON Web Token (JWT) to verify your identity. That token payload includes the protocol and hostname of the endpoint included in the subscription and an expiration timestamp (usually between 12-24h), and it's signed using your public and private key. Given that, two notifications sent to the same push service will use the same token, so you can reuse them for the same flush session to boost performance using:
+
+```php
+$webPush->setReuseVAPIDHeaders(true);
+```
+
 ### Notifications and default options
 Each notification can have a specific Time To Live, urgency, and topic.
 You can change the default options with `setDefaultOptions()` or in the constructor:

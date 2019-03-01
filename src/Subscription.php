@@ -27,6 +27,9 @@ class Subscription
     /** @var null|string */
     private $contentEncoding;
 
+    /** @var null|string */
+    private $sharedSecret;
+
     /**
      * Subscription constructor.
      *
@@ -40,7 +43,8 @@ class Subscription
         string $endpoint,
         ?string $publicKey = null,
         ?string $authToken = null,
-        ?string $contentEncoding = null
+        ?string $contentEncoding = null,
+        ?string $sharedSecret = null
     ) {
         $this->endpoint = $endpoint;
 
@@ -53,6 +57,7 @@ class Subscription
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
             $this->contentEncoding = $contentEncoding ?: "aesgcm";
+            $this->sharedSecret = $sharedSecret;
         }
     }
 
@@ -63,22 +68,24 @@ class Subscription
      * @return Subscription
      * @throws \ErrorException
      */
-    public static function create(array $associativeArray): Subscription {
-        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
-            return new self(
-                $associativeArray['endpoint'],
-                $associativeArray['publicKey'] ?? null,
-                $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
-            );
-        }
-
+    public static function create(array $associativeArray): Subscription
+    {
         if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
             return new self(
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
                 $associativeArray['contentEncoding'] ?? "aesgcm"
+            );
+        }
+
+        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
+            return new self(
+                $associativeArray['endpoint'],
+                $associativeArray['publicKey'] ?? null,
+                $associativeArray['authToken'] ?? null,
+                $associativeArray['contentEncoding'] ?? "aesgcm",
+                $associativeArray['sharedSecret']
             );
         }
 
@@ -117,5 +124,13 @@ class Subscription
     public function getContentEncoding(): ?string
     {
         return $this->contentEncoding;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSharedSecret(): ?string
+    {
+        return $this->sharedSecret;
     }
 }
