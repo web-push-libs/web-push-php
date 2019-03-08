@@ -190,8 +190,8 @@ class VAPID
         }
 
         return [
-            'publicKey'  => Base64Url::($binaryPublicKey),
-            'privateKey' => Base64Url::($binaryPrivateKey)
+            'publicKey'  => Base64Url::encode($binaryPublicKey),
+            'privateKey' => Base64Url::encode($binaryPrivateKey)
         ];
     }
 }
