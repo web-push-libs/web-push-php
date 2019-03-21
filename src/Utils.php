@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\Ecc\PublicKey;
 
 class Utils
@@ -59,5 +60,26 @@ class Utils
             hex2bin(mb_substr($data, 0, $dataLength / 2, '8bit')),
             hex2bin(mb_substr($data, $dataLength / 2, null, '8bit')),
         ];
+    }
+
+
+    /**
+     * @param PrivateKey $privateKey
+     *
+     * @return string
+     */
+    public static function serializePrivateKey(PrivateKey $privateKey): string
+    {
+        return hex2bin(gmp_strval($privateKey->getSecret(), 16));
+    }
+
+    /**
+     * @param string $data
+     *
+     * @return PrivateKey
+     */
+    public static function unserializePrivateKey(string $data): PrivateKey
+    {
+        return PrivateKey::create(gmp_init(bin2hex($data), 16));
     }
 }

@@ -89,25 +89,18 @@ class Encryption
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
-        $curve = NistCurve::curve256();
-
         // get local key pair
         list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
+
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
+
         if (!$localPublicKey) {
             throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
         }
 
-        // get user public key object
-        [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
-        $userPublicKeyObject = $curve->getPublicKeyFrom(
-            gmp_init(bin2hex($userPublicKeyObjectX), 16),
-            gmp_init(bin2hex($userPublicKeyObjectY), 16)
-        );
-
         if (!$sharedSecret) {
             // Create a shared secret from user public key and local private key
-            $sharedSecret = self::createSharedSecret($curve, $userPublicKeyObject, $localPrivateKeyObject);
+            $sharedSecret = self::createSharedSecret($userPublicKey, $localPrivateKeyObject);
         } else {
             // Decode the provided shared secret
             $sharedSecret = Base64Url::decode($sharedSecret);
@@ -147,15 +140,24 @@ class Encryption
     /**
      * Create a shared secret from user public key and local private key
      *
-     * @param Curve $curve
-     * @param PublicKey $userPublicKey
+     * @param string $userPublicKey
      * @param PrivateKey $localPrivateKey
      *
      * @return bool|string
      */
-    public static function createSharedSecret(Curve $curve, PublicKey $userPublicKey, PrivateKey $localPrivateKey)
+    public static function createSharedSecret(string $userPublicKey, PrivateKey $localPrivateKey)
     {
-        $sharedSecret = $curve->mul($userPublicKey->getPoint(), $localPrivateKey->getSecret())->getX();
+        $curve = NistCurve::curve256();
+
+        // get user public key object
+        list($userPublicKeyObjectX, $userPublicKeyObjectY) = Utils::unserializePublicKey($userPublicKey);
+
+        $userPublicKeyObject = $curve->getPublicKeyFrom(
+            gmp_init(bin2hex($userPublicKeyObjectX), 16),
+            gmp_init(bin2hex($userPublicKeyObjectY), 16)
+        );
+
+        $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKey->getSecret())->getX();
 
         return hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
     }
@@ -283,7 +285,7 @@ class Encryption
                 gmp_init(bin2hex($x), 16),
                 gmp_init(bin2hex($y), 16)
             ),
-            PrivateKey::create(gmp_init(bin2hex($privateKey), 16))
+            Utils::unserializePrivateKey($privateKey)
         ];
     }
 

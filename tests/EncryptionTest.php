@@ -38,7 +38,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $localPrivateKey = Base64Url::decode($this->localPrivateKey);
         $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
 
-        $localPrivateKeyObject = PrivateKey::create(gmp_init(bin2hex($localPrivateKey), 16));
+        $localPrivateKeyObject = Utils::unserializePrivateKey($localPrivateKey);
         $curve = NistCurve::curve256();
         [$localPublicKeyObjectX, $localPublicKeyObjectY] = Utils::unserializePublicKey($localPublicKey);
         $localPublicKeyObject = $curve->getPublicKeyFrom(
