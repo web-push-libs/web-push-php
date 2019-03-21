@@ -59,6 +59,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             'VAPID_PRIVATE_KEY',
             'LOCAL_PUBLIC_KEY',
             'LOCAL_PRIVATE_KEY',
+            'USER_SHARED_SECRET',
         ];
         foreach ($envs as $env) {
             if (!getenv($env)) {
