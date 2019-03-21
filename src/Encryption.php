@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
+use Jose\Component\Core\Util\Ecc\Curve;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\Point;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
@@ -38,7 +39,7 @@ class Encryption
 
         if ($contentEncoding === "aesgcm") {
             return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
-        } else if ($contentEncoding === "aes128gcm") {
+        } elseif ($contentEncoding === "aes128gcm") {
             return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
         } else {
             throw new \ErrorException("This content encoding is not supported");
@@ -105,12 +106,12 @@ class Encryption
         );
 
         if (!$sharedSecret) {
-            // get shared secret from user public key and local private key
-            $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
-            $sharedSecret = str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT);
+            // Create a shared secret from user public key and local private key
+            $sharedSecret = self::createSharedSecret($curve, $userPublicKeyObject, $localPrivateKeyObject);
+        } else {
+            // Decode the provided shared secret
+            $sharedSecret = Base64Url::decode($sharedSecret);
         }
-
-        $sharedSecret = hex2bin($sharedSecret);
 
         if (!$sharedSecret) {
             throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
@@ -141,6 +142,22 @@ class Encryption
             'salt' => $salt,
             'cipherText' => $encryptedText.$tag,
         ];
+    }
+
+    /**
+     * Create a shared secret from user public key and local private key
+     *
+     * @param Curve $curve
+     * @param PublicKey $userPublicKey
+     * @param PrivateKey $localPrivateKey
+     *
+     * @return bool|string
+     */
+    public static function createSharedSecret(Curve $curve, PublicKey $userPublicKey, PrivateKey $localPrivateKey)
+    {
+        $sharedSecret = $curve->mul($userPublicKey->getPoint(), $localPrivateKey->getSecret())->getX();
+
+        return hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
     }
 
     public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
