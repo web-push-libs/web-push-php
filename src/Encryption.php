@@ -50,22 +50,21 @@ class Encryption
      * @param string      $userPublicKey   Base 64 encoded (MIME or URL-safe)
      * @param string      $userAuthToken   Base 64 encoded (MIME or URL-safe)
      * @param string      $contentEncoding
+     * @param array|null  $localKeyObject  Array with Base 64 encoded (MIME or URL-safe) local public and private key
      * @param string|null $sharedSecret
-     * @param string|null $localPublicKey  Base 64 encoded (MIME or URL-safe)
-     * @param string|null $localPrivateKey Base 64 encoded (MIME or URL-safe)
      *
      * @return array
      *
      * @throws \ErrorException
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding = null, string $sharedSecret = null, string $localPublicKey = null, string $localPrivateKey = null): array
+    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding = null, ?array $localKeyObject = null, string $sharedSecret = null): array
     {
         return self::deterministicEncrypt(
             $payload,
             $userPublicKey,
             $userAuthToken,
             $contentEncoding,
-            self::createLocalKeyObject($localPublicKey, $localPrivateKey),
+            $localKeyObject ?: self::createLocalKeyObject(),
             random_bytes(16),
             $sharedSecret
         );
@@ -110,6 +109,7 @@ class Encryption
             $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
             $sharedSecret = str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT);
         }
+
         $sharedSecret = hex2bin($sharedSecret);
 
         if (!$sharedSecret) {
@@ -254,35 +254,27 @@ class Encryption
      *
      * @return array
      */
-    private static function createLocalKeyObjectUsingProvidedKeys(string $encodedSerializedPublicKey, $encodedSerializedPrivateKey): array
+    public static function createLocalKeyObjectUsingKeys(string $encodedSerializedPublicKey, string $encodedSerializedPrivateKey): array
     {
         $decodedSerializedPublicKey = Base64Url::decode($encodedSerializedPublicKey);
         $decodedSerializedPrivateKey = Base64Url::decode($encodedSerializedPrivateKey);
 
-        [$x, $y] = Utils::unserializePublicKey(hex2bin($decodedSerializedPublicKey));
-        $secret = Utils::unserializePrivateKey($decodedSerializedPrivateKey);
+        [$x, $y] = Utils::unserializePublicKey($decodedSerializedPublicKey);
 
         return [
             NistCurve::curve256()->getPublicKeyFrom(
                 gmp_init(bin2hex($x), 16),
                 gmp_init(bin2hex($y), 16)
             ),
-            PrivateKey::create($secret)
+            PrivateKey::create(gmp_init(bin2hex($decodedSerializedPrivateKey), 16))
         ];
     }
 
     /**
-     * @param string|null $localPublicKey
-     * @param string|null $localPrivateKey
-     *
      * @return array
      */
-    public static function createLocalKeyObject(string $localPublicKey = null, string $localPrivateKey = null): array
+    public static function createLocalKeyObject(): array
     {
-        if ($localPublicKey&& $localPrivateKey) {
-            return self::createLocalKeyObjectUsingProvidedKeys($localPublicKey, $localPrivateKey);
-        }
-
         try {
             return self::createLocalKeyObjectUsingOpenSSL();
         } catch (\Exception $e) {

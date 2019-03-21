@@ -37,6 +37,7 @@ class Subscription
      * @param null|string $publicKey
      * @param null|string $authToken
      * @param string $contentEncoding (Optional) Must be "aesgcm"
+     * @param null|string $sharedSecret
      * @throws \ErrorException
      */
     public function __construct(
@@ -57,7 +58,10 @@ class Subscription
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
             $this->contentEncoding = $contentEncoding ?: "aesgcm";
-            $this->sharedSecret = $sharedSecret;
+
+            if($sharedSecret) {
+                $this->sharedSecret = $sharedSecret;
+            }
         }
     }
 
@@ -75,7 +79,8 @@ class Subscription
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? "aesgcm",
+                $associativeArray['sharedSecret'] ?? null
             );
         }
 
@@ -85,7 +90,7 @@ class Subscription
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
                 $associativeArray['contentEncoding'] ?? "aesgcm",
-                $associativeArray['sharedSecret']
+                $associativeArray['sharedSecret'] ?? null
             );
         }
 
@@ -127,7 +132,7 @@ class Subscription
     }
 
     /**
-     * @return string|null
+     * @return null|string
      */
     public function getSharedSecret(): ?string
     {

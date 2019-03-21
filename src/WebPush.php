@@ -72,8 +72,6 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param string|null $localPublicKey
-     * @param string|null $localPrivateKey
      * @param array       $auth           Some servers needs authentication
      * @param array       $defaultOptions TTL, urgency, topic, batchSize
      * @param int|null    $timeout        Timeout of POST request
@@ -81,7 +79,7 @@ class WebPush
      *
      * @throws \ErrorException
      */
-    public function __construct(string $localPublicKey = null, string $localPrivateKey = null, array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
+    public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
     {
         $extensions = [
             'curl' => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
@@ -104,8 +102,6 @@ class WebPush
         }
 
         $this->auth = $auth;
-        $this->localPublicKey = $localPublicKey;
-        $this->localPrivateKey = $localPrivateKey;
 
         $this->setDefaultOptions($defaultOptions);
 
@@ -181,7 +177,7 @@ class WebPush
             // for each endpoint server type
             $requests = $this->prepare($batch);
 
-	        /** @var Promise[] $promises */
+	        /** @var \GuzzleHttp\Promise\Promise[] $promises */
             $promises = [];
 
             foreach ($requests as $request) {
@@ -233,7 +229,9 @@ class WebPush
                     throw new \ErrorException('Subscription should have a content encoding');
                 }
 
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding, $sharedSecret, $this->localPublicKey, $this->localPrivateKey);
+                $localKeyObject = Encryption::createLocalKeyObjectUsingKeys($this->localPublicKey, $this->localPrivateKey);
+
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding, $localKeyObject, $sharedSecret);
                 $cipherText = $encrypted['cipherText'];
                 $salt = $encrypted['salt'];
                 $localPublicKey = $encrypted['localPublicKey'];
@@ -384,6 +382,19 @@ class WebPush
         $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+
+        return $this;
+    }
+
+    /**
+     * @param string $localPublicKey
+     * @param string $localPrivateKey
+     * @return $this
+     */
+    public function setLocalKeys(string $localPublicKey, string $localPrivateKey)
+    {
+        $this->localPublicKey = $localPublicKey;
+        $this->localPrivateKey = $localPrivateKey;
 
         return $this;
     }
