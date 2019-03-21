@@ -266,24 +266,24 @@ class Encryption
     }
 
     /**
-     * @param string $encodedSerializedPublicKey
-     * @param        $encodedSerializedPrivateKey
+     * @param string $encodedPublicKey
+     * @param        $encodedPrivateKey
      *
      * @return array
      */
-    public static function createLocalKeyObjectUsingKeys(string $encodedSerializedPublicKey, string $encodedSerializedPrivateKey): array
+    public static function createLocalKeyObjectUsingKeys(string $encodedPublicKey, string $encodedPrivateKey): array
     {
-        $decodedSerializedPublicKey = Base64Url::decode($encodedSerializedPublicKey);
-        $decodedSerializedPrivateKey = Base64Url::decode($encodedSerializedPrivateKey);
+        $publicKey = Base64Url::decode($encodedPublicKey);
+        $privateKey = Base64Url::decode($encodedPrivateKey);
 
-        [$x, $y] = Utils::unserializePublicKey($decodedSerializedPublicKey);
+        [$x, $y] = Utils::unserializePublicKey($publicKey);
 
         return [
             NistCurve::curve256()->getPublicKeyFrom(
                 gmp_init(bin2hex($x), 16),
                 gmp_init(bin2hex($y), 16)
             ),
-            PrivateKey::create(gmp_init(bin2hex($decodedSerializedPrivateKey), 16))
+            PrivateKey::create(gmp_init(bin2hex($privateKey), 16))
         ];
     }
 
