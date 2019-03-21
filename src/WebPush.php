@@ -229,7 +229,11 @@ class WebPush
                     throw new \ErrorException('Subscription should have a content encoding');
                 }
 
-                $localKeyObject = Encryption::createLocalKeyObjectUsingKeys($this->localPublicKey, $this->localPrivateKey);
+                $localKeyObject = null;
+
+                if($this->localPublicKey && $this->localPrivateKey) {
+                    $localKeyObject = Encryption::createLocalKeyObjectUsingKeys($this->localPublicKey, $this->localPrivateKey);
+                }
 
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding, $localKeyObject, $sharedSecret);
                 $cipherText = $encrypted['cipherText'];
