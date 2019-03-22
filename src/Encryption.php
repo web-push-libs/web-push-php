@@ -58,7 +58,7 @@ class Encryption
      *
      * @throws \ErrorException
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding = null, ?array $localKeyObject = null, string $sharedSecret = null): array
+    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, ?array $localKeyObject = null, ?string $sharedSecret = null): array
     {
         return self::deterministicEncrypt(
             $payload,
@@ -84,7 +84,7 @@ class Encryption
      *
      * @throws \ErrorException
      */
-    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt, string $sharedSecret = null): array
+    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt, ?string $sharedSecret = null): array
     {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
@@ -143,7 +143,7 @@ class Encryption
      * @param string $userPublicKey
      * @param PrivateKey $localPrivateKey
      *
-     * @return bool|string
+     * @return string
      */
     public static function createSharedSecret(string $userPublicKey, PrivateKey $localPrivateKey)
     {
@@ -260,7 +260,7 @@ class Encryption
             }
 
             return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
-        } else if ($contentEncoding === "aes128gcm") {
+        } elseif ($contentEncoding === "aes128gcm") {
             return 'Content-Encoding: '.$type.chr(0);
         }
 
@@ -269,7 +269,7 @@ class Encryption
 
     /**
      * @param string $encodedPublicKey
-     * @param        $encodedPrivateKey
+     * @param string $encodedPrivateKey
      *
      * @return array
      */

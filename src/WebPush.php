@@ -177,7 +177,7 @@ class WebPush
             // for each endpoint server type
             $requests = $this->prepare($batch);
 
-	        /** @var \GuzzleHttp\Promise\Promise[] $promises */
+            /** @var \GuzzleHttp\Promise\Promise[] $promises */
             $promises = [];
 
             foreach ($requests as $request) {
@@ -231,7 +231,7 @@ class WebPush
 
                 $localKeyObject = null;
 
-                if($this->localPublicKey && $this->localPrivateKey) {
+                if ($this->localPublicKey && $this->localPrivateKey) {
                     $localKeyObject = Encryption::createLocalKeyObjectUsingKeys($this->localPublicKey, $this->localPrivateKey);
                 }
 

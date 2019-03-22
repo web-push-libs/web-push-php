@@ -59,7 +59,7 @@ class Subscription
             $this->authToken = $authToken;
             $this->contentEncoding = $contentEncoding ?: "aesgcm";
 
-            if($sharedSecret) {
+            if ($sharedSecret) {
                 $this->sharedSecret = $sharedSecret;
             }
         }
