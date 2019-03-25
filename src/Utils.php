@@ -66,9 +66,9 @@ class Utils
     /**
      * @param PrivateKey $privateKey
      *
-     * @return string
+     * @return bool|string
      */
-    public static function serializePrivateKey(PrivateKey $privateKey): string
+    public static function serializePrivateKey(PrivateKey $privateKey)
     {
         return hex2bin(gmp_strval($privateKey->getSecret(), 16));
     }

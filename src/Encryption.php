@@ -104,10 +104,10 @@ class Encryption
         } else {
             // Decode the provided shared secret
             $sharedSecret = Base64Url::decode($sharedSecret);
-        }
 
-        if (!$sharedSecret) {
-            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
+            if (!$sharedSecret) {
+                throw new \ErrorException('Failed to decode the given sharedsecret');
+            }
         }
 
         // section 4.3
@@ -144,8 +144,9 @@ class Encryption
      * @param PrivateKey $localPrivateKey
      *
      * @return string
+     * @throws \ErrorException
      */
-    public static function createSharedSecret(string $userPublicKey, PrivateKey $localPrivateKey)
+    public static function createSharedSecret(string $userPublicKey, PrivateKey $localPrivateKey): string
     {
         $curve = NistCurve::curve256();
 
@@ -159,7 +160,13 @@ class Encryption
 
         $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKey->getSecret())->getX();
 
-        return hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+        $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+
+        if (!$sharedSecret) {
+            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
+        }
+
+        return $sharedSecret;
     }
 
     public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
