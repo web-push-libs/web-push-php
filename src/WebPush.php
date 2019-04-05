@@ -254,8 +254,8 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            // if GCM
-            if (substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
+            // if GCM or FCM using legacy GCM server key
+            if (array_key_exists('GCM', $auth) || substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
                 if (array_key_exists('GCM', $auth)) {
                     $headers['Authorization'] = 'key='.$auth['GCM'];
                 } else {
