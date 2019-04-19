@@ -19,6 +19,9 @@ use Minishlink\WebPush\Utils;
 
 final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
+    protected $localPublicKey = 'BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8';
+    protected $localPrivateKey = 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw';
+
     public function testDeterministicEncrypt()
     {
         $contentEncoding = "aes128gcm";
@@ -31,17 +34,21 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $userPublicKey = 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4';
         $userAuthToken = 'BTBZMqHH6r4Tts7J_aSIgg';
 
-        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
-        $localPrivateKey = Base64Url::decode('yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw');
+        $localPublicKey = Base64Url::decode($this->localPublicKey);
+        $localPrivateKey = Base64Url::decode($this->localPrivateKey);
         $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
 
-        $localPrivateKeyObject = PrivateKey::create(gmp_init(bin2hex($localPrivateKey), 16));
+        $localPrivateKeyObject = Utils::unserializePrivateKey($localPrivateKey);
         $curve = NistCurve::curve256();
         [$localPublicKeyObjectX, $localPublicKeyObjectY] = Utils::unserializePublicKey($localPublicKey);
         $localPublicKeyObject = $curve->getPublicKeyFrom(
             gmp_init(bin2hex($localPublicKeyObjectX), 16),
             gmp_init(bin2hex($localPublicKeyObjectY), 16)
         );
+
+        $localKeyObject = Encryption::createLocalKeyObjectUsingKeys($this->localPublicKey, $this->localPrivateKey);
+
+        $this->assertEquals([$localPublicKeyObject, $localPrivateKeyObject], $localKeyObject);
 
         $expected = [
             'localPublicKey' => $localPublicKey,
@@ -65,7 +72,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
 
     public function testGetContentCodingHeader()
     {
-        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $localPublicKey = Base64Url::decode($this->localPublicKey);
         $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
 
         $result = Encryption::getContentCodingHeader($salt, $localPublicKey, "aes128gcm");

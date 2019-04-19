@@ -19,6 +19,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     private static $endpoints;
     private static $keys;
     private static $tokens;
+    private static $secret;
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
@@ -39,6 +40,10 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         self::$tokens = [
             'standard' => getenv('USER_AUTH_TOKEN'),
         ];
+
+        self::$secret = [
+            'standard' => getenv('USER_SHARED_SECRET'),
+        ];
     }
 
     /**
@@ -52,6 +57,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             'USER_AUTH_TOKEN',
             'VAPID_PUBLIC_KEY',
             'VAPID_PRIVATE_KEY',
+            'LOCAL_PUBLIC_KEY',
+            'LOCAL_PRIVATE_KEY',
+            'USER_SHARED_SECRET',
         ];
         foreach ($envs as $env) {
             if (!getenv($env)) {
@@ -67,6 +75,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             ],
         ]);
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
+        $this->webPush->setLocalKeys(getenv('LOCAL_PUBLIC_KEY'),getenv('LOCAL_PRIVATE_KEY'));
     }
 
     /**
@@ -81,7 +90,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         if (getenv('CI')) return [];
 
         return [
-            [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
+            [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard'], null, self::$secret['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
         ];
     }
 

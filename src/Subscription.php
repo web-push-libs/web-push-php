@@ -27,6 +27,9 @@ class Subscription
     /** @var null|string */
     private $contentEncoding;
 
+    /** @var null|string */
+    private $sharedSecret;
+
     /**
      * Subscription constructor.
      *
@@ -34,13 +37,15 @@ class Subscription
      * @param null|string $publicKey
      * @param null|string $authToken
      * @param string $contentEncoding (Optional) Must be "aesgcm"
+     * @param null|string $sharedSecret
      * @throws \ErrorException
      */
     public function __construct(
         string $endpoint,
         ?string $publicKey = null,
         ?string $authToken = null,
-        ?string $contentEncoding = null
+        ?string $contentEncoding = null,
+        ?string $sharedSecret = null
     ) {
         $this->endpoint = $endpoint;
 
@@ -53,6 +58,10 @@ class Subscription
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
             $this->contentEncoding = $contentEncoding ?: "aesgcm";
+
+            if ($sharedSecret) {
+                $this->sharedSecret = $sharedSecret;
+            }
         }
     }
 
@@ -70,7 +79,8 @@ class Subscription
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? "aesgcm",
+                $associativeArray['sharedSecret'] ?? null
             );
         }
 
@@ -79,7 +89,8 @@ class Subscription
                 $associativeArray['endpoint'],
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? "aesgcm",
+                $associativeArray['sharedSecret'] ?? null
             );
         }
 
@@ -118,5 +129,13 @@ class Subscription
     public function getContentEncoding(): ?string
     {
         return $this->contentEncoding;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getSharedSecret(): ?string
+    {
+        return $this->sharedSecret;
     }
 }

@@ -15,6 +15,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals(null, $subscription->getPublicKey());
         $this->assertEquals(null, $subscription->getAuthToken());
         $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->assertEquals(null, $subscription->getSharedSecret());
     }
 
     public function testConstructMinimal()
@@ -24,6 +25,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals(null, $subscription->getPublicKey());
         $this->assertEquals(null, $subscription->getAuthToken());
         $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->assertEquals(null, $subscription->getSharedSecret());
     }
 
     public function testCreatePartial()
@@ -56,21 +58,24 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
             "publicKey" => "publicKey",
             "authToken" => "authToken",
             "contentEncoding" => "aes128gcm",
+            "sharedSecret" => "sharedSecret",
         );
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
+        $this->assertEquals("sharedSecret", $subscription->getSharedSecret());
     }
 
     public function testConstructFull()
     {
-        $subscription = new Subscription("http://toto.com", "publicKey", "authToken", "aes128gcm");
+        $subscription = new Subscription("http://toto.com", "publicKey", "authToken", "aes128gcm", "sharedSecret");
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
+        $this->assertEquals("sharedSecret", $subscription->getSharedSecret());
     }
 
     public function testCreatePartialWithNewStructure()
@@ -101,5 +106,21 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
+    }
+
+    public function testCreatePartialWithNewStructureAndSharedSecret()
+    {
+        $subscription = Subscription::create([
+            "endpoint" => "http://toto.com",
+            "sharedSecret" => 'sharedSecret',
+            "keys" => [
+                'p256dh' => 'publicKey',
+                'auth' => 'authToken'
+            ]
+        ]);
+        $this->assertEquals("http://toto.com", $subscription->getEndpoint());
+        $this->assertEquals("publicKey", $subscription->getPublicKey());
+        $this->assertEquals("authToken", $subscription->getAuthToken());
+        $this->assertEquals("sharedSecret", $subscription->getSharedSecret());
     }
 }

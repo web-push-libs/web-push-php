@@ -35,6 +35,16 @@ class WebPush
     private $auth;
 
     /**
+     * @var string
+     */
+    private $localPublicKey;
+
+    /**
+     * @var string
+     */
+    private $localPrivateKey;
+
+    /**
      * @var null|array Array of array of Notifications
      */
     private $notifications;
@@ -62,10 +72,10 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array    $auth           Some servers needs authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize
-     * @param int|null $timeout        Timeout of POST request
-     * @param array    $clientOptions
+     * @param array       $auth           Some servers needs authentication
+     * @param array       $defaultOptions TTL, urgency, topic, batchSize
+     * @param int|null    $timeout        Timeout of POST request
+     * @param array       $clientOptions
      *
      * @throws \ErrorException
      */
@@ -167,18 +177,19 @@ class WebPush
             // for each endpoint server type
             $requests = $this->prepare($batch);
 
+            /** @var \GuzzleHttp\Promise\Promise[] $promises */
             $promises = [];
 
             foreach ($requests as $request) {
                 $promises[] = $this->client->sendAsync($request)
-                    ->then(function ($response) use ($request) {
-                        /** @var ResponseInterface $response * */
-                        return new MessageSentReport($request, $response);
-                    })
-                    ->otherwise(function ($reason) {
-                        /** @var RequestException $reason **/
-                        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
-                    });
+                                           ->then(function ($response) use ($request) {
+                                               /** @var ResponseInterface $response * */
+                                               return new MessageSentReport($request, $response);
+                                           })
+                                           ->otherwise(function ($reason) {
+                                               /** @var RequestException $reason **/
+                                               return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+                                           });
             }
 
             foreach ($promises as $promise) {
@@ -208,6 +219,7 @@ class WebPush
             $userPublicKey = $subscription->getPublicKey();
             $userAuthToken = $subscription->getAuthToken();
             $contentEncoding = $subscription->getContentEncoding();
+            $sharedSecret = $subscription->getSharedSecret();
             $payload = $notification->getPayload();
             $options = $notification->getOptions($this->getDefaultOptions());
             $auth = $notification->getAuth($this->auth);
@@ -217,7 +229,13 @@ class WebPush
                     throw new \ErrorException('Subscription should have a content encoding');
                 }
 
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
+                $localKeyObject = null;
+
+                if ($this->localPublicKey && $this->localPrivateKey) {
+                    $localKeyObject = Encryption::createLocalKeyObjectUsingKeys($this->localPublicKey, $this->localPrivateKey);
+                }
+
+                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding, $localKeyObject, $sharedSecret);
                 $cipherText = $encrypted['cipherText'];
                 $salt = $encrypted['salt'];
                 $localPublicKey = $encrypted['localPublicKey'];
@@ -368,6 +386,19 @@ class WebPush
         $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
         $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
         $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+
+        return $this;
+    }
+
+    /**
+     * @param string $localPublicKey
+     * @param string $localPrivateKey
+     * @return $this
+     */
+    public function setLocalKeys(string $localPublicKey, string $localPrivateKey)
+    {
+        $this->localPublicKey = $localPublicKey;
+        $this->localPrivateKey = $localPrivateKey;
 
         return $this;
     }
