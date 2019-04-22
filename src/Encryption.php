@@ -334,8 +334,12 @@ class Encryption
         );
 
         $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $privateKey->getSecret())->getX();
+        $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+        if (false === $sharedSecret) {
+            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
+        }
 
-        return hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+        return $sharedSecret;
     }
 
     /**
@@ -365,7 +369,8 @@ class Encryption
     }
 
     /**
-     * @param string $key
+     * @param string $publicKey
+     * @param PrivateKey $secret
      *
      * @return string
      */
