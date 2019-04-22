@@ -82,8 +82,6 @@ class Encryption
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
-        $curve = NistCurve::curve256();
-
         // get local key pair
         list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
         $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
@@ -91,19 +89,8 @@ class Encryption
             throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
         }
 
-        // get user public key object
-        [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
-        $userPublicKeyObject = $curve->getPublicKeyFrom(
-            gmp_init(bin2hex($userPublicKeyObjectX), 16),
-            gmp_init(bin2hex($userPublicKeyObjectY), 16)
-        );
-
         // get shared secret from user public key and local private key
-        $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
-        $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
-        if (!$sharedSecret) {
-            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
-        }
+        $sharedSecret = self::computeSharedSecret($userPublicKey, $localPublicKey, $localPrivateKeyObject);
 
         // section 4.3
         $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
@@ -317,5 +304,92 @@ class Encryption
         }
 
         return $sharedSecret;
+    }
+
+    /**
+     * @param string $userPublicKey
+     * @param string $localPublicKey
+     * @param PrivateKey $privateKey
+     *
+     * @return string
+     */
+    private static function computeSharedSecret(string $userPublicKey, string $localPublicKey, PrivateKey $privateKey): string
+    {
+        $curve = NistCurve::curve256();
+        if (\function_exists('openssl_pkey_derive')) {
+            try {
+                $publicPem = self::publicKeyToPem($userPublicKey);
+                $privatePem = self::privateKeyToPem($localPublicKey, $privateKey);
+
+                return openssl_pkey_derive($publicPem, $privatePem, $curve->getSize());
+            } catch (\Throwable $throwable) {
+                //Does nothing. Will fallback to the pure PHP function
+            }
+        }
+        // get user public key object
+        [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
+        $userPublicKeyObject = $curve->getPublicKeyFrom(
+            gmp_init(bin2hex($userPublicKeyObjectX), 16),
+            gmp_init(bin2hex($userPublicKeyObjectY), 16)
+        );
+
+        $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $privateKey->getSecret())->getX();
+
+        return hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+    }
+
+    /**
+     * @param string $publicKey
+     *
+     * @return string
+     */
+    private static function publicKeyToPem(string $publicKey): string
+    {
+        $der = pack(
+            'H*',
+            '3059' // SEQUENCE, length 89
+            .'3013' // SEQUENCE, length 19
+            .'0607' // OID, length 7
+            .'2a8648ce3d0201' // 1.2.840.10045.2.1 = EC Public Key
+            .'0608' // OID, length 8
+            .'2a8648ce3d030107' // 1.2.840.10045.3.1.7 = P-256 Curve
+            .'0342' // BIT STRING, length 66
+            .'00' // prepend with NUL
+            . $publicKey // pubkey
+        );
+        $pem = '-----BEGIN PUBLIC KEY-----'.PHP_EOL;
+        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
+        $pem .= '-----END PUBLIC KEY-----'.PHP_EOL;
+
+        return $pem;
+    }
+
+    /**
+     * @param string $key
+     *
+     * @return string
+     */
+    private static function privateKeyToPem(string $publicKey, PrivateKey $secret): string
+    {
+        $d = str_pad(gmp_strval($secret->getSecret(), 16), 64, '0', STR_PAD_LEFT);
+        $der = pack(
+            'H*',
+            '3077' // SEQUENCE, length 87+length($d)=32
+            .'020101' // INTEGER, 1
+            .'0420'   // OCTET STRING, length($d) = 32
+            .$d
+            .'a00a' // TAGGED OBJECT #0, length 10
+            .'0608' // OID, length 8
+            .'2a8648ce3d030107' // 1.3.132.0.34 = P-384 Curve
+            .'a144' //  TAGGED OBJECT #1, length 68
+            .'0342' // BIT STRING, length 66
+            .'00' // prepend with NUL
+            . $publicKey // pubkey
+        );
+        $pem = '-----BEGIN EC PRIVATE KEY-----'.PHP_EOL;
+        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
+        $pem .= '-----END EC PRIVATE KEY-----'.PHP_EOL;
+
+        return $pem;
     }
 }
