@@ -98,6 +98,11 @@ class WebPush
         if (!array_key_exists('timeout', $clientOptions) && isset($timeout)) {
             $clientOptions['timeout'] = $timeout;
         }
+
+        if (!array_key_exists('http_errors', $clientOptions)) {
+            $clientOptions['http_errors'] = false;
+        }
+
         $this->client = new Client($clientOptions);
     }
 
