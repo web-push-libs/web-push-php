@@ -20,8 +20,10 @@
   "require": {
     "php": "^7.1",
     "ext-json": "*",
+    "ext-curl": "*",
     "ext-gmp": "*",
     "lib-openssl": "*",
+    "ext-mbstring": "*",
     "guzzlehttp/guzzle": "^6.2",
     "web-token/jwt-signature": "^1.0",
     "web-token/jwt-key-mgmt": "^1.0"
