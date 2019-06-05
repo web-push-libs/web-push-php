@@ -21,15 +21,15 @@ class Notification
     /** @var null|string */
     private $payload;
 
-    /** @var array Options : TTL, urgency, topic */
-    private $options;
+    /** @var array */
+    private $options = [
+        'TTL' => null, 'urgency' => null, 'topic' => null
+    ];
 
     /** @var array Auth details : GCM, VAPID */
     private $auth;
 
     /**
-     * Notification constructor.
-     *
      * @param Subscription $subscription
      * @param string|null $payload
      * @param array $options
@@ -39,8 +39,8 @@ class Notification
     {
         $this->subscription = $subscription;
         $this->payload = $payload;
-        $this->options = $options;
         $this->auth = $auth;
+        $this->setOptions($options);
     }
 
     /**
@@ -60,27 +60,42 @@ class Notification
     }
 
     /**
-     * @param array $defaultOptions
+     * @param array $overrides
      *
      * @return array
      */
-    public function getOptions(array $defaultOptions = []): array
+    public function getOptions(array $overrides = []): array
     {
-        $options = $this->options;
-        $options['TTL'] = $options['TTL'] ?? $defaultOptions['TTL'];
-        $options['urgency'] = $options['urgency'] ?? $defaultOptions['urgency'];
-        $options['topic'] = $options['topic'] ?? $defaultOptions['topic'];
+        $allowed = $this->filterOptions($overrides);
 
-        return $options;
+        return array_merge($this->options, array_replace($allowed, array_filter($this->options)));
     }
 
     /**
-     * @param array $defaultAuth
+     * @param array $default
      *
      * @return array
      */
-    public function getAuth(array $defaultAuth): array
+    public function getAuth(array $default): array
     {
-        return count($this->auth) > 0 ? $this->auth : $defaultAuth;
+        return count($this->auth) > 0 ? $this->auth : $default;
+    }
+
+    /**
+     * @param array $options
+     */
+    private function setOptions(array $options): void
+    {
+        $this->options = array_replace($this->options, $this->filterOptions($options));
+    }
+
+    /**
+     * @param array $options
+     *
+     * @return array
+     */
+    private function filterOptions(array $options): array
+    {
+        return array_intersect_key($options, array_flip(['TTL', 'urgency', 'topic']));
     }
 }
