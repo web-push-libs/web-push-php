@@ -1,6 +1,6 @@
 <?php
 
-namespace Minishlink\WebPush\Tests;
+namespace Minishlink\WebPush\Tests\Unit;
 
 use Minishlink\WebPush\Subscription;
 use PHPUnit\Framework\TestCase;

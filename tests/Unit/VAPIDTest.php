@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Minishlink\WebPush\Tests;
+namespace Minishlink\WebPush\Tests\Unit;
 
 /*
  * This file is part of the WebPush library.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Minishlink\WebPush\Tests;
+namespace Minishlink\WebPush\Tests\Integration;
 
 /*
  * This file is part of the WebPush library.
@@ -48,10 +48,6 @@ final class PushServiceTest extends TestCase
      */
     protected function setUp()
     {
-        if (!(getenv('TRAVIS') || getenv('CI'))) {
-            $this->markTestSkipped('This test does not run on Travis.');
-        }
-
         $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
         curl_setopt_array($startApiCurl, [
             CURLOPT_POST => true,

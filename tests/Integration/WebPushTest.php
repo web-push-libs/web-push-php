@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Minishlink\WebPush\Tests;
+namespace Minishlink\WebPush\Tests\Integration;
 
 /*
  * This file is part of the WebPush library.
@@ -13,6 +13,7 @@ namespace Minishlink\WebPush\Tests;
  * file that was distributed with this source code.
  */
 
+use ErrorException;
 use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
@@ -80,11 +81,6 @@ final class WebPushTest extends TestCase
     public function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
-
-        // ignore in TravisCI
-        if (getenv('CI')) {
-            return [];
-        }
 
         return [
             [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
