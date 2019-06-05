@@ -1,5 +1,7 @@
 <?php
 
+namespace Minishlink\WebPush\Tests;
+
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Minishlink\WebPush\Utils;
 use PHPUnit\Framework\TestCase;

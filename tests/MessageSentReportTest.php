@@ -4,6 +4,8 @@
  * @started: 2018-12-03 11:31
  */
 
+namespace Minishlink\WebPush\Tests;
+
 use GuzzleHttp\Psr7\Request;
 use \Minishlink\WebPush\MessageSentReport;
 use \GuzzleHttp\Psr7\Response;
@@ -12,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \Minishlink\WebPush\MessageSentReport
  */
-class MessageSentReportTest extends TestCase
+final class MessageSentReportTest extends TestCase
 {
 
     /**

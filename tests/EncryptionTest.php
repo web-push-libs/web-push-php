@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Minishlink\WebPush\Tests;
+
 /*
  * This file is part of the WebPush library.
  *
@@ -16,8 +18,9 @@ use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
+use PHPUnit\Framework\TestCase;
 
-final class EncryptionTest extends PHPUnit\Framework\TestCase
+final class EncryptionTest extends TestCase
 {
     public function testDeterministicEncrypt()
     {
