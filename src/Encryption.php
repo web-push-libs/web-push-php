@@ -186,7 +186,7 @@ class Encryption
      *
      * @param string $clientPublicKey The client's public key
      * @param string $serverPublicKey Our public key
-     * @param $contentEncoding
+     * @param string $contentEncoding
      *
      * @return null|string
      *
