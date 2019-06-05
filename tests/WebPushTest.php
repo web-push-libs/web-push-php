@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Minishlink\WebPush\Tests;
+
 /*
  * This file is part of the WebPush library.
  *
@@ -14,8 +16,9 @@ declare(strict_types=1);
 use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use PHPUnit\Framework\TestCase;
 
-final class WebPushTest extends PHPUnit\Framework\TestCase
+final class WebPushTest extends TestCase
 {
     private static $endpoints;
     private static $keys;

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+namespace Minishlink\WebPush\Tests;
+
 /*
  * This file is part of the WebPush library.
  *
@@ -13,8 +15,9 @@ declare(strict_types=1);
 
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
+use PHPUnit\Framework\TestCase;
 
-final class VAPIDTest extends PHPUnit\Framework\TestCase
+final class VAPIDTest extends TestCase
 {
     public function vapidProvider()
     {

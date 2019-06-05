@@ -1,8 +1,11 @@
 <?php
 
-use Minishlink\WebPush\Subscription;
+namespace Minishlink\WebPush\Tests;
 
-class SubscriptionTest extends PHPUnit\Framework\TestCase
+use Minishlink\WebPush\Subscription;
+use PHPUnit\Framework\TestCase;
+
+final class SubscriptionTest extends TestCase
 {
     public function testCreateMinimal()
     {
