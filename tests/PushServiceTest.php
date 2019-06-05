@@ -11,6 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
@@ -178,11 +179,11 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
                 try {
                     $sendResp = $this->webPush->sendNotification($subscription, $payload, true);
-                    $this->assertInstanceOf(\Generator::class, $sendResp);
+                    $this->assertInstanceOf(Generator::class, $sendResp);
 
-                    /** @var \Minishlink\WebPush\MessageSentReport $report */
-	                foreach ($sendResp as $report) {
-                    	$this->assertTrue($report->isSuccess());
+                    /** @var MessageSentReport $report */
+                    foreach ($sendResp as $report) {
+                        $this->assertTrue($report->isSuccess());
                     }
 
                     $dataString = json_encode([

@@ -31,7 +31,7 @@ class Notification
      * Notification constructor.
      *
      * @param Subscription $subscription
-     * @param null|string $payload
+     * @param string|null $payload
      * @param array $options
      * @param array $auth
      */
@@ -67,9 +67,9 @@ class Notification
     public function getOptions(array $defaultOptions = []): array
     {
         $options = $this->options;
-        $options['TTL'] = array_key_exists('TTL', $options) ? $options['TTL'] : $defaultOptions['TTL'];
-        $options['urgency'] = array_key_exists('urgency', $options) ? $options['urgency'] : $defaultOptions['urgency'];
-        $options['topic'] = array_key_exists('topic', $options) ? $options['topic'] : $defaultOptions['topic'];
+        $options['TTL'] = $options['TTL'] ?? $defaultOptions['TTL'];
+        $options['urgency'] = $options['urgency'] ?? $defaultOptions['urgency'];
+        $options['topic'] = $options['topic'] ?? $defaultOptions['topic'];
 
         return $options;
     }
