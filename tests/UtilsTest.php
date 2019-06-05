@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 final class UtilsTest extends TestCase
 {
-
     public function testSerializePublicKey()
     {
         $curve = NistCurve::curve256();
@@ -15,5 +14,4 @@ final class UtilsTest extends TestCase
         $serializedPublicKey = Utils::serializePublicKey($publicKey);
         $this->assertEquals(130, Utils::safeStrlen($serializedPublicKey));
     }
-
 }

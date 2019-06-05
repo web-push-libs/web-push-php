@@ -6,13 +6,15 @@
 
 namespace Minishlink\WebPush;
 
+use function in_array;
+use JsonSerializable;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
  * Standardized response from sending a message
  */
-class MessageSentReport implements \JsonSerializable
+class MessageSentReport implements JsonSerializable
 {
 
     /**
@@ -123,7 +125,7 @@ class MessageSentReport implements \JsonSerializable
             return false;
         }
 
-        return \in_array($this->response->getStatusCode(), [404, 410], true);
+        return in_array($this->response->getStatusCode(), [404, 410], true);
     }
 
     /**

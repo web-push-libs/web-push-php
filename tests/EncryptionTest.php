@@ -21,7 +21,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
     public function testDeterministicEncrypt()
     {
-        $contentEncoding = "aes128gcm";
+        $contentEncoding = 'aes128gcm';
         $plaintext = 'When I grow up, I want to be a watermelon';
         $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24', Base64Url::encode($plaintext));
 

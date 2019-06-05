@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use ErrorException;
+
 class Subscription
 {
     /** @var string */
@@ -34,7 +36,7 @@ class Subscription
      * @param null|string $publicKey
      * @param null|string $authToken
      * @param string $contentEncoding (Optional) Must be "aesgcm"
-     * @throws \ErrorException
+     * @throws ErrorException
      */
     public function __construct(
         string $endpoint,
@@ -46,13 +48,13 @@ class Subscription
 
         if ($publicKey || $authToken || $contentEncoding) {
             $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
-            if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings)) {
-                throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+            if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings, true)) {
+                throw new ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
             }
 
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
-            $this->contentEncoding = $contentEncoding ?: "aesgcm";
+            $this->contentEncoding = $contentEncoding ?: 'aesgcm';
         }
     }
 
@@ -61,7 +63,7 @@ class Subscription
      *
      * @param array $associativeArray (with keys endpoint, publicKey, authToken, contentEncoding)
      * @return Subscription
-     * @throws \ErrorException
+     * @throws ErrorException
      */
     public static function create(array $associativeArray): Subscription
     {
@@ -79,7 +81,7 @@ class Subscription
                 $associativeArray['endpoint'],
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? 'aesgcm'
             );
         }
 
