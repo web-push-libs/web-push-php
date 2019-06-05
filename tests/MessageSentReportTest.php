@@ -57,32 +57,9 @@ final class MessageSentReportTest extends TestCase
     public function generateReportsWithEndpoints(): array
     {
         return [
-            [new MessageSentReport(new Request('POST', 'https://www.example.com')), 'https://www.example.com'],
-            [new MessageSentReport(new Request('POST', 'https://m.example.com')), 'https://m.example.com'],
-            [new MessageSentReport(new Request('POST', 'https://test.net')), 'https://test.net'],
-        ];
-    }
-
-    /**
-     * @param MessageSentReport $report
-     * @param Request           $expected
-     * @dataProvider generateReportsWithRequests
-     */
-    public function testGetRequest(MessageSentReport $report, Request $expected): void
-    {
-        $this->assertEquals($expected, $report->getRequest());
-    }
-
-    public function generateReportsWithRequests(): array
-    {
-        $r1 = new Request('POST', 'https://www.example.com');
-        $r2 = new Request('PUT', 'https://m.example.com');
-        $r3 = new Request('GET', 'https://test.net');
-
-        return [
-            [new MessageSentReport($r1), $r1],
-            [new MessageSentReport($r2), $r2],
-            [new MessageSentReport($r3), $r3],
+            [new MessageSentReport(new Request('POST', 'https://www.example.com'), new Response(200)), 'https://www.example.com'],
+            [new MessageSentReport(new Request('POST', 'https://m.example.com'), new Response(200)), 'https://m.example.com'],
+            [new MessageSentReport(new Request('POST', 'https://test.net'), new Response(200)), 'https://test.net'],
         ];
     }
 
@@ -100,9 +77,9 @@ final class MessageSentReportTest extends TestCase
     {
         $request1Body = json_encode(['title' => 'test', 'body' => 'blah', 'data' => []]);
         $request1 = new Request('POST', 'https://www.example.com', [], $request1Body);
-        $response1 = new Response(200, [], 'test');
+        $response1 = new Response(200, [], $request1Body);
 
-        $request2Body = '';
+        $request2Body = 'Faield to do somthing';
         $request2 = new Request('POST', 'https://www.example.com', [], $request2Body);
         $response2 = new Response(410, [], 'Faield to do somthing', '1.1', 'Gone');
 
@@ -118,7 +95,7 @@ final class MessageSentReportTest extends TestCase
                 ])
             ],
             [
-                new MessageSentReport($request2, $response2, false, 'Gone'),
+                new MessageSentReport($request2, $response2),
                 json_encode([
                     'success'  => false,
                     'expired'  => true,
@@ -147,9 +124,9 @@ final class MessageSentReportTest extends TestCase
     {
         $request = new Request('POST', 'https://example.com');
         return [
-            [new MessageSentReport($request), true],
-            [new MessageSentReport($request, null, true), true],
-            [new MessageSentReport($request, null, false), false],
+            [new MessageSentReport($request, new Response(200)), true],
+            [new MessageSentReport($request, new Response(200)), true],
+            [new MessageSentReport($request, new Response(404)), false],
         ];
     }
 }

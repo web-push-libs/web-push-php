@@ -83,7 +83,7 @@ foreach ($notifications as $notification) {
  * @var MessageSentReport $report
  */
 foreach ($webPush->flush() as $report) {
-    $endpoint = $report->getRequest()->getUri()->__toString();
+    $endpoint = $report->getEndpoint();
 
     if ($report->isSuccess()) {
         echo "[v] Message sent successfully for subscription {$endpoint}.";
@@ -225,12 +225,6 @@ foreach ($webPush->flush() as $report) {
         echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReason()}";
         
         // also available (to get more info)
-        
-        /** @var \Psr\Http\Message\RequestInterface $requestToPushService */
-        $requestToPushService = $report->getRequest();
-        
-        /** @var \Psr\Http\Message\ResponseInterface $responseOfPushService */
-        $responseOfPushService = $report->getResponse();
         
         /** @var string $failReason */
         $failReason = $report->getReason();
