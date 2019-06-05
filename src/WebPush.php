@@ -168,7 +168,7 @@ class WebPush
                     })
                     ->otherwise(static function ($reason) {
                         /** @var RequestException $reason **/
-                        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+                        return new MessageSentReport($reason->getRequest(), $reason->getResponse());
                     });
             }
 
