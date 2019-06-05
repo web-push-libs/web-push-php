@@ -4,7 +4,7 @@
  * @started: 2018-12-03 11:31
  */
 
-namespace Minishlink\WebPush\Tests;
+namespace Minishlink\WebPush\Tests\Unit;
 
 use GuzzleHttp\Psr7\Request;
 use \Minishlink\WebPush\MessageSentReport;
