@@ -22,7 +22,7 @@ class MessageSentReport implements JsonSerializable
     protected $request;
 
     /**
-     * @var ResponseInterface | null
+     * @var ResponseInterface
      */
     protected $response;
 
