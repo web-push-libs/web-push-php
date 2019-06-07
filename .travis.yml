@@ -8,18 +8,15 @@ sudo: required
 cache:
   directories:
     - ~/.selenium-assistant
-    - node_modules                  # cache modules too
-    - $HOME/.composer/cache/files   # and composer packages
+    - node_modules            # cache modules too
+    - $HOME/.composer/cache   # and composer packages
+    - vendor
 
-matrix:
-    allow_failures:
-        - php: nightly
-    fast_finish: true
-    include:
-        - php: 7.1
-        - php: 7.2
-        - php: 7.3
-        - php: nightly
+php:
+    - 7.1
+    - 7.2
+    - 7.3
+    - nightly
 
 env:
   - TRAVIS_NODE_VERSION="stable"
@@ -40,5 +37,26 @@ script:
   - web-push-testing-service start example -p 9012
   - composer test:unit
   - web-push-testing-service stop example
-  - composer test:typing
-  - composer test:syntax
+
+jobs:
+    allow_failures:
+        - php: nightly
+
+    include:
+        - stage: Metrics and quality
+          env: STATIC_ANALYSIS
+          script:
+              - composer test:typing
+
+        - stage: Metrics and quality
+          env: CODING_STANDARDS
+          script:
+              - composer test:syntax
+
+        - stage: Security Check
+          env: SECURITY_CHECK
+          before_script:
+              - wget -c https://get.sensiolabs.org/security-checker.phar
+              - chmod +x security-checker.phar
+          script:
+              - ./security-checker.phar security:check
