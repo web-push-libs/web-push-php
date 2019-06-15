@@ -13,9 +13,9 @@ namespace Minishlink\WebPush\Tests\Unit;
  * file that was distributed with this source code.
  */
 
+use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
-use PHPUnit\Framework\TestCase;
 
 final class VAPIDTest extends TestCase
 {

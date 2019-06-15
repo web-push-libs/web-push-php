@@ -2,16 +2,17 @@
 
 namespace Minishlink\WebPush\Tests\Unit;
 
+use ErrorException;
 use Minishlink\WebPush\Subscription;
-use PHPUnit\Framework\TestCase;
+use Minishlink\WebPush\Tests\TestCase;
 
 final class SubscriptionTest extends TestCase
 {
     public function testCreateMinimal()
     {
-        $subscriptionArray = array(
+        $subscriptionArray = [
             "endpoint" => "http://toto.com"
-        );
+        ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals(null, $subscription->getPublicKey());
@@ -30,11 +31,11 @@ final class SubscriptionTest extends TestCase
 
     public function testCreatePartial()
     {
-        $subscriptionArray = array(
+        $subscriptionArray = [
             "endpoint" => "http://toto.com",
             "publicKey" => "publicKey",
             "authToken" => "authToken",
-        );
+        ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
@@ -53,12 +54,12 @@ final class SubscriptionTest extends TestCase
 
     public function testCreateFull()
     {
-        $subscriptionArray = array(
+        $subscriptionArray = [
             "endpoint" => "http://toto.com",
             "publicKey" => "publicKey",
             "authToken" => "authToken",
             "contentEncoding" => "aes128gcm",
-        );
+        ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
@@ -104,4 +105,37 @@ final class SubscriptionTest extends TestCase
         $this->assertEquals("authToken", $subscription->getAuthToken());
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
     }
+
+    /**
+     * @dataProvider providesServices
+     *
+     * @param string $service
+     * @param string $url
+     *
+     * @throws ErrorException
+     */
+    public function testDeterminesServiceProvider($service, $url): void
+    {
+        $subscription = Subscription::create([
+            'endpoint' => $url,
+            'contentEncoding' => 'aes128gcm',
+            'keys' => [
+                'p256dh' => 'publicKey',
+                'auth' => 'authToken'
+            ]
+        ]);
+
+        $this->assertEquals($service, $subscription->getServiceName());
+    }
+
+    public function providesServices(): array
+    {
+        return [
+            'GCM' => ['GCM', 'https://android.googleapis.com'],
+            'FCM' => ['FCM', 'https://fcm.googleapis.com'],
+            'Unknown' => ['', 'https://foo.bar']
+        ];
+    }
+
+
 }

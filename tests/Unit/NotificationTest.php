@@ -2,9 +2,10 @@
 
 namespace Minishlink\WebPush\Tests\Unit;
 
+use Exception;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
-use PHPUnit\Framework\TestCase;
+use Minishlink\WebPush\Tests\TestCase;
 
 /**
  * @covers \Minishlink\WebPush\Notification
@@ -17,44 +18,54 @@ final class NotificationTest extends TestCase
             'TTL' => 1000, 'urgency' => 'normal', 'topic' => null
         ];
         $instance = new Notification(new Subscription(''), '', $options, []);
-        $this->assertEquals($options, $instance->getOptions());
+        $this->assertEquals(array_filter($options), $instance->getOptions());
     }
 
     public function testOnlySetsAllowedOptions(): void
     {
         $options = [
-            'TTL' => 1000, 'urgency' => 'normal', 'topic' => null
-        ];
-        $instance = new Notification(new Subscription(''), '', array_merge($options, ['foo' => 'bar']), []);
-        $this->assertEquals($options, $instance->getOptions());
-    }
-
-    public function testOverridesMissingOptionsWithOptionsParameter(): void
-    {
-        $options = [
-            'TTL' => 1000, 'urgency' => 'normal', 'topic' => null
+            'TTL' => 1000, 'urgency' => 'normal', 'foo' => 'bar'
         ];
         $instance = new Notification(new Subscription(''), '', $options, []);
-
-        $this->assertEquals($options, $instance->getOptions(['TTL' => 2000]));
-        $this->assertEquals(
-            array_merge($options, ['topic' => 'foo_topic']),
-            $instance->getOptions(['topic' => 'foo_topic'])
-        );
+        unset($options['foo']);
+        $this->assertEquals(array_filter($options), $instance->getOptions());
     }
 
-    public function testOnlyOverridesAllowedOptions(): void
+    public function testDeterminesWhetherItHasAuth(): void
     {
-        $options = [
-            'TTL' => 1000, 'urgency' => 'normal', 'topic' => null
-        ];
-        $instance = new Notification(new Subscription(''), '', $options, []);
-        $this->assertEquals($options, $instance->getOptions(['foo' => 'bar']));
-    }
-
-    public function testGetsNullValuesForOptionsWhichHaveNotBeenSpecified(): void
-    {
+        $instance = new Notification(new Subscription(''), '', [], ['VAPID' => 'foobar']);
+        $this->assertTrue($instance->hasAuth());
         $instance = new Notification(new Subscription(''), '', [], []);
-        $this->assertEquals(['TTL' => null, 'urgency' => null, 'topic' => null], $instance->getOptions());
+        $this->assertFalse($instance->hasAuth());
+        $instance = new Notification(new Subscription(''), '', [], ['invalid']);
+        $this->assertFalse($instance->hasAuth());
+    }
+
+    public function testHasAuth(): void
+    {
+        $instance = new Notification(new Subscription(''), '', [], ['VAPID' => ['foobar']]);
+        $this->assertEquals(['foobar'], $instance->getAuth());
+    }
+
+    public function testDeterminesWhichAuthService(): void
+    {
+        $instance = new Notification(new Subscription(''), '', [], ['VAPID' => 'foobar']);
+        $this->assertEquals('VAPID', $instance->getAuthType());
+        $instance = new Notification(new Subscription(''), '', [], ['GCM' => 'foobar']);
+        $this->assertEquals('GCM', $instance->getAuthType());
+        $instance = new Notification(new Subscription(''), '', [], ['FOO' => 'foobar']);
+        $this->assertEquals('', $instance->getAuthType());
+    }
+
+    public function testOnlySetsAllowedAuth(): void
+    {
+        $instance = new Notification(new Subscription(''), '', [], ['foo' => 'bar']);
+        $this->assertEquals(null, $instance->getAuth());
+    }
+
+    public function testThrowsAnExceptionIfYouSetMultipleAuth(): void
+    {
+        $this->expectException(Exception::class);
+        new Notification(new Subscription(''), '', [], ['VAPID' => 'foobar', 'GCM' => 'foobar']);
     }
 }
