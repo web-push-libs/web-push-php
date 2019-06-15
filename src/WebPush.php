@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 /*
  * This file is part of the WebPush library.
@@ -17,16 +17,10 @@ use Base64Url\Base64Url;
 use ErrorException;
 use Exception;
 use Generator;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
-use Psr\Http\Message\ResponseInterface;
 
 class WebPush
 {
-    public const GCM_URL = 'https://android.googleapis.com/gcm/send';
-    public const FCM_BASE_URL = 'https://fcm.googleapis.com';
-
     /**
      * @var Client
      */
@@ -65,14 +59,13 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array    $auth           Some servers needs authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize
-     * @param int|null $timeout        Timeout of POST request
-     * @param array    $clientOptions
+     * @param array $auth Some servers needs authentication
+     * @param array $defaultOptions TTL, urgency, topic, batchSize
+     * @param Client|null $client
      *
      * @throws ErrorException
      */
-    public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
+    public function __construct(array $auth = [], array $defaultOptions = [], ?Client $client = null)
     {
         if (ini_get('mbstring.func_overload') >= 2) {
             trigger_error('[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.');
@@ -86,15 +79,7 @@ class WebPush
 
         $this->setDefaultOptions($defaultOptions);
 
-        if (!array_key_exists('timeout', $clientOptions) && isset($timeout)) {
-            $clientOptions['timeout'] = $timeout;
-        }
-
-        if (array_key_exists('http_errors', $clientOptions)) {
-            $clientOptions['http_errors'] = false;
-        }
-
-        $this->client = new Client($clientOptions);
+        $this->client = $client ?? new Client();
     }
 
     /**
@@ -103,78 +88,51 @@ class WebPush
      * @param Subscription $subscription
      * @param string|null $payload If you want to send an array, json_encode it
      * @param bool $flush If you want to flush directly (usually when you send only one notification)
-     * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
+     * @param array $options Array with several options tied to this notification. If not set, will use the default
+     *     options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
-     * @return Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the queued requests has failed.
-     *                    Else return true
+     * @return Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the
+     *     queued requests has failed. Else return true
      *
      * @throws ErrorException
      */
-    public function sendNotification(Subscription $subscription, ?string $payload = null, bool $flush = false, array $options = [], array $auth = [])
-    {
-        if (isset($payload)) {
-            if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
-                throw new ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
-            }
+    public function sendNotification(
+        Subscription $subscription,
+        ?string $payload = null,
+        bool $flush = false,
+        array $options = [],
+        array $auth = []
+    ) {
+        $notification = $this->buildNotification($subscription, $payload, $options, $auth);
 
-            $contentEncoding = $subscription->getContentEncoding();
-            if (!$contentEncoding) {
-                throw new ErrorException('Subscription should have a content encoding');
-            }
+        $this->notifications[] = $notification;
 
-            $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
-        }
-
-        if (array_key_exists('VAPID', $auth)) {
-            $auth['VAPID'] = VAPID::validate($auth['VAPID']);
-        }
-
-        $this->notifications[] = new Notification($subscription, $payload, $options, $auth);
-
-        return false !== $flush ? $this->flush() : true;
+        return $flush ? $this->flush() : true;
     }
 
     /**
      * Flush notifications. Triggers the requests.
      *
-     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to
+     *     1000).
      *
      * @return Generator|MessageSentReport[]
      * @throws ErrorException
      */
-    public function flush(?int $batchSize = null): Generator
+    public function flush(?int $batchSize = null): ?Generator
     {
-        if (null === $this->notifications || empty($this->notifications)) {
-            yield from [];
-            return;
+        if (empty($this->notifications)) {
+            return null;
         }
 
-        if (null === $batchSize) {
-            $batchSize = $this->defaultOptions['batchSize'];
-        }
-
-        $batches = array_chunk($this->notifications, $batchSize);
-
-        // reset queue
+        $batches = array_chunk($this->notifications, $batchSize ?? $this->defaultOptions['batchSize']);
         $this->notifications = [];
 
         foreach ($batches as $batch) {
-            // for each endpoint server type
-            $requests = $this->prepare($batch);
-
             $promises = [];
-
-            foreach ($requests as $request) {
-                $promises[] = $this->client->sendAsync($request)
-                    ->then(static function ($response) use ($request) {
-                        /** @var ResponseInterface $response * */
-                        return new MessageSentReport($request, $response);
-                    })
-                    ->otherwise(static function ($reason) {
-                        /** @var RequestException $reason **/
-                        return new MessageSentReport($reason->getRequest(), $reason->getResponse());
-                    });
+            foreach ($batch as $notification) {
+                $promises[] = $this->client->sendAsync($this->prepare($notification));
             }
 
             foreach ($promises as $promise) {
@@ -188,99 +146,94 @@ class WebPush
     }
 
     /**
-     * @param array $notifications
+     * @param Notification $notification
      *
-     * @return array
+     * @return Request
      *
      * @throws ErrorException
      */
-    private function prepare(array $notifications): array
+    private function prepare(Notification $notification): Request
     {
-        $requests = [];
         /** @var Notification $notification */
-        foreach ($notifications as $notification) {
-            $subscription = $notification->getSubscription();
-            $endpoint = $subscription->getEndpoint();
-            $userPublicKey = $subscription->getPublicKey();
-            $userAuthToken = $subscription->getAuthToken();
-            $contentEncoding = $subscription->getContentEncoding();
-            $payload = $notification->getPayload();
-            $options = $notification->getOptions($this->getDefaultOptions());
-            $auth = $notification->getAuth($this->auth);
+        $subscription = $notification->getSubscription();
+        $endpoint = $subscription->getEndpoint();
+        $userPublicKey = $subscription->getPublicKey();
+        $userAuthToken = $subscription->getAuthToken();
+        $contentEncoding = $subscription->getContentEncoding();
+        $payload = $notification->getPayload();
+        $options = $notification->getOptions();
+        $auth = $notification->getAuth();
 
-            if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
-                if (!$contentEncoding) {
-                    throw new ErrorException('Subscription should have a content encoding');
-                }
-
-                $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
-                $cipherText = $encrypted['cipherText'];
-                $salt = $encrypted['salt'];
-                $localPublicKey = $encrypted['localPublicKey'];
-
-                $headers = [
-                    'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => $contentEncoding,
-                ];
-
-                if ($contentEncoding === "aesgcm") {
-                    $headers['Encryption'] = 'salt='.Base64Url::encode($salt);
-                    $headers['Crypto-Key'] = 'dh='.Base64Url::encode($localPublicKey);
-                }
-
-                $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey, $contentEncoding);
-                $content = $encryptionContentCodingHeader.$cipherText;
-
-                $headers['Content-Length'] = Utils::safeStrlen($content);
-            } else {
-                $headers = [
-                    'Content-Length' => 0,
-                ];
-
-                $content = '';
+        if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
+            if (!$contentEncoding) {
+                throw new ErrorException('Subscription should have a content encoding');
             }
 
-            $headers['TTL'] = $options['TTL'];
+            $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
+            $cipherText = $encrypted['cipherText'];
+            $salt = $encrypted['salt'];
+            $localPublicKey = $encrypted['localPublicKey'];
 
-            if (isset($options['urgency'])) {
-                $headers['Urgency'] = $options['urgency'];
+            $headers = [
+                'Content-Type' => 'application/octet-stream',
+                'Content-Encoding' => $contentEncoding,
+            ];
+
+            if ($contentEncoding === "aesgcm") {
+                $headers['Encryption'] = 'salt=' . Base64Url::encode($salt);
+                $headers['Crypto-Key'] = 'dh=' . Base64Url::encode($localPublicKey);
             }
 
-            if (isset($options['topic'])) {
-                $headers['Topic'] = $options['topic'];
-            }
+            $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey,
+                $contentEncoding);
+            $content = $encryptionContentCodingHeader . $cipherText;
 
-            // if GCM
-            if (strpos($endpoint, self::GCM_URL) === 0) {
-                if (array_key_exists('GCM', $auth)) {
-                    $headers['Authorization'] = 'key='.$auth['GCM'];
-                } else {
-                    throw new ErrorException('No GCM API Key specified.');
-                }
-            } elseif (array_key_exists('VAPID', $auth) && $contentEncoding) {
-                // if VAPID (GCM doesn't support it but FCM does)
-                $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
-                if (!parse_url($audience)) {
-                    throw new ErrorException('Audience "'.$audience.'"" could not be generated.');
-                }
+            $headers['Content-Length'] = Utils::safeStrlen($content);
+        } else {
+            $headers = [
+                'Content-Length' => 0,
+            ];
 
-                $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth['VAPID']);
-
-                $headers['Authorization'] = $vapidHeaders['Authorization'];
-
-                if ($contentEncoding === 'aesgcm') {
-                    if (array_key_exists('Crypto-Key', $headers)) {
-                        $headers['Crypto-Key'] .= ';'.$vapidHeaders['Crypto-Key'];
-                    } else {
-                        $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
-                    }
-                }
-            }
-
-            $requests[] = new Request('POST', $endpoint, $headers, $content);
+            $content = '';
         }
 
-        return $requests;
+        $headers['TTL'] = $options['TTL'];
+
+        if (isset($options['urgency'])) {
+            $headers['Urgency'] = $options['urgency'];
+        }
+
+        if (isset($options['topic'])) {
+            $headers['Topic'] = $options['topic'];
+        }
+
+        // if GCM
+        if ($subscription->getServiceName() === 'GCM') {
+            if ($notification->hasAuth() === false) {
+                throw new ErrorException('No GCM API Key specified.');
+            }
+            $headers['Authorization'] = 'key=' . $notification->getAuth();
+        } elseif ($contentEncoding && $notification->getAuthType() === 'VAPID') {
+            // if VAPID (GCM doesn't support it but FCM does)
+            $audience = parse_url($endpoint, PHP_URL_SCHEME) . '://' . parse_url($endpoint, PHP_URL_HOST);
+            if (!parse_url($audience)) {
+                throw new ErrorException('Audience "' . $audience . '"" could not be generated.');
+            }
+
+            $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth['VAPID']);
+
+            $headers['Authorization'] = $vapidHeaders['Authorization'];
+
+            if ($contentEncoding === 'aesgcm') {
+                if (array_key_exists('Crypto-Key', $headers)) {
+                    $headers['Crypto-Key'] .= ';' . $vapidHeaders['Crypto-Key'];
+                } else {
+                    $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
+                }
+            }
+        }
+
+        return $this->client->buildRequest($endpoint, $headers, $content);
     }
 
     /**
@@ -309,7 +262,7 @@ class WebPush
     public function setAutomaticPadding($automaticPadding): WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
-            throw new Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
+            throw new Exception('Automatic padding is too large. Max is ' . Encryption::MAX_PAYLOAD_LENGTH . '. Recommended max is ' . Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH . ' for compatibility reasons (see README).');
         }
 
         if ($automaticPadding < 0) {
@@ -335,6 +288,7 @@ class WebPush
 
     /**
      * Reuse VAPID headers in the same flush session to improve performance
+     *
      * @param bool $enabled
      *
      * @return WebPush
@@ -378,9 +332,47 @@ class WebPush
     }
 
     /**
+     * @param Subscription $subscription
+     * @param string|null $payload
+     * @param array $options
+     * @param array $auth
+     *
+     * @return Notification
+     * @throws ErrorException
+     */
+    private function buildNotification(
+        Subscription $subscription,
+        ?string $payload = null,
+        array $options = [],
+        array $auth = []
+    ): Notification {
+        if (isset($payload)) {
+            if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
+                throw new ErrorException('Size of payload must not be greater than ' . Encryption::MAX_PAYLOAD_LENGTH . ' octets.');
+            }
+
+            $contentEncoding = $subscription->getContentEncoding();
+            if (!$contentEncoding) {
+                throw new ErrorException('Subscription should have a content encoding');
+            }
+
+            $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
+        }
+
+        $options = array_replace($this->defaultOptions, $options);
+        $auth = empty($auth) ? $this->auth : $auth;
+        if (array_key_exists('VAPID', $auth)) {
+            $auth['VAPID'] = VAPID::validate($auth['VAPID']);
+        }
+
+        return new Notification($subscription, $payload, $options, $auth);
+    }
+
+    /**
      * @param string $audience
      * @param string $contentEncoding
      * @param array $vapid
+     *
      * @return array
      * @throws ErrorException
      */
@@ -397,7 +389,8 @@ class WebPush
         }
 
         if (!$vapidHeaders) {
-            $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'], $vapid['privateKey'], $contentEncoding);
+            $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'],
+                $vapid['privateKey'], $contentEncoding);
         }
 
         if ($this->reuseVAPIDHeaders) {

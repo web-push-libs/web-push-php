@@ -15,9 +15,9 @@ namespace Minishlink\WebPush\Tests\Integration;
 
 use ErrorException;
 use Minishlink\WebPush\MessageSentReport;
+use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
-use PHPUnit\Framework\TestCase;
 
 final class WebPushTest extends TestCase
 {

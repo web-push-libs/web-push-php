@@ -13,10 +13,12 @@ namespace Minishlink\WebPush\Tests\Integration;
  * file that was distributed with this source code.
  */
 
+use Exception;
+use Generator;
 use Minishlink\WebPush\MessageSentReport;
+use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
-use PHPUnit\Framework\TestCase;
 
 final class PushServiceTest extends TestCase
 {

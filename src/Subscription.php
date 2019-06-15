@@ -17,6 +17,11 @@ use ErrorException;
 
 class Subscription
 {
+    private const SERVICE_URLS = [
+        'GCM' => 'https://android.googleapis.com',
+        'FCM' => 'https://fcm.googleapis.com'
+    ];
+
     /** @var string */
     private $endpoint;
 
@@ -120,5 +125,16 @@ class Subscription
     public function getContentEncoding(): ?string
     {
         return $this->contentEncoding;
+    }
+
+    public function getServiceName(): string
+    {
+        foreach (self::SERVICE_URLS as $service => $url) {
+            if (strpos($this->getEndpoint(), $url) === 0) {
+                return $service;
+            }
+        }
+
+        return '';
     }
 }

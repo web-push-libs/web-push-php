@@ -3,8 +3,8 @@
 namespace Minishlink\WebPush\Tests\Unit;
 
 use Jose\Component\Core\Util\Ecc\NistCurve;
+use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\Utils;
-use PHPUnit\Framework\TestCase;
 
 final class UtilsTest extends TestCase
 {

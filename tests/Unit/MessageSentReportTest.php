@@ -9,7 +9,7 @@ namespace Minishlink\WebPush\Tests\Unit;
 use GuzzleHttp\Psr7\Request;
 use \Minishlink\WebPush\MessageSentReport;
 use \GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\TestCase;
+use Minishlink\WebPush\Tests\TestCase;
 
 /**
  * @covers \Minishlink\WebPush\MessageSentReport

@@ -17,8 +17,8 @@ use Base64Url\Base64Url;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Minishlink\WebPush\Encryption;
+use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\Utils;
-use PHPUnit\Framework\TestCase;
 
 final class EncryptionTest extends TestCase
 {

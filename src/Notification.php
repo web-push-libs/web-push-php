@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 /*
  * This file is part of the WebPush library.
@@ -13,12 +13,14 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Exception;
+
 class Notification
 {
     /** @var Subscription */
     private $subscription;
 
-    /** @var null|string */
+    /** @var string */
     private $payload;
 
     /** @var array */
@@ -26,76 +28,89 @@ class Notification
         'TTL' => null, 'urgency' => null, 'topic' => null
     ];
 
-    /** @var array Auth details : GCM, VAPID */
-    private $auth;
+    /** @var array */
+    private $auth = [
+        'GCM' => null, 'VAPID' => null
+    ];
 
     /**
      * @param Subscription $subscription
-     * @param string|null $payload
+     * @param string $payload
      * @param array $options
      * @param array $auth
+     *
+     * @throws Exception
      */
-    public function __construct(Subscription $subscription, ?string $payload, array $options, array $auth)
+    public function __construct(Subscription $subscription, string $payload, array $options, array $auth)
     {
         $this->subscription = $subscription;
-        $this->payload = $payload;
-        $this->auth = $auth;
+        $this->setPayload($payload);
+        $this->setAuth($auth);
         $this->setOptions($options);
     }
 
-    /**
-     * @return Subscription
-     */
     public function getSubscription(): Subscription
     {
         return $this->subscription;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getPayload(): ?string
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
+    public function getPayload(): string
     {
         return $this->payload;
     }
 
     /**
-     * @param array $overrides
-     *
-     * @return array
+     * @return array|string|null
      */
-    public function getOptions(array $overrides = []): array
+    public function getAuth()
     {
-        $allowed = $this->filterOptions($overrides);
+        if ($this->hasAuth() === false) {
+            return null;
+        }
 
-        return array_merge($this->options, array_replace($allowed, array_filter($this->options)));
+        return $this->auth[$this->getAuthType()];
     }
 
-    /**
-     * @param array $default
-     *
-     * @return array
-     */
-    public function getAuth(array $default): array
+    public function getAuthType(): ?string
     {
-        return count($this->auth) > 0 ? $this->auth : $default;
+        if ($this->hasAuth() === false) {
+            return null;
+        }
+
+        return !empty($this->auth['GCM']) ? 'GCM' : 'VAPID';
     }
 
-    /**
-     * @param array $options
-     */
+    public function hasAuth(): bool
+    {
+        return !empty($this->auth);
+    }
+
+    private function setPayload(string $payload): void
+    {
+        $this->payload = $payload;
+    }
+
     private function setOptions(array $options): void
     {
-        $this->options = array_replace($this->options, $this->filterOptions($options));
+        $this->options = array_filter(array_intersect_key($options, $this->options));
     }
 
     /**
-     * @param array $options
+     * @param array $auth
      *
-     * @return array
+     * @throws Exception
      */
-    private function filterOptions(array $options): array
+    private function setAuth(array $auth): void
     {
-        return array_intersect_key($options, array_flip(['TTL', 'urgency', 'topic']));
+        $auth = array_filter(array_intersect_key($auth, $this->auth));
+        if (count($auth) > 1) {
+            throw new Exception('You must specify only one form of authorization');
+        }
+        $this->auth = $auth;
     }
 }
