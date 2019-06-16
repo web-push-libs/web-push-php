@@ -37,9 +37,9 @@ class WebPush
     private $notifications;
 
     /**
-     * @var array Default options : TTL, urgency, topic, batchSize
+     * @var Options
      */
-    private $defaultOptions;
+    private $options;
 
     /**
      * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
@@ -60,12 +60,12 @@ class WebPush
      * WebPush constructor.
      *
      * @param array $auth Some servers needs authentication
-     * @param array $defaultOptions TTL, urgency, topic, batchSize
+     * @param Options|null $options TTL, urgency, topic, batchSize
      * @param Client|null $client
      *
      * @throws ErrorException
      */
-    public function __construct(array $auth = [], array $defaultOptions = [], ?Client $client = null)
+    public function __construct(array $auth = [], ?Options $options = null, ?Client $client = null)
     {
         if (ini_get('mbstring.func_overload') >= 2) {
             trigger_error('[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.');
@@ -77,7 +77,7 @@ class WebPush
 
         $this->auth = $auth;
 
-        $this->setDefaultOptions($defaultOptions);
+        $this->options = $options ?? new Options();
 
         $this->client = $client ?? new Client();
     }
@@ -88,7 +88,7 @@ class WebPush
      * @param Subscription $subscription
      * @param string|null $payload If you want to send an array, json_encode it
      * @param bool $flush If you want to flush directly (usually when you send only one notification)
-     * @param array $options Array with several options tied to this notification. If not set, will use the default
+     * @param Options|array $options Array with several options tied to this notification. If not set, will use the default
      *     options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
@@ -101,10 +101,10 @@ class WebPush
         Subscription $subscription,
         ?string $payload = null,
         bool $flush = false,
-        array $options = [],
+        $options = [],
         array $auth = []
     ) {
-        $notification = $this->buildNotification($subscription, $payload, $options, $auth);
+        $notification = $this->buildNotification($subscription, (string) $payload, Options::normalize($options), $auth);
 
         $this->notifications[] = $notification;
 
@@ -112,21 +112,16 @@ class WebPush
     }
 
     /**
-     * Flush notifications. Triggers the requests.
-     *
-     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to
-     *     1000).
-     *
      * @return Generator|MessageSentReport[]
      * @throws ErrorException
      */
-    public function flush(?int $batchSize = null): ?Generator
+    public function flush(): ?Generator
     {
         if (empty($this->notifications)) {
             return null;
         }
 
-        $batches = array_chunk($this->notifications, $batchSize ?? $this->defaultOptions['batchSize']);
+        $batches = array_chunk($this->notifications, $this->options->getBatchSize());
         $this->notifications = [];
 
         foreach ($batches as $batch) {
@@ -197,14 +192,14 @@ class WebPush
             $content = '';
         }
 
-        $headers['TTL'] = $options['TTL'];
+        $headers['TTL'] = $options->getTtl();
 
-        if (isset($options['urgency'])) {
-            $headers['Urgency'] = $options['urgency'];
+        if ($urgency = $options->getUrgency()) {
+            $headers['Urgency'] = $urgency;
         }
 
-        if (isset($options['topic'])) {
-            $headers['Topic'] = $options['topic'];
+        if ($topic = $options->getTopic()) {
+            $headers['Topic'] = $topic;
         }
 
         // if GCM
@@ -300,27 +295,9 @@ class WebPush
         return $this;
     }
 
-    /**
-     * @return array
-     */
-    public function getDefaultOptions(): array
+    public function getOptions(): Options
     {
-        return $this->defaultOptions;
-    }
-
-    /**
-     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
-     *
-     * @return WebPush
-     */
-    public function setDefaultOptions(array $defaultOptions)
-    {
-        $this->defaultOptions['TTL'] = $defaultOptions['TTL'] ?? 2419200;
-        $this->defaultOptions['urgency'] = $defaultOptions['urgency'] ?? null;
-        $this->defaultOptions['topic'] = $defaultOptions['topic'] ?? null;
-        $this->defaultOptions['batchSize'] = $defaultOptions['batchSize'] ?? 1000;
-
-        return $this;
+        return $this->options;
     }
 
     /**
@@ -333,8 +310,8 @@ class WebPush
 
     /**
      * @param Subscription $subscription
-     * @param string|null $payload
-     * @param array $options
+     * @param string $payload
+     * @param Options $options
      * @param array $auth
      *
      * @return Notification
@@ -342,11 +319,11 @@ class WebPush
      */
     private function buildNotification(
         Subscription $subscription,
-        ?string $payload = null,
-        array $options = [],
-        array $auth = []
+        string $payload,
+        Options $options,
+        array $auth
     ): Notification {
-        if (isset($payload)) {
+        if (!empty($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
                 throw new ErrorException('Size of payload must not be greater than ' . Encryption::MAX_PAYLOAD_LENGTH . ' octets.');
             }
@@ -359,13 +336,12 @@ class WebPush
             $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
         }
 
-        $options = array_replace($this->defaultOptions, $options);
         $auth = empty($auth) ? $this->auth : $auth;
         if (array_key_exists('VAPID', $auth)) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
         }
 
-        return new Notification($subscription, $payload, $options, $auth);
+        return new Notification($subscription, $payload, $this->options->with($options), $auth);
     }
 
     /**
