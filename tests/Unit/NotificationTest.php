@@ -4,6 +4,7 @@ namespace Minishlink\WebPush\Tests\Unit;
 
 use Exception;
 use Minishlink\WebPush\Notification;
+use Minishlink\WebPush\Options;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Tests\TestCase;
 
@@ -12,60 +13,41 @@ use Minishlink\WebPush\Tests\TestCase;
  */
 final class NotificationTest extends TestCase
 {
-    public function testHasOptions(): void
-    {
-        $options = [
-            'TTL' => 1000, 'urgency' => 'normal', 'topic' => null
-        ];
-        $instance = new Notification(new Subscription(''), '', $options, []);
-        $this->assertEquals(array_filter($options), $instance->getOptions());
-    }
-
-    public function testOnlySetsAllowedOptions(): void
-    {
-        $options = [
-            'TTL' => 1000, 'urgency' => 'normal', 'foo' => 'bar'
-        ];
-        $instance = new Notification(new Subscription(''), '', $options, []);
-        unset($options['foo']);
-        $this->assertEquals(array_filter($options), $instance->getOptions());
-    }
-
     public function testDeterminesWhetherItHasAuth(): void
     {
-        $instance = new Notification(new Subscription(''), '', [], ['VAPID' => 'foobar']);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['VAPID' => 'foobar']);
         $this->assertTrue($instance->hasAuth());
-        $instance = new Notification(new Subscription(''), '', [], []);
+        $instance = new Notification(new Subscription(''), '', new Options(), []);
         $this->assertFalse($instance->hasAuth());
-        $instance = new Notification(new Subscription(''), '', [], ['invalid']);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['invalid']);
         $this->assertFalse($instance->hasAuth());
     }
 
     public function testHasAuth(): void
     {
-        $instance = new Notification(new Subscription(''), '', [], ['VAPID' => ['foobar']]);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['VAPID' => ['foobar']]);
         $this->assertEquals(['foobar'], $instance->getAuth());
     }
 
     public function testDeterminesWhichAuthService(): void
     {
-        $instance = new Notification(new Subscription(''), '', [], ['VAPID' => 'foobar']);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['VAPID' => 'foobar']);
         $this->assertEquals('VAPID', $instance->getAuthType());
-        $instance = new Notification(new Subscription(''), '', [], ['GCM' => 'foobar']);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['GCM' => 'foobar']);
         $this->assertEquals('GCM', $instance->getAuthType());
-        $instance = new Notification(new Subscription(''), '', [], ['FOO' => 'foobar']);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['FOO' => 'foobar']);
         $this->assertEquals('', $instance->getAuthType());
     }
 
     public function testOnlySetsAllowedAuth(): void
     {
-        $instance = new Notification(new Subscription(''), '', [], ['foo' => 'bar']);
+        $instance = new Notification(new Subscription(''), '', new Options(), ['foo' => 'bar']);
         $this->assertEquals(null, $instance->getAuth());
     }
 
     public function testThrowsAnExceptionIfYouSetMultipleAuth(): void
     {
         $this->expectException(Exception::class);
-        new Notification(new Subscription(''), '', [], ['VAPID' => 'foobar', 'GCM' => 'foobar']);
+        new Notification(new Subscription(''), '', new Options(), ['VAPID' => 'foobar', 'GCM' => 'foobar']);
     }
 }

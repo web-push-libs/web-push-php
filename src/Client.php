@@ -13,7 +13,7 @@ use GuzzleHttp\Psr7\Response;
 class Client
 {
     /**
-     * @var GuzzleClient|null
+     * @var GuzzleClient
      */
     private $client;
 

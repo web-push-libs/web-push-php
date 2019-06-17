@@ -23,10 +23,8 @@ class Notification
     /** @var string */
     private $payload;
 
-    /** @var array */
-    private $options = [
-        'TTL' => null, 'urgency' => null, 'topic' => null
-    ];
+    /** @var Options */
+    private $options;
 
     /** @var array */
     private $auth = [
@@ -36,17 +34,17 @@ class Notification
     /**
      * @param Subscription $subscription
      * @param string $payload
-     * @param array $options
+     * @param Options $options
      * @param array $auth
      *
      * @throws Exception
      */
-    public function __construct(Subscription $subscription, string $payload, array $options, array $auth)
+    public function __construct(Subscription $subscription, string $payload, Options $options, array $auth)
     {
         $this->subscription = $subscription;
         $this->setPayload($payload);
         $this->setAuth($auth);
-        $this->setOptions($options);
+        $this->options = $options;
     }
 
     public function getSubscription(): Subscription
@@ -54,7 +52,7 @@ class Notification
         return $this->subscription;
     }
 
-    public function getOptions(): array
+    public function getOptions(): Options
     {
         return $this->options;
     }
@@ -93,11 +91,6 @@ class Notification
     private function setPayload(string $payload): void
     {
         $this->payload = $payload;
-    }
-
-    private function setOptions(array $options): void
-    {
-        $this->options = array_filter(array_intersect_key($options, $this->options));
     }
 
     /**
