@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Minishlink\WebPush\Tests\Unit;
 
 use Minishlink\WebPush\Options;

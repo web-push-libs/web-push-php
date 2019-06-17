@@ -52,7 +52,7 @@ class Options
      */
     public static function wrap($options): Options
     {
-        return $options instanceof self ? $options : new static($options);
+        return $options instanceof self ? $options : new static((array) $options);
     }
 
     private function setOptions(array $options): void

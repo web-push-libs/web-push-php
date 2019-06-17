@@ -25,40 +25,32 @@ class WebPush
      * @var Client
      */
     private $client;
-
     /**
      * @var array
      */
     private $auth;
-
     /**
      * @var null|array Array of array of Notifications
      */
     private $notifications;
-
     /**
      * @var Options
      */
     private $options;
-
     /**
      * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
      */
     private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
-
     /**
      * @var bool Reuse VAPID headers in the same flush session to improve performance
      */
     private $reuseVAPIDHeaders = false;
-
     /**
      * @var array Dictionary for VAPID headers cache
      */
     private $vapidHeaders = [];
 
     /**
-     * WebPush constructor.
-     *
      * @param array $auth Some servers needs authentication
      * @param Options|null $options
      * @param Client|null $client
@@ -77,7 +69,7 @@ class WebPush
 
         $this->auth = $auth;
 
-        $this->options = $options ?? new Options();
+        $this->options = Options::wrap($options);
 
         $this->client = $client ?? new Client();
     }
@@ -88,8 +80,8 @@ class WebPush
      * @param Subscription $subscription
      * @param string|null $payload If you want to send an array, json_encode it
      * @param bool $flush If you want to flush directly (usually when you send only one notification)
-     * @param Options|array $options Array with several options tied to this notification. If not set, will use the default
-     *     options that you can set in the WebPush object
+     * @param Options|array $options Options to use for this notification. If not set, the default options
+     *         set while instantiating the Webpush object will be used.
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
      * @return Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the
@@ -104,7 +96,8 @@ class WebPush
         $options = [],
         array $auth = []
     ) {
-        $notification = $this->buildNotification($subscription, (string) $payload, Options::wrap($options)->with($this->options), $auth);
+        $notification = $this->buildNotification($subscription, (string) $payload,
+            Options::wrap($options)->with($this->options), $auth);
 
         $this->notifications[] = $notification;
 
