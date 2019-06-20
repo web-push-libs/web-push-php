@@ -65,50 +65,6 @@ final class MessageSentReportTest extends TestCase
 
     /**
      * @param MessageSentReport $report
-     * @param string            $json
-     * @dataProvider generateReportsWithJson
-     */
-    public function testJsonSerialize(MessageSentReport $report, string $json): void
-    {
-        $this->assertJsonStringEqualsJsonString($json, json_encode($report));
-    }
-
-    public function generateReportsWithJson(): array
-    {
-        $request1Body = json_encode(['title' => 'test', 'body' => 'blah', 'data' => []]);
-        $request1 = new Request('POST', 'https://www.example.com', [], $request1Body);
-        $response1 = new Response(200, [], $request1Body);
-
-        $request2Body = 'Faield to do somthing';
-        $request2 = new Request('POST', 'https://www.example.com', [], $request2Body);
-        $response2 = new Response(410, [], 'Faield to do somthing', '1.1', 'Gone');
-
-        return [
-            [
-                new MessageSentReport($request1, $response1),
-                json_encode([
-                    'success'  => true,
-                    'expired'  => false,
-                    'reason'   => 'OK',
-                    'endpoint' => (string) $request1->getUri(),
-                    'payload'  => $request1Body,
-                ])
-            ],
-            [
-                new MessageSentReport($request2, $response2),
-                json_encode([
-                    'success'  => false,
-                    'expired'  => true,
-                    'reason'   => 'Gone',
-                    'endpoint' => (string) $request2->getUri(),
-                    'payload'  => $request2Body,
-                ])
-            ]
-        ];
-    }
-
-    /**
-     * @param MessageSentReport $report
      * @param bool              $expected
      * @dataProvider generateReportsWithSuccess
      */

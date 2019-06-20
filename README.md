@@ -88,7 +88,7 @@ foreach ($webPush->flush() as $report) {
     if ($report->isSuccess()) {
         echo "[v] Message sent successfully for subscription {$endpoint}.";
     } else {
-        echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReason()}";
+        echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReasonPhrase()}";
     }
 }
 
@@ -222,12 +222,12 @@ foreach ($webPush->flush() as $report) {
     if ($report->isSuccess()) {
         echo "[v] Message sent successfully for subscription {$endpoint}.";
     } else {
-        echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReason()}";
+        echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReasonPhrase()}";
         
         // also available (to get more info)
         
         /** @var string $failReason */
-        $failReason = $report->getReason();
+        $failReason = $report->getReasonPhrase();
         
         /** @var bool $isTheEndpointWrongOrExpired */
         $isTheEndpointWrongOrExpired = $report->isSubscriptionExpired();

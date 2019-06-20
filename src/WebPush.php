@@ -121,8 +121,12 @@ class WebPush
 
         foreach ($batches as $batch) {
             $promises = [];
+            /** @var Notification $notification */
             foreach ($batch as $notification) {
-                $promises[] = $this->client->sendAsync($this->prepare($notification));
+                $promises[] = $this->client->sendAsync(
+                    $notification->getSubscription()->getEndpoint(),
+                    ...$this->prepare($notification)
+                );
             }
 
             foreach ($promises as $promise) {
@@ -138,11 +142,11 @@ class WebPush
     /**
      * @param Notification $notification
      *
-     * @return Request
+     * @return array
      *
      * @throws ErrorException
      */
-    private function prepare(Notification $notification): Request
+    private function prepare(Notification $notification): array
     {
         /** @var Notification $notification */
         $subscription = $notification->getSubscription();
@@ -223,7 +227,7 @@ class WebPush
             }
         }
 
-        return $this->client->buildRequest($endpoint, $headers, $content);
+        return [$headers, $content];
     }
 
     /**
