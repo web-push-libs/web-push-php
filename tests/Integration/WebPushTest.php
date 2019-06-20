@@ -173,7 +173,7 @@ final class WebPushTest extends TestCase
         foreach ($this->webPush->flush() as $report) {
             $this->assertFalse($report->isSuccess());
             $this->assertTrue($report->isSubscriptionExpired());
-            $this->assertNotEmpty($report->getReasonPhrase());
+            $this->assertNotEmpty($report->getReason());
             $this->assertNotFalse(filter_var($report->getEndpoint(), FILTER_VALIDATE_URL));
         }
     }
