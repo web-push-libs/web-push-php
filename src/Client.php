@@ -4,49 +4,111 @@ declare(strict_types = 1);
 
 namespace Minishlink\WebPush;
 
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Promise\PromiseInterface;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
+use Exception;
+use Http\Client\HttpAsyncClient;
+use Http\Discovery\HttpAsyncClientDiscovery;
+use Http\Discovery\Psr17FactoryDiscovery;
+use Http\Promise\Promise;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
 class Client
 {
     /**
-     * @var GuzzleClient
+     * @var HttpAsyncClient
      */
     private $client;
+    /**
+     * @var RequestFactoryInterface
+     */
+    private $requestFactory;
+    /**
+     * @var StreamFactoryInterface
+     */
+    private $streamFactory;
+    /**
+     * @var RequestInterface
+     */
+    private $request;
 
-    public function __construct(?GuzzleClient $client = null)
-    {
-        $this->client = $client ?? new GuzzleClient([
-                'http_errors' => false,
-                'timeout' => 30
-            ]);
+    public function __construct(
+        ?HttpAsyncClient $client = null,
+        ?RequestFactoryInterface $requestFactory = null,
+        ?StreamFactoryInterface $streamFactory = null
+    ) {
+        $this->client = $client ?? HttpAsyncClientDiscovery::find();
+        $this->requestFactory = $requestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
+        $this->streamFactory = $streamFactory ?? Psr17FactoryDiscovery::findStreamFactory();
     }
 
-    public function sendNow(Request $request): MessageSentReport
+    /**
+     * @param string $endpoint
+     * @param array $headers
+     * @param string|null $payload
+     *
+     * @return MessageSentReport
+     * @throws Exception
+     */
+    public function sendNow(string $endpoint, array $headers = [], ?string $payload = null): MessageSentReport
     {
-        return $this->sendAsync($request)->wait();
+        return $this->sendAsync(...func_get_args())->wait();
     }
 
-    public function sendAsync(Request $request): PromiseInterface
+    /**
+     * @param string $endpoint
+     * @param array $headers
+     * @param string|null $payload
+     *
+     * @return Promise
+     * @throws Exception
+     */
+    public function sendAsync(string $endpoint, array $headers = [], ?string $payload = null): Promise
     {
-        return $this->send($request);
+        return $this->createRequest($endpoint)
+            ->withPayload($payload)
+            ->withHeaders($headers)
+            ->send();
     }
 
-    public function buildRequest(string $endpoint, array $headers = [], ?string $body = null): Request
+    private function createRequest(string $endpoint): self
     {
-        return new Request('POST', $endpoint, $headers, $body);
+        $this->request = $this->requestFactory->createRequest('POST', $endpoint);
+
+        return $this;
     }
 
-    private function send(Request $request): PromiseInterface
+    private function withHeaders(array $headers): self
     {
-        return $this->client->sendAsync($request)
-            ->then(static function (Response $response) use ($request) {
+        foreach ($headers as $header => $value) {
+            $this->request->withHeader($header, $value);
+        }
+
+        return $this;
+    }
+
+    private function withPayload(?string $payload): self
+    {
+        if ($payload) {
+            $this->request->withBody($this->streamFactory->createStream($payload));
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Promise
+     * @throws Exception
+     */
+    private function send(): Promise
+    {
+        $request = $this->request;
+        unset($this->request);
+
+        return $this->client->sendAsyncRequest($request)
+            ->then(static function (ResponseInterface $response) use ($request) {
                 return new MessageSentReport($request, $response);
-            }, static function (RequestException $reason) {
-                return new MessageSentReport($reason->getRequest(), $reason->getResponse());
             });
     }
 }
