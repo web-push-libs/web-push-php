@@ -17,7 +17,7 @@ final class SubscriptionTest extends TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals(null, $subscription->getPublicKey());
         $this->assertEquals(null, $subscription->getAuthToken());
-        $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->assertEquals('aesgcm', $subscription->getContentEncoding());
     }
 
     public function testConstructMinimal()
@@ -26,7 +26,7 @@ final class SubscriptionTest extends TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals(null, $subscription->getPublicKey());
         $this->assertEquals(null, $subscription->getAuthToken());
-        $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->assertEquals('aesgcm', $subscription->getContentEncoding());
     }
 
     public function testCreatePartial()

@@ -31,7 +31,7 @@ class Subscription
     /** @var null|string */
     private $authToken;
 
-    /** @var null|string */
+    /** @var string */
     private $contentEncoding;
 
     /**
@@ -47,7 +47,7 @@ class Subscription
         string $endpoint,
         ?string $publicKey = null,
         ?string $authToken = null,
-        ?string $contentEncoding = null
+        string $contentEncoding = null
     ) {
         $this->endpoint = $endpoint;
 
@@ -59,8 +59,8 @@ class Subscription
 
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
-            $this->contentEncoding = $contentEncoding ?: 'aesgcm';
         }
+        $this->contentEncoding = $contentEncoding ?? 'aesgcm';
     }
 
     /**
@@ -77,7 +77,7 @@ class Subscription
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? 'aesgcm'
             );
         }
 
@@ -120,9 +120,9 @@ class Subscription
     }
 
     /**
-     * @return null|string
+     * @return string
      */
-    public function getContentEncoding(): ?string
+    public function getContentEncoding(): string
     {
         return $this->contentEncoding;
     }

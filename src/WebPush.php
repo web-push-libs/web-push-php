@@ -17,7 +17,6 @@ use Base64Url\Base64Url;
 use ErrorException;
 use Exception;
 use Generator;
-use GuzzleHttp\Psr7\Request;
 
 class WebPush
 {
@@ -26,7 +25,7 @@ class WebPush
      */
     private $client;
     /**
-     * @var array
+     * @var Auth
      */
     private $auth;
     /**
@@ -51,26 +50,18 @@ class WebPush
     private $vapidHeaders = [];
 
     /**
-     * @param array $auth Some servers needs authentication
+     * @param Auth|null $auth
      * @param Options|null $options
      * @param Client|null $client
-     *
-     * @throws ErrorException
      */
-    public function __construct(array $auth = [], ?Options $options = null, ?Client $client = null)
+    public function __construct(?Auth $auth = null, ?Options $options = null, ?Client $client = null)
     {
         if (ini_get('mbstring.func_overload') >= 2) {
             trigger_error('[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.');
         }
 
-        if (isset($auth['VAPID'])) {
-            $auth['VAPID'] = VAPID::validate($auth['VAPID']);
-        }
-
         $this->auth = $auth;
-
         $this->options = Options::wrap($options);
-
         $this->client = $client ?? new Client();
     }
 
@@ -82,7 +73,7 @@ class WebPush
      * @param bool $flush If you want to flush directly (usually when you send only one notification)
      * @param Options|array $options Options to use for this notification. If not set, the default options
      *         set while instantiating the Webpush object will be used.
-     * @param array $auth Use this auth details instead of what you provided when creating WebPush
+     * @param Auth|null $auth Use this auth details instead of what you provided when creating WebPush
      *
      * @return Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the
      *     queued requests has failed. Else return true
@@ -94,12 +85,12 @@ class WebPush
         ?string $payload = null,
         bool $flush = false,
         $options = [],
-        array $auth = []
+        ?Auth $auth = null
     ) {
-        $notification = $this->buildNotification($subscription, (string) $payload,
-            Options::wrap($options)->with($this->options), $auth);
+        $this->notifications[] = $this->buildNotification(
+            $subscription, (string) $payload, Options::wrap($options)->with($this->options), $auth ?? $this->auth
+        );
 
-        $this->notifications[] = $notification;
 
         return $flush ? $this->flush() : true;
     }
@@ -124,8 +115,7 @@ class WebPush
             /** @var Notification $notification */
             foreach ($batch as $notification) {
                 $promises[] = $this->client->sendAsync(
-                    $notification->getSubscription()->getEndpoint(),
-                    ...$this->prepare($notification)
+                    $notification->getSubscription()->getEndpoint(), ...$this->prepare($notification)
                 );
             }
 
@@ -159,10 +149,6 @@ class WebPush
         $auth = $notification->getAuth();
 
         if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
-            if (!$contentEncoding) {
-                throw new ErrorException('Subscription should have a content encoding');
-            }
-
             $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
             $cipherText = $encrypted['cipherText'];
             $salt = $encrypted['salt'];
@@ -173,7 +159,7 @@ class WebPush
                 'Content-Encoding' => $contentEncoding,
             ];
 
-            if ($contentEncoding === "aesgcm") {
+            if ($contentEncoding === 'aesgcm') {
                 $headers['Encryption'] = 'salt=' . Base64Url::encode($salt);
                 $headers['Crypto-Key'] = 'dh=' . Base64Url::encode($localPublicKey);
             }
@@ -201,31 +187,23 @@ class WebPush
             $headers['Topic'] = $topic;
         }
 
-        // if GCM
-        if ($subscription->getServiceName() === 'GCM') {
-            if ($notification->hasAuth() === false) {
-                throw new ErrorException('No GCM API Key specified.');
-            }
-            $headers['Authorization'] = 'key=' . $notification->getAuth();
-        } elseif ($contentEncoding && $notification->getAuthType() === 'VAPID') {
-            // if VAPID (GCM doesn't support it but FCM does)
-            $audience = parse_url($endpoint, PHP_URL_SCHEME) . '://' . parse_url($endpoint, PHP_URL_HOST);
-            if (!parse_url($audience)) {
-                throw new ErrorException('Audience "' . $audience . '"" could not be generated.');
-            }
+        $audience = parse_url($endpoint, PHP_URL_SCHEME) . '://' . parse_url($endpoint, PHP_URL_HOST);
+        if (!parse_url($audience)) {
+            throw new ErrorException('Audience "' . $audience . '"" could not be generated.');
+        }
 
-            $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth['VAPID']);
+        $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth->toArray());
 
-            $headers['Authorization'] = $vapidHeaders['Authorization'];
+        $headers['Authorization'] = $vapidHeaders['Authorization'];
 
-            if ($contentEncoding === 'aesgcm') {
-                if (array_key_exists('Crypto-Key', $headers)) {
-                    $headers['Crypto-Key'] .= ';' . $vapidHeaders['Crypto-Key'];
-                } else {
-                    $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
-                }
+        if ($contentEncoding === 'aesgcm') {
+            if (array_key_exists('Crypto-Key', $headers)) {
+                $headers['Crypto-Key'] .= ';' . $vapidHeaders['Crypto-Key'];
+            } else {
+                $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
             }
         }
+
 
         return [$headers, $content];
     }
@@ -311,7 +289,7 @@ class WebPush
      * @param Subscription $subscription
      * @param string $payload
      * @param Options $options
-     * @param array $auth
+     * @param Auth $auth
      *
      * @return Notification
      * @throws ErrorException
@@ -320,7 +298,7 @@ class WebPush
         Subscription $subscription,
         string $payload,
         Options $options,
-        array $auth
+        Auth $auth
     ): Notification {
         if (!empty($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
@@ -335,12 +313,7 @@ class WebPush
             $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
         }
 
-        $auth = empty($auth) ? $this->auth : $auth;
-        if (array_key_exists('VAPID', $auth)) {
-            $auth['VAPID'] = VAPID::validate($auth['VAPID']);
-        }
-
-        return new Notification($subscription, $payload, $options, $auth);
+        return new Notification($subscription, $payload, $options, $auth ?? $this->auth);
     }
 
     /**

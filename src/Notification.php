@@ -26,24 +26,22 @@ class Notification
     /** @var Options */
     private $options;
 
-    /** @var array */
-    private $auth = [
-        'GCM' => null, 'VAPID' => null
-    ];
+    /** @var Auth */
+    private $auth;
 
     /**
      * @param Subscription $subscription
      * @param string $payload
      * @param Options $options
-     * @param array $auth
+     * @param Auth $auth
      *
      * @throws Exception
      */
-    public function __construct(Subscription $subscription, string $payload, Options $options, array $auth)
+    public function __construct(Subscription $subscription, string $payload, Options $options, Auth $auth)
     {
         $this->subscription = $subscription;
         $this->setPayload($payload);
-        $this->setAuth($auth);
+        $this->auth = $auth;
         $this->options = $options;
     }
 
@@ -57,53 +55,18 @@ class Notification
         return $this->options;
     }
 
+    public function getAuth(): Auth
+    {
+        return $this->auth;
+    }
+
     public function getPayload(): string
     {
         return $this->payload;
     }
 
-    /**
-     * @return array|string|null
-     */
-    public function getAuth()
-    {
-        if ($this->hasAuth() === false) {
-            return null;
-        }
-
-        return $this->auth[$this->getAuthType()];
-    }
-
-    public function getAuthType(): ?string
-    {
-        if ($this->hasAuth() === false) {
-            return null;
-        }
-
-        return !empty($this->auth['GCM']) ? 'GCM' : 'VAPID';
-    }
-
-    public function hasAuth(): bool
-    {
-        return !empty($this->auth);
-    }
-
     private function setPayload(string $payload): void
     {
         $this->payload = $payload;
-    }
-
-    /**
-     * @param array $auth
-     *
-     * @throws Exception
-     */
-    private function setAuth(array $auth): void
-    {
-        $auth = array_filter(array_intersect_key($auth, $this->auth));
-        if (count($auth) > 1) {
-            throw new Exception('You must specify only one form of authorization');
-        }
-        $this->auth = $auth;
     }
 }
