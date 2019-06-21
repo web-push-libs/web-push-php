@@ -146,7 +146,7 @@ class WebPush
         $contentEncoding = $subscription->getContentEncoding();
         $payload = $notification->getPayload();
         $options = $notification->getOptions();
-        $auth = $notification->getAuth();
+        $headers = new Headers();
 
         if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
             $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
@@ -154,37 +154,38 @@ class WebPush
             $salt = $encrypted['salt'];
             $localPublicKey = $encrypted['localPublicKey'];
 
-            $headers = [
+            $headers->add([
                 'Content-Type' => 'application/octet-stream',
                 'Content-Encoding' => $contentEncoding,
-            ];
+            ]);
 
             if ($contentEncoding === 'aesgcm') {
-                $headers['Encryption'] = 'salt=' . Base64Url::encode($salt);
-                $headers['Crypto-Key'] = 'dh=' . Base64Url::encode($localPublicKey);
+                $headers->add([
+                    'Encryption' => 'salt=' . Base64Url::encode($salt),
+                    'Crypto-Key' => 'dh=' . Base64Url::encode($localPublicKey)
+                ]);
             }
 
             $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey,
                 $contentEncoding);
             $content = $encryptionContentCodingHeader . $cipherText;
 
-            $headers['Content-Length'] = Utils::safeStrlen($content);
+            $headers->set('Content-Length', Utils::safeStrlen($content));
+
         } else {
-            $headers = [
-                'Content-Length' => 0,
-            ];
+            $headers->set('Content-Length', 0);
 
             $content = '';
         }
 
-        $headers['TTL'] = $options->getTtl();
+        $headers->set('TTL', $options->getTtl());
 
         if ($urgency = $options->getUrgency()) {
-            $headers['Urgency'] = $urgency;
+            $headers->set('Urgency', $urgency);
         }
 
         if ($topic = $options->getTopic()) {
-            $headers['Topic'] = $topic;
+            $headers->set('Topic', $topic);
         }
 
         $audience = parse_url($endpoint, PHP_URL_SCHEME) . '://' . parse_url($endpoint, PHP_URL_HOST);
@@ -192,16 +193,12 @@ class WebPush
             throw new ErrorException('Audience "' . $audience . '"" could not be generated.');
         }
 
-        $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth->toArray());
+        $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $notification->getAuth()->toArray());
 
-        $headers['Authorization'] = $vapidHeaders['Authorization'];
+        $headers->set('Authorization', $vapidHeaders['Authorization']);
 
         if ($contentEncoding === 'aesgcm') {
-            if (array_key_exists('Crypto-Key', $headers)) {
-                $headers['Crypto-Key'] .= ';' . $vapidHeaders['Crypto-Key'];
-            } else {
-                $headers['Crypto-Key'] = $vapidHeaders['Crypto-Key'];
-            }
+            $headers->append('Crypto-Key', $vapidHeaders['Crypto-Key'], ';');
         }
 
 

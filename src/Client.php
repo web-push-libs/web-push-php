@@ -45,26 +45,26 @@ class Client
 
     /**
      * @param string $endpoint
-     * @param array $headers
+     * @param Headers $headers
      * @param string|null $payload
      *
      * @return MessageSentReport
      * @throws Exception
      */
-    public function sendNow(string $endpoint, array $headers = [], ?string $payload = null): MessageSentReport
+    public function sendNow(string $endpoint, Headers $headers, ?string $payload = null): MessageSentReport
     {
         return $this->sendAsync(...func_get_args())->wait();
     }
 
     /**
      * @param string $endpoint
-     * @param array $headers
+     * @param Headers $headers
      * @param string|null $payload
      *
      * @return Promise
      * @throws Exception
      */
-    public function sendAsync(string $endpoint, array $headers = [], ?string $payload = null): Promise
+    public function sendAsync(string $endpoint, Headers $headers, ?string $payload = null): Promise
     {
         return $this->createRequest($endpoint)
             ->withPayload($payload)
@@ -79,7 +79,7 @@ class Client
         return $this;
     }
 
-    private function withHeaders(array $headers): self
+    private function withHeaders(Headers $headers): self
     {
         foreach ($headers as $header => $value) {
             $this->request->withHeader($header, $value);
