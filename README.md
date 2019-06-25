@@ -10,13 +10,13 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 ## Requirements
 
-* PHP 7.1+
-  * gmp
-  * mbstring
-  * curl
-  * openssl
-
-PHP 7.2+ is recommended for better performance.
+* PHP 7.1+ (_recommended 7.3 for increased performance_)
+* [Async HTTP client](https://packagist.org/providers/php-http/async-client-implementation)
+* [PSR-7 implementation](https://packagist.org/providers/psr/http-message-implementation)
+* gmp
+* mbstring
+* curl
+* openssl
 
 There is no support and maintenance for older PHP versions, however you are free to use the following compatible versions:
 - PHP 5.6 or HHVM: `v1.x`
@@ -25,16 +25,15 @@ There is no support and maintenance for older PHP versions, however you are free
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
 
-`composer require minishlink/web-push`
+`composer require minishlink/web-push php-http/guzzle2-adapter guzzlehttp/psr7`
 
 ## Usage
 ```php
 <?php
 
 use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\SubscriptionFactory;
 
-// array of notifications
 $notifications = [
     [
         'subscription' => SubscriptionFactory::create([
@@ -58,13 +57,13 @@ $notifications = [
         'payload' => '{msg:"test"}',
     ], [
           'subscription' => SubscriptionFactory::create([ // this is the structure for the working draft from october 2018 (https://www.w3.org/TR/2018/WD-push-api-20181026/) 
-              "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
-              "keys" => [
+              'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+              'keys' => [
                   'p256dh' => '(stringOf88Chars)',
                   'auth' => '(stringOf24Chars)'
               ],
           ]),
-          'payload' => '{msg:"Hello World!"}',
+          'payload' => 'Hello World!',
       ],
 ];
 
@@ -72,35 +71,25 @@ $webPush = new WebPush();
 
 // send multiple notifications with payload
 foreach ($notifications as $notification) {
-    $webPush->sendNotification(
+    $webPush->queueNotification(
         $notification['subscription'],
-        $notification['payload'] // optional (defaults null)
+        $notification['payload'] ?? null // optional, string value (defaults null)
     );
 }
 
 /**
  * Check sent results
- * @var MessageSentReport $report
+ * @var Minishlink\WebPush\MessageSentReport $report
  */
-foreach ($webPush->flush() as $report) {
+foreach ($webPush->deliver() as $report) {
     $endpoint = $report->getEndpoint();
 
     if ($report->isSuccess()) {
         echo "[v] Message sent successfully for subscription {$endpoint}.";
     } else {
-        echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReasonPhrase()}";
+        echo "[x] Message failed to send for subscription {$endpoint}: {$report->getReasonPhrase()}";
     }
 }
-
-/**
- * send one notification and flush directly
- * @var \Generator<MessageSentReport> $sent
- */
-$sent = $webPush->sendNotification(
-    $notifications[0]['subscription'],
-    $notifications[0]['payload'], // optional (defaults null)
-    true // optional (defaults false)
-);
 ```
 
 ### Full examples of Web Push implementations
@@ -118,22 +107,18 @@ You can specify your authentication details when instantiating WebPush. The keys
 <?php
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Authorization;
 
 $endpoint = 'https://android.googleapis.com/gcm/send/abcdef...'; // Chrome
 
-$auth = [
-    'GCM' => 'MY_GCM_API_KEY', // deprecated and optional, it's here only for compatibility reasons
-    'VAPID' => [
-        'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
-        'publicKey' => '~88 chars', // (recommended) uncompressed public key P-256 encoded in Base64-URL
-        'privateKey' => '~44 chars', // (recommended) in fact the secret multiplier of the private key encoded in Base64-URL
-        'pemFile' => 'path/to/pem', // if you have a PEM file and can link to it on your filesystem
-        'pem' => 'pemFileContent', // if you have a PEM file and want to hardcode its content
-    ],
-];
+$auth = new Authorization(
+    'private_key', // ~44 chars, the secret multiplier of the private key encoded in Base64-URL
+    'public_key', // ~88 chars, uncompressed public key P-256 encoded in Base64-URL
+    'subject' // can be a mailto: or your website address
+);
 
 $webPush = new WebPush($auth);
-$webPush->sendNotification(...);
+$webPush->queueNotification(...);
 ```
 
 In order to generate the uncompressed public and secret key, encoded in Base64, enter the following in your Linux bash:
@@ -161,31 +146,35 @@ serviceWorkerRegistration.pushManager.subscribe({
 VAPID headers make use of a JSON Web Token (JWT) to verify your identity. That token payload includes the protocol and hostname of the endpoint included in the subscription and an expiration timestamp (usually between 12-24h), and it's signed using your public and private key. Given that, two notifications sent to the same push service will use the same token, so you can reuse them for the same flush session to boost performance using:
 
 ```php
-$webPush->setReuseVAPIDHeaders(true);
+$webPush->enableVapidHeaderReuse();
 ```
 
 ### Notifications and default options
 Each notification can have a specific Time To Live, urgency, and topic.
-You can change the default options with `setDefaultOptions()` or in the constructor:
+You can specify options by specifying the `$options` parameter to the `WebPush` constructor, or override those by specifying the `$options` parameter to the `WebPush::queueNotification()` call:
 
 ```php
 <?php
 
 use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Options;
 
-$defaultOptions = [
-    'TTL' => 300, // defaults to 4 weeks
+$options = new Options([
+    'ttl' => 300, // defaults to 4 weeks if left empty
     'urgency' => 'normal', // protocol defaults to "normal"
     'topic' => 'new_event', // not defined by default,
-    'batchSize' => 200, // defaults to 1000
-];
+]);
+
+$overrides = new Options([
+    'ttl' => '600'
+]);
 
 // for every notifications
-$webPush = new WebPush([], $defaultOptions);
-$webPush->setDefaultOptions($defaultOptions);
+$webPush = new WebPush(null, $options);
 
-// or for one notification
-$webPush->sendNotification($subscription, $payload, $flush, ['TTL' => 5000]);
+// or, for one individual notification - this will also
+// override the default options specified on $webpush
+$webPush->queueNotification($subscription, $payload, $auth, $options);
 ```
 
 #### TTL
@@ -201,22 +190,16 @@ Urgency can be either "very-low", "low", "normal", or "high". If the browser ven
 #### topic
 Similar to the old `collapse_key` on legacy GCM servers, this string will make the vendor show to the user only the last notification of this topic (cf. [protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-08#section-5.4)).
 
-#### batchSize
-If you send tens of thousands notifications at a time, you may get memory overflows due to how endpoints are called in Guzzle.
-In order to fix this, WebPush sends notifications in batches. The default size is 1000. Depending on your server configuration (memory), you may want
-to decrease this number. Do this while instanciating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
-it as a parameter : `$webPush->flush($batchSize)`.
-
 ### Server errors
 You can see what the browser vendor's server sends back in case it encountered an error (push subscription expiration, wrong parameters...).
-`sendNotification()` (with `$flush` as `true`) and `flush()` **always** returns a [`\Generator`](http://php.net/manual/en/language.generators.php) with [`MessageSentReport`](https://github.com/web-push-libs/web-push-php/blob/master/src/MessageSentReport.php) objects, even if you just send one notification.
+`WebPush::deliver()` **always** returns a [`\Generator`](http://php.net/manual/en/language.generators.php) with [`MessageSentReport`](https://github.com/web-push-libs/web-push-php/blob/master/src/MessageSentReport.php) objects.
 To loop through the results, just pass it into `foreach`. You can also use [`iterator_to_array`](http://php.net/manual/en/function.iterator-to-array.php) to check the contents while debugging.
 
 ```php
 <?php
 
-/** @var \Minishlink\WebPush\MessageSentReport $report */
-foreach ($webPush->flush() as $report) {
+/** @var Minishlink\WebPush\MessageSentReport $report */
+foreach ($webPush->deliver() as $report) {
     $endpoint = $report->getEndpoint();
 
     if ($report->isSuccess()) {
@@ -271,27 +254,14 @@ Here are some ideas of settings:
 use Minishlink\WebPush\WebPush;
 
 $webPush = new WebPush();
-$webPush->setAutomaticPadding(false); // disable automatic padding
-$webPush->setAutomaticPadding(512); // enable automatic padding to 512 bytes (you should make sure that your payload is less than 512 bytes, or else an attacker could guess the content)
-$webPush->setAutomaticPadding(true); // enable automatic padding to default maximum compatibility length
+$webPush->setPadding(false); // disable automatic padding
+$webPush->setPadding(512); // enable automatic padding to 512 bytes (you should make sure that your payload is less than 512 bytes, or else an attacker could guess the content)
+$webPush->setPadding(true); // enable automatic padding to default maximum compatibility length
 ```
 
 ### Customizing the HTTP client
-WebPush uses [Guzzle](https://github.com/guzzle/guzzle). It will use the most appropriate client it finds, 
-and most of the time it will be `MultiCurl`, which allows to send multiple notifications in parallel.
-
-You can customize the default request options and timeout when instantiating WebPush:
-```php
-<?php
-
-use Minishlink\WebPush\WebPush;
-
-$timeout = 20; // seconds
-$clientOptions = [
-    \GuzzleHttp\RequestOptions::ALLOW_REDIRECTS => false,
-]; // see \GuzzleHttp\RequestOptions
-$webPush = new WebPush([], [], $timeout, $clientOptions);
-```
+WebPush uses [HTTPlug](https://httplug.io). It will use the most appropriate client it finds, 
+but you must first install [one](https://packagist.org/providers/php-http/async-client-implementation)
 
 ## Common questions
 
