@@ -25,7 +25,7 @@ There is no support and maintenance for older PHP versions, however you are free
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
 
-`composer require minishlink/web-push php-http/guzzle2-adapter guzzlehttp/psr7`
+`composer require minishlink/web-push php-http/guzzle6-adapter guzzlehttp/psr7`
 
 ## Usage
 ```php
