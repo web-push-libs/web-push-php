@@ -12,14 +12,11 @@ cache:
     - $HOME/.composer/cache/files   # and composer packages
 
 matrix:
-    allow_failures:
-        - php: '7.4snapshot'
     fast_finish: true
     include:
         - php: '7.1'
         - php: '7.2'
         - php: '7.3'
-        - php: '7.4snapshot'
 
 env:
   - TRAVIS_NODE_VERSION="stable"
