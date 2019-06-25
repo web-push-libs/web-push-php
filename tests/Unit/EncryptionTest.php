@@ -14,6 +14,7 @@ namespace Minishlink\WebPush\Tests\Unit;
  */
 
 use Base64Url\Base64Url;
+use ErrorException;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Minishlink\WebPush\Encryption;
@@ -22,7 +23,7 @@ use Minishlink\WebPush\Utils;
 
 final class EncryptionTest extends TestCase
 {
-    public function testDeterministicEncrypt()
+    public function testDeterministicEncrypt(): void
     {
         $contentEncoding = 'aes128gcm';
         $plaintext = 'When I grow up, I want to be a watermelon';
@@ -66,7 +67,7 @@ final class EncryptionTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetContentCodingHeader()
+    public function testGetContentCodingHeader(): void
     {
         $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
         $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
@@ -84,9 +85,10 @@ final class EncryptionTest extends TestCase
      * @param string $payload
      * @param int $maxLengthToPad
      * @param int $expectedResLength
+     *
      * @throws ErrorException
      */
-    public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength)
+    public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength): void
     {
         $res = Encryption::padPayload($payload, $maxLengthToPad, "aesgcm");
 
@@ -106,7 +108,7 @@ final class EncryptionTest extends TestCase
             ['testé', 7, 9],
             ['testé', Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH, Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH + 2],
             ['testé', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2],
-            [str_repeat('test', 1019).'te', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2],
+            [str_repeat('test', 1019) . 'te', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2],
         ];
     }
 }

@@ -8,7 +8,7 @@ use Exception;
 use GuzzleHttp\Psr7\Response;
 use Http\Mock\Client as MockClient;
 use Minishlink\WebPush\Client;
-use Minishlink\WebPush\Headers;
+use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Tests\TestCase;
 use Psr\Http\Message\ResponseInterface;
 
@@ -42,7 +42,7 @@ final class ClientTest extends TestCase
         $this->mock->addResponse($response);
         $this->assertEquals(
             $response->getStatusCode(),
-            $this->client->sendNow('https://google.com', new Headers())->getStatusCode()
+            $this->client->sendNow($this->getNotification())->getStatusCode()
         );
     }
 
@@ -55,5 +55,16 @@ final class ClientTest extends TestCase
             [new Response(404)],
             [new Response(500)]
         ];
+    }
+
+    private function getNotification(): Notification
+    {
+        $subscription = $this->getSubscription();
+        return new Notification(
+            $subscription,
+            $this->getPayload($subscription),
+            $this->getOptions(),
+            $this->getAuthorization()
+        );
     }
 }

@@ -13,7 +13,6 @@ declare(strict_types = 1);
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use ErrorException;
 use Exception;
 use Generator;
@@ -25,323 +24,134 @@ class WebPush
      */
     private $client;
     /**
-     * @var Auth
+     * @var Contracts\AuthorizationInterface|null
      */
     private $auth;
-    /**
-     * @var null|array Array of array of Notifications
-     */
-    private $notifications;
     /**
      * @var Options
      */
     private $options;
     /**
-     * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
+     * @var int
      */
-    private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
-    /**
-     * @var bool Reuse VAPID headers in the same flush session to improve performance
-     */
-    private $reuseVAPIDHeaders = false;
-    /**
-     * @var array Dictionary for VAPID headers cache
-     */
-    private $vapidHeaders = [];
+    private $padding = Encryption::MAX_PAYLOAD_LENGTH;
 
     /**
-     * @param Auth|null $auth
+     * @param Contracts\AuthorizationInterface|null $auth
      * @param Options|null $options
      * @param Client|null $client
      */
-    public function __construct(?Auth $auth = null, ?Options $options = null, ?Client $client = null)
+    public function __construct(?Contracts\AuthorizationInterface $auth = null, ?Options $options = null, ?Client $client = null)
     {
-        if (ini_get('mbstring.func_overload') >= 2) {
-            trigger_error('[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.');
-        }
-
         $this->auth = $auth;
         $this->options = Options::wrap($options);
         $this->client = $client ?? new Client();
     }
 
     /**
-     * Send a notification.
+     * @param Contracts\SubscriptionInterface $subscription
+     * @param string|null $payload
+     * @param Contracts\AuthorizationInterface|null $auth Set the Auth only for this notification.
+     * @param Options|null $options Set the Options only for this notification.
      *
-     * @param Subscription $subscription
-     * @param string|null $payload If you want to send an array, json_encode it
-     * @param bool $flush If you want to flush directly (usually when you send only one notification)
-     * @param Options|array $options Options to use for this notification. If not set, the default options
-     *         set while instantiating the Webpush object will be used.
-     * @param Auth|null $auth Use this auth details instead of what you provided when creating WebPush
-     *
-     * @return Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the
-     *     queued requests has failed. Else return true
-     *
+     * @return WebPush
      * @throws ErrorException
      */
-    public function sendNotification(
-        Subscription $subscription,
+    public function queueNotification(
+        Contracts\SubscriptionInterface $subscription,
         ?string $payload = null,
-        bool $flush = false,
-        $options = [],
-        ?Auth $auth = null
-    ) {
-        $this->notifications[] = $this->buildNotification(
-            $subscription, (string) $payload, Options::wrap($options)->with($this->options), $auth ?? $this->auth
+        ?Contracts\AuthorizationInterface $auth = null,
+        ?Options $options = null
+    ): self {
+        QueueFactory::create('notifications')->push(
+            $this->buildNotification($subscription, $payload, $auth, $options)
         );
 
-
-        return $flush ? $this->flush() : true;
+        return $this;
     }
 
     /**
      * @param int $batch_size
      *
      * @return Generator|MessageSentReport[]
-     * @throws ErrorException
-     */
-    public function flush(int $batch_size = 1000): ?Generator
-    {
-        if (empty($this->notifications)) {
-            return null;
-        }
-
-        $batches = array_chunk($this->notifications, $batch_size);
-        $this->notifications = [];
-
-        foreach ($batches as $batch) {
-            $promises = [];
-            /** @var Notification $notification */
-            foreach ($batch as $notification) {
-                $promises[] = $this->client->sendAsync(
-                    $notification->getSubscription()->getEndpoint(), ...$this->prepare($notification)
-                );
-            }
-
-            foreach ($promises as $promise) {
-                yield $promise->wait();
-            }
-        }
-
-        if ($this->reuseVAPIDHeaders) {
-            $this->vapidHeaders = [];
-        }
-    }
-
-    /**
-     * @param Notification $notification
-     *
-     * @return array
-     *
-     * @throws ErrorException
-     */
-    private function prepare(Notification $notification): array
-    {
-        /** @var Notification $notification */
-        $subscription = $notification->getSubscription();
-        $endpoint = $subscription->getEndpoint();
-        $userPublicKey = $subscription->getPublicKey();
-        $userAuthToken = $subscription->getAuthToken();
-        $contentEncoding = $subscription->getContentEncoding();
-        $payload = $notification->getPayload();
-        $options = $notification->getOptions();
-        $headers = new Headers();
-
-        if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
-            $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
-            $cipherText = $encrypted['cipherText'];
-            $salt = $encrypted['salt'];
-            $localPublicKey = $encrypted['localPublicKey'];
-
-            $headers->add([
-                'Content-Type' => 'application/octet-stream',
-                'Content-Encoding' => $contentEncoding,
-            ]);
-
-            if ($contentEncoding === 'aesgcm') {
-                $headers->add([
-                    'Encryption' => 'salt=' . Base64Url::encode($salt),
-                    'Crypto-Key' => 'dh=' . Base64Url::encode($localPublicKey)
-                ]);
-            }
-
-            $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey,
-                $contentEncoding);
-            $content = $encryptionContentCodingHeader . $cipherText;
-
-            $headers->set('Content-Length', Utils::safeStrlen($content));
-
-        } else {
-            $headers->set('Content-Length', 0);
-
-            $content = '';
-        }
-
-        $headers->set('TTL', $options->getTtl());
-
-        if ($urgency = $options->getUrgency()) {
-            $headers->set('Urgency', $urgency);
-        }
-
-        if ($topic = $options->getTopic()) {
-            $headers->set('Topic', $topic);
-        }
-
-        $audience = parse_url($endpoint, PHP_URL_SCHEME) . '://' . parse_url($endpoint, PHP_URL_HOST);
-        if (!parse_url($audience)) {
-            throw new ErrorException('Audience "' . $audience . '"" could not be generated.');
-        }
-
-        $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $notification->getAuth()->toArray());
-
-        $headers->set('Authorization', $vapidHeaders['Authorization']);
-
-        if ($contentEncoding === 'aesgcm') {
-            $headers->append('Crypto-Key', $vapidHeaders['Crypto-Key'], ';');
-        }
-
-
-        return [$headers, $content];
-    }
-
-    /**
-     * @return bool
-     */
-    public function isAutomaticPadding(): bool
-    {
-        return $this->automaticPadding !== 0;
-    }
-
-    /**
-     * @return int
-     */
-    public function getAutomaticPadding()
-    {
-        return $this->automaticPadding;
-    }
-
-    /**
-     * @param int|bool $automaticPadding Max padding length
-     *
-     * @return WebPush
-     *
      * @throws Exception
      */
-    public function setAutomaticPadding($automaticPadding): WebPush
+    public function deliver(int $batch_size = 1000): ?Generator
     {
-        if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
-            throw new Exception('Automatic padding is too large. Max is ' . Encryption::MAX_PAYLOAD_LENGTH . '. Recommended max is ' . Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH . ' for compatibility reasons (see README).');
+        $promises = QueueFactory::create('promises');
+        while ($notification = QueueFactory::create('notifications')->pop()) {
+            $promises->push($this->client->sendAsync($notification));
+
+            if ($promises->count() >= $batch_size) {
+                yield from $this->flush();
+                CacheFactory::create('vapid')->clear();
+            }
         }
 
-        if ($automaticPadding < 0) {
-            throw new Exception('Padding length should be positive or zero.');
+        if ($promises->isNotEmpty()) {
+            yield from $this->flush();
         }
+    }
 
-        if (is_bool($automaticPadding)) {
-            $this->automaticPadding = $automaticPadding ? Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH : 0;
+    public function enableVapidHeaderReuse(): void
+    {
+        CacheFactory::create('vapid')->enable();
+    }
+
+    public function disableVapidHeaderReuse(): void
+    {
+        CacheFactory::create('vapid')->disable();
+    }
+
+    public function countQueuedNotifications(): int
+    {
+        return QueueFactory::create('notifications')->count();
+    }
+
+    /**
+     * @param int|bool $padding
+     */
+    public function setPadding($padding): void
+    {
+        if (is_numeric($padding)) {
+            $this->padding = (int) $padding;
         } else {
-            $this->automaticPadding = $automaticPadding;
+            $this->padding = (bool) $padding ? Encryption::MAX_PAYLOAD_LENGTH : 0;
         }
-
-        return $this;
     }
 
     /**
-     * @return bool
-     */
-    public function getReuseVAPIDHeaders()
-    {
-        return $this->reuseVAPIDHeaders;
-    }
-
-    /**
-     * Reuse VAPID headers in the same flush session to improve performance
-     *
-     * @param bool $enabled
-     *
-     * @return WebPush
-     */
-    public function setReuseVAPIDHeaders(bool $enabled)
-    {
-        $this->reuseVAPIDHeaders = $enabled;
-
-        return $this;
-    }
-
-    public function getOptions(): Options
-    {
-        return $this->options;
-    }
-
-    /**
-     * @return int
-     */
-    public function countPendingNotifications(): int
-    {
-        return null !== $this->notifications ? count($this->notifications) : 0;
-    }
-
-    /**
-     * @param Subscription $subscription
-     * @param string $payload
-     * @param Options $options
-     * @param Auth $auth
+     * @param Contracts\SubscriptionInterface $subscription
+     * @param string|null $payload
+     * @param Contracts\AuthorizationInterface|null $auth
+     * @param Options|null $options
      *
      * @return Notification
      * @throws ErrorException
      */
     private function buildNotification(
-        Subscription $subscription,
-        string $payload,
-        Options $options,
-        Auth $auth
+        Contracts\SubscriptionInterface $subscription,
+        ?string $payload = null,
+        ?Contracts\AuthorizationInterface $auth = null,
+        ?Options $options = null
     ): Notification {
-        if (!empty($payload)) {
-            if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
-                throw new ErrorException('Size of payload must not be greater than ' . Encryption::MAX_PAYLOAD_LENGTH . ' octets.');
-            }
-
-            $contentEncoding = $subscription->getContentEncoding();
-            if (!$contentEncoding) {
-                throw new ErrorException('Subscription should have a content encoding');
-            }
-
-            $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
+        $auth = $auth ?? $this->auth;
+        if ($auth === null) {
+            throw new ErrorException(sprintf('Authorization must be provided as a parameter to %s or %s.', __CLASS__, __METHOD__));
         }
 
-        return new Notification($subscription, $payload, $options, $auth ?? $this->auth);
+        return new Notification(
+            $subscription,
+            Payload::create($subscription, (string) $payload, $this->padding),
+            $options ?? $this->options,
+            $auth
+        );
     }
 
-    /**
-     * @param string $audience
-     * @param string $contentEncoding
-     * @param array $vapid
-     *
-     * @return array
-     * @throws ErrorException
-     */
-    private function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid)
+    private function flush(): ?Generator
     {
-        $vapidHeaders = null;
-
-        $cache_key = null;
-        if ($this->reuseVAPIDHeaders) {
-            $cache_key = implode('#', [$audience, $contentEncoding, crc32(serialize($vapid))]);
-            if (array_key_exists($cache_key, $this->vapidHeaders)) {
-                $vapidHeaders = $this->vapidHeaders[$cache_key];
-            }
+        while ($promise = QueueFactory::create('promises')->pop()) {
+            yield $promise->wait();
         }
-
-        if (!$vapidHeaders) {
-            $vapidHeaders = VAPID::getVapidHeaders($audience, $vapid['subject'], $vapid['publicKey'],
-                $vapid['privateKey'], $contentEncoding);
-        }
-
-        if ($this->reuseVAPIDHeaders) {
-            $this->vapidHeaders[$cache_key] = $vapidHeaders;
-        }
-
-        return $vapidHeaders;
     }
 }

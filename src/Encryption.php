@@ -30,21 +30,22 @@ class Encryption
     /**
      * @param string $payload
      * @param int $maxLengthToPad
-     * @param string $contentEncoding
+     * @param string $encoding
+     *
      * @return string padded payload (plaintext)
      * @throws ErrorException
      */
-    public static function padPayload(string $payload, int $maxLengthToPad, string $contentEncoding): string
+    public static function padPayload(string $payload, int $maxLengthToPad, string $encoding): string
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
 
-        if ($contentEncoding === 'aesgcm') {
-            return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
+        if ($encoding === 'aesgcm') {
+            return pack('n*', $padLen) . str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
         }
 
-        if ($contentEncoding === 'aes128gcm') {
-            return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0));
+        if ($encoding === 'aes128gcm') {
+            return str_pad($payload . chr(2), $padLen + $payloadLen, chr(0));
         }
 
         throw new ErrorException('This content encoding is not supported');
@@ -54,18 +55,18 @@ class Encryption
      * @param string $payload With padding
      * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
      * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
-     * @param string $contentEncoding
-     * @return array
+     * @param string $encoding
      *
+     * @return array
      * @throws ErrorException
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding): array
+    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $encoding): array
     {
         return self::deterministicEncrypt(
             $payload,
             $userPublicKey,
             $userAuthToken,
-            $contentEncoding,
+            $encoding,
             self::createLocalKeyObject(),
             random_bytes(16)
         );
@@ -75,14 +76,14 @@ class Encryption
      * @param string $payload
      * @param string $userPublicKey
      * @param string $userAuthToken
-     * @param string $contentEncoding
+     * @param string $encoding
      * @param array $localKeyObject
      * @param string $salt
-     * @return array
      *
+     * @return array
      * @throws ErrorException
      */
-    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
+    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $encoding, array $localKeyObject, string $salt): array
     {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
@@ -111,17 +112,17 @@ class Encryption
         }
 
         // section 4.3
-        $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
+        $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $encoding);
 
         // section 4.2
-        $context = self::createContext($userPublicKey, $localPublicKey, $contentEncoding);
+        $context = self::createContext($userPublicKey, $localPublicKey, $encoding);
 
         // derive the Content Encryption Key
-        $contentEncryptionKeyInfo = self::createInfo($contentEncoding, $context, $contentEncoding);
+        $contentEncryptionKeyInfo = self::createInfo($encoding, $context, $encoding);
         $contentEncryptionKey = self::hkdf($salt, $ikm, $contentEncryptionKeyInfo, 16);
 
         // section 3.3, derive the nonce
-        $nonceInfo = self::createInfo('nonce', $context, $contentEncoding);
+        $nonceInfo = self::createInfo('nonce', $context, $encoding);
         $nonce = self::hkdf($salt, $ikm, $nonceInfo, 12);
 
         // encrypt
@@ -133,17 +134,17 @@ class Encryption
         return [
             'localPublicKey' => $localPublicKey,
             'salt' => $salt,
-            'cipherText' => $encryptedText.$tag,
+            'cipherText' => $encryptedText . $tag,
         ];
     }
 
-    public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
+    public static function getContentCodingHeader($salt, $localPublicKey, $encoding): string
     {
-        if ($contentEncoding === 'aes128gcm') {
+        if ($encoding === 'aes128gcm') {
             return $salt
-                .pack('N*', 4096)
-                .pack('C*', Utils::safeStrlen($localPublicKey))
-                .$localPublicKey;
+                . pack('N*', 4096)
+                . pack('C*', Utils::safeStrlen($localPublicKey))
+                . $localPublicKey;
         }
 
         return '';
@@ -175,7 +176,7 @@ class Encryption
         $prk = hash_hmac('sha256', $ikm, $salt, true);
 
         // expand
-        return mb_substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length, '8bit');
+        return mb_substr(hash_hmac('sha256', $info . chr(1), $prk, true), 0, $length, '8bit');
     }
 
     /**
@@ -186,15 +187,14 @@ class Encryption
      *
      * @param string $clientPublicKey The client's public key
      * @param string $serverPublicKey Our public key
-     * @param string $contentEncoding
+     * @param string $encoding
      *
      * @return null|string
-     *
      * @throws ErrorException
      */
-    private static function createContext(string $clientPublicKey, string $serverPublicKey, $contentEncoding): ?string
+    private static function createContext(string $clientPublicKey, string $serverPublicKey, $encoding): ?string
     {
-        if ($contentEncoding === 'aes128gcm') {
+        if ($encoding === 'aes128gcm') {
             return null;
         }
 
@@ -207,9 +207,9 @@ class Encryption
             throw new ErrorException('Invalid server public key length');
         }
 
-        $len = chr(0).'A'; // 65 as Uint16BE
+        $len = chr(0) . 'A'; // 65 as Uint16BE
 
-        return chr(0).$len.$clientPublicKey.$len.$serverPublicKey;
+        return chr(0) . $len . $clientPublicKey . $len . $serverPublicKey;
     }
 
     /**
@@ -219,14 +219,14 @@ class Encryption
      *
      * @param string $type The type of the info record
      * @param string|null $context The context for the record
-     * @param string $contentEncoding
-     * @return string
+     * @param string $encoding
      *
+     * @return string
      * @throws ErrorException
      */
-    private static function createInfo(string $type, ?string $context, string $contentEncoding): string
+    private static function createInfo(string $type, ?string $context, string $encoding): string
     {
-        if ($contentEncoding === 'aesgcm') {
+        if ($encoding === 'aesgcm') {
             if (!$context) {
                 throw new ErrorException('Context must exist');
             }
@@ -235,11 +235,11 @@ class Encryption
                 throw new ErrorException('Context argument has invalid size');
             }
 
-            return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
+            return 'Content-Encoding: ' . $type . chr(0) . 'P-256' . $context;
         }
 
-        if ($contentEncoding === 'aes128gcm') {
-            return 'Content-Encoding: '.$type.chr(0);
+        if ($encoding === 'aes128gcm') {
+            return 'Content-Encoding: ' . $type . chr(0);
         }
 
         throw new ErrorException('This content encoding is not supported.');
@@ -306,17 +306,18 @@ class Encryption
      * @param string $userPublicKey
      * @param string $localPublicKey
      * @param string $sharedSecret
-     * @param string $contentEncoding
+     * @param string $encoding
+     *
      * @return string
      * @throws ErrorException
      */
-    private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, string $contentEncoding): string
+    private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, string $encoding): string
     {
         if (!empty($userAuthToken)) {
-            if ($contentEncoding === 'aesgcm') {
-                $info = 'Content-Encoding: auth'.chr(0);
-            } elseif ($contentEncoding === 'aes128gcm') {
-                $info = 'WebPush: info' .chr(0).$userPublicKey.$localPublicKey;
+            if ($encoding === 'aesgcm') {
+                $info = 'Content-Encoding: auth' . chr(0);
+            } elseif ($encoding === 'aes128gcm') {
+                $info = 'WebPush: info' . chr(0) . $userPublicKey . $localPublicKey;
             } else {
                 throw new ErrorException('This content encoding is not supported');
             }

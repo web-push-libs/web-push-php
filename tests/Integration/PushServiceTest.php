@@ -42,7 +42,7 @@ final class PushServiceTest extends TestCase
      */
     public static function setUpBeforeClass()
     {
-        self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
+        self::$testServiceUrl = 'http://localhost:' . self::$portNumber;
     }
 
     /**
@@ -50,7 +50,7 @@ final class PushServiceTest extends TestCase
      */
     protected function setUp()
     {
-        $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
+        $startApiCurl = curl_init(self::$testServiceUrl . '/api/start-test-suite/');
         curl_setopt_array($startApiCurl, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => [],
@@ -125,7 +125,6 @@ final class PushServiceTest extends TestCase
     {
         return function () use ($browserId, $browserVersion, $options) {
             $this->webPush = new WebPush($options);
-            $this->webPush->setAutomaticPadding(false);
 
             $subscriptionParameters = [
                 'testSuiteId' => self::$testSuiteId,
@@ -143,14 +142,14 @@ final class PushServiceTest extends TestCase
 
             $subscriptionParameters = json_encode($subscriptionParameters);
 
-            $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
+            $getSubscriptionCurl = curl_init(self::$testServiceUrl . '/api/get-subscription/');
             curl_setopt_array($getSubscriptionCurl, [
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $subscriptionParameters,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HTTPHEADER => [
                     'Content-Type: application/json',
-                    'Content-Length: '.strlen($subscriptionParameters),
+                    'Content-Length: ' . strlen($subscriptionParameters),
                 ],
                 CURLOPT_TIMEOUT => self::$timeout,
             ]);
@@ -172,14 +171,14 @@ final class PushServiceTest extends TestCase
             foreach ($supportedContentEncodings as $contentEncoding) {
                 if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'])) {
                     $this->expectException('ErrorException');
-                    $this->expectExceptionMessage('This content encoding ('.$contentEncoding.') is not supported.');
-                    $this->markTestIncomplete('Unsupported content encoding: '.$contentEncoding);
+                    $this->expectExceptionMessage('This content encoding (' . $contentEncoding . ') is not supported.');
+                    $this->markTestIncomplete('Unsupported content encoding: ' . $contentEncoding);
                 }
 
                 $subscription = new Subscription($endpoint, $p256dh, $auth, $contentEncoding);
 
                 try {
-                    $sendResp = $this->webPush->sendNotification($subscription, $payload, true);
+                    $sendResp = $this->webPush->queueNotification($subscription, $payload, true);
                     $this->assertInstanceOf(Generator::class, $sendResp);
 
                     /** @var MessageSentReport $report */
@@ -192,14 +191,14 @@ final class PushServiceTest extends TestCase
                         'testId' => $testId,
                     ]);
 
-                    $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
+                    $getNotificationCurl = curl_init(self::$testServiceUrl . '/api/get-notification-status/');
                     curl_setopt_array($getNotificationCurl, [
                         CURLOPT_POST => true,
                         CURLOPT_POSTFIELDS => $dataString,
                         CURLOPT_RETURNTRANSFER => true,
                         CURLOPT_HTTPHEADER => [
                             'Content-Type: application/json',
-                            'Content-Length: '.strlen($dataString),
+                            'Content-Length: ' . strlen($dataString),
                         ],
                         CURLOPT_TIMEOUT => self::$timeout,
                     ]);
@@ -207,7 +206,7 @@ final class PushServiceTest extends TestCase
                     $parsedResp = $this->getResponse($getNotificationCurl);
 
                     if (!property_exists($parsedResp->{'data'}, 'messages')) {
-                        throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
+                        throw new Exception('web-push-testing-service error, no messages: ' . json_encode($parsedResp));
                     }
 
                     $messages = $parsedResp->{'data'}->{'messages'};
@@ -230,15 +229,15 @@ final class PushServiceTest extends TestCase
 
     protected function tearDown()
     {
-        $dataString = '{ "testSuiteId": '.self::$testSuiteId.' }';
-        $curl = curl_init(self::$testServiceUrl.'/api/end-test-suite/');
+        $dataString = '{ "testSuiteId": ' . self::$testSuiteId . ' }';
+        $curl = curl_init(self::$testServiceUrl . '/api/end-test-suite/');
         curl_setopt_array($curl, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $dataString,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'Content-Length: '.strlen($dataString),
+                'Content-Length: ' . strlen($dataString),
             ],
             CURLOPT_TIMEOUT => self::$timeout,
         ]);
@@ -256,7 +255,7 @@ final class PushServiceTest extends TestCase
         $resp = curl_exec($ch);
 
         if (!$resp) {
-            $error = 'Curl error: n'.curl_errno($ch).' - '.curl_error($ch);
+            $error = 'Curl error: n' . curl_errno($ch) . ' - ' . curl_error($ch);
             curl_close($ch);
             throw new Exception($error);
         }
@@ -264,7 +263,7 @@ final class PushServiceTest extends TestCase
         $parsedResp = json_decode($resp);
 
         if (!property_exists($parsedResp, 'data')) {
-            throw new Exception('web-push-testing-service error: '.$resp);
+            throw new Exception('web-push-testing-service error: ' . $resp);
         }
 
         // Close request to clear up some resources

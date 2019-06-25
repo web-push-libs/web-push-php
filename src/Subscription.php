@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 /*
  * This file is part of the WebPush library.
@@ -13,128 +13,91 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-use ErrorException;
+use InvalidArgumentException;
 
-class Subscription
+class Subscription implements Contracts\SubscriptionInterface
 {
-    private const SERVICE_URLS = [
-        'GCM' => 'https://android.googleapis.com',
-        'FCM' => 'https://fcm.googleapis.com'
-    ];
-
-    /** @var string */
+    /**
+     * @var string
+     */
     private $endpoint;
-
-    /** @var null|string */
+    /**
+     * @var string
+     */
     private $publicKey;
-
-    /** @var null|string */
+    /**
+     * @var string
+     */
     private $authToken;
-
-    /** @var string */
-    private $contentEncoding;
+    /**
+     * @var string
+     */
+    private $encoding;
 
     /**
-     * Subscription constructor.
-     *
      * @param string $endpoint
-     * @param null|string $publicKey
-     * @param null|string $authToken
-     * @param string $contentEncoding (Optional) Must be "aesgcm"
-     * @throws ErrorException
+     * @param string $publicKey
+     * @param string $authToken
+     * @param string $encoding
      */
     public function __construct(
         string $endpoint,
-        ?string $publicKey = null,
-        ?string $authToken = null,
-        string $contentEncoding = null
+        string $publicKey,
+        string $authToken,
+        string $encoding = 'aesgcm'
     ) {
         $this->endpoint = $endpoint;
-
-        if ($publicKey || $authToken || $contentEncoding) {
-            $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
-            if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings, true)) {
-                throw new ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
-            }
-
-            $this->publicKey = $publicKey;
-            $this->authToken = $authToken;
-        }
-        $this->contentEncoding = $contentEncoding ?? 'aesgcm';
+        $this->publicKey = $publicKey;
+        $this->authToken = $authToken;
+        $this->encoding = $encoding;
     }
 
     /**
-     * Subscription factory.
+     * @param array $associativeArray (with keys endpoint, publicKey, authToken, encoding)
      *
-     * @param array $associativeArray (with keys endpoint, publicKey, authToken, contentEncoding)
-     * @return Subscription
-     * @throws ErrorException
+     * @return Contracts\SubscriptionInterface
+     * @throws InvalidArgumentException
      */
-    public static function create(array $associativeArray): Subscription
+    public static function create(array $associativeArray): Contracts\SubscriptionInterface
     {
         if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
-            return new self(
+            return new static(
                 $associativeArray['endpoint'],
-                $associativeArray['keys']['p256dh'] ?? null,
-                $associativeArray['keys']['auth'] ?? null,
-                $associativeArray['contentEncoding'] ?? 'aesgcm'
+                $associativeArray['keys']['p256dh'],
+                $associativeArray['keys']['auth'],
+                $associativeArray['encoding'] ?? 'aesgcm'
             );
         }
 
-        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
-            return new self(
+        if (array_key_exists('public_key', $associativeArray) || array_key_exists('auth_token', $associativeArray) || array_key_exists('encoding', $associativeArray)) {
+            return new static(
                 $associativeArray['endpoint'],
-                $associativeArray['publicKey'] ?? null,
-                $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? 'aesgcm'
+                $associativeArray['public_key'],
+                $associativeArray['auth_token'],
+                $associativeArray['encoding'] ?? 'aesgcm'
             );
         }
 
-        return new self(
-            $associativeArray['endpoint']
-        );
+        throw new InvalidArgumentException('Unable to create Subscription from the parameters provided.');
     }
 
-    /**
-     * @return string
-     */
     public function getEndpoint(): string
     {
         return $this->endpoint;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getPublicKey(): ?string
+    public function getPublicKey(): string
     {
         return $this->publicKey;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getAuthToken(): ?string
+    public function getAuthToken(): string
     {
         return $this->authToken;
     }
 
-    /**
-     * @return string
-     */
-    public function getContentEncoding(): string
+    public function getEncoding(): string
     {
-        return $this->contentEncoding;
-    }
-
-    public function getServiceName(): string
-    {
-        foreach (self::SERVICE_URLS as $service => $url) {
-            if (strpos($this->getEndpoint(), $url) === 0) {
-                return $service;
-            }
-        }
-
-        return '';
+        return $this->encoding;
     }
 }

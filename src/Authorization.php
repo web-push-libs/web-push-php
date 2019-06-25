@@ -2,9 +2,10 @@
 
 namespace Minishlink\WebPush;
 
+use Base64Url\Base64Url;
 use InvalidArgumentException;
 
-class Auth
+class Authorization implements Contracts\AuthorizationInterface
 {
     /**
      * @var string
@@ -33,6 +34,21 @@ class Auth
         $this->setSubject($subject);
     }
 
+    public function getPrivateKey(): string
+    {
+        return $this->privateKey;
+    }
+
+    public function getPublicKey(): string
+    {
+        return $this->publicKey;
+    }
+
+    public function getSubject(): string
+    {
+        return $this->subject;
+    }
+
     /**
      * @param string $private_key
      *
@@ -40,6 +56,7 @@ class Auth
      */
     private function setPrivateKey(string $private_key): void
     {
+        $private_key = Base64Url::decode($private_key);
         if (mb_strlen($private_key, '8bit') !== 32) {
             throw new InvalidArgumentException('Invalid private key provided');
         }
@@ -54,7 +71,8 @@ class Auth
      */
     private function setPublicKey(string $public_key): void
     {
-        if (mb_strlen($public_key, '8bit') !== 32) {
+        $public_key = Base64Url::decode($public_key);
+        if (mb_strlen($public_key, '8bit') !== 65) {
             throw new InvalidArgumentException('Invalid public key provided');
         }
 
@@ -97,12 +115,21 @@ class Auth
         }
     }
 
-    public function toArray(): array
+    public function serialize(): string
     {
-        return [
+        return serialize([
             'subject' => $this->subject,
-            'public_key' => $this->publicKey,
-            'private_key' => $this->privateKey
-        ];
+            'public_key' => Base64Url::encode($this->publicKey),
+            'private_key' => Base64Url::encode($this->privateKey)
+        ]);
+    }
+
+    public function unserialize($serialized): void
+    {
+        $unserialized = unserialize($serialized, ['allowed_classes' => [static::class]]);
+
+        $this->setSubject($unserialized['subject']);
+        $this->setPublicKey($unserialized['public_key']);
+        $this->setPrivateKey($unserialized['private_key']);
     }
 }

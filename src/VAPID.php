@@ -111,7 +111,7 @@ class VAPID
      * @return array Returns an array with the 'Authorization' and 'Crypto-Key' values to be used as headers
      * @throws ErrorException
      */
-    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, string $contentEncoding, ?int $expiration = null)
+    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, string $contentEncoding, ?int $expiration = null): array
     {
         $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
         if (null === $expiration || $expiration > $expirationLimit) {
@@ -155,14 +155,14 @@ class VAPID
 
         if ($contentEncoding === 'aesgcm') {
             return [
-                'Authorization' => 'WebPush '.$jwt,
-                'Crypto-Key' => 'p256ecdsa='.$encodedPublicKey,
+                'Authorization' => 'WebPush ' . $jwt,
+                'Crypto-Key' => 'p256ecdsa=' . $encodedPublicKey,
             ];
         }
 
         if ($contentEncoding === 'aes128gcm') {
             return [
-                'Authorization' => 'vapid t='.$jwt.', k='.$encodedPublicKey,
+                'Authorization' => 'vapid t=' . $jwt . ', k=' . $encodedPublicKey,
             ];
         }
 

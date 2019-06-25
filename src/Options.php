@@ -45,8 +45,13 @@ class Options
         return new static(array_replace(static::wrap($options)->toArray(), $this->toArray()));
     }
 
+    public static function create(array $options)
+    {
+        return new static($options);
+    }
+
     /**
-     * @param Options|array $options
+     * @param mixed $options
      *
      * @return Options
      */

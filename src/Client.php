@@ -44,37 +44,33 @@ class Client
     }
 
     /**
-     * @param string $endpoint
-     * @param Headers $headers
-     * @param string|null $payload
+     * @param Notification $notification
      *
      * @return MessageSentReport
      * @throws Exception
      */
-    public function sendNow(string $endpoint, Headers $headers, ?string $payload = null): MessageSentReport
+    public function sendNow(Notification $notification): MessageSentReport
     {
         return $this->sendAsync(...func_get_args())->wait();
     }
 
     /**
-     * @param string $endpoint
-     * @param Headers $headers
-     * @param string|null $payload
+     * @param Notification $notification
      *
      * @return Promise
      * @throws Exception
      */
-    public function sendAsync(string $endpoint, Headers $headers, ?string $payload = null): Promise
+    public function sendAsync(Notification $notification): Promise
     {
-        return $this->createRequest($endpoint)
-            ->withPayload($payload)
-            ->withHeaders($headers)
+        return $this->createRequest($notification->getSubscription())
+            ->withPayload($notification->getPayload())
+            ->withHeaders($notification->buildHeaders())
             ->send();
     }
 
-    private function createRequest(string $endpoint): self
+    private function createRequest(Contracts\SubscriptionInterface $subscription): self
     {
-        $this->request = $this->requestFactory->createRequest('POST', $endpoint);
+        $this->request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
 
         return $this;
     }
@@ -88,10 +84,10 @@ class Client
         return $this;
     }
 
-    private function withPayload(?string $payload): self
+    private function withPayload(Payload $payload): self
     {
-        if ($payload) {
-            $this->request->withBody($this->streamFactory->createStream($payload));
+        if ($payload->isEmpty() === false) {
+            $this->request->withBody($this->streamFactory->createStream($payload->toString()));
         }
 
         return $this;

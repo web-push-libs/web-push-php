@@ -37,7 +37,7 @@
     "mockery/mockery": "^1.2",
     "psr/http-message": "^1.0",
     "psr/http-factory": "^1.0",
-    "php-http/httplug": "^1.1",
+    "php-http/httplug": "^2.0",
     "php-http/discovery": "^1.0",
     "php-http/async-client-implementation": "^1.0"
   },
@@ -52,7 +52,10 @@
   "autoload": {
     "psr-4": {
       "Minishlink\\WebPush\\": "src"
-    }
+    },
+    "files": [
+      "dependency.php"
+    ]
   },
   "autoload-dev": {
     "psr-4": {

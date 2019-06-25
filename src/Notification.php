@@ -13,39 +13,37 @@ declare(strict_types = 1);
 
 namespace Minishlink\WebPush;
 
-use Exception;
+use ErrorException;
 
 class Notification
 {
-    /** @var Subscription */
+    /** @var Contracts\SubscriptionInterface */
     private $subscription;
 
-    /** @var string */
+    /** @var Payload */
     private $payload;
 
     /** @var Options */
     private $options;
 
-    /** @var Auth */
+    /** @var Contracts\AuthorizationInterface */
     private $auth;
 
     /**
-     * @param Subscription $subscription
-     * @param string $payload
+     * @param Contracts\SubscriptionInterface $subscription
+     * @param Payload $payload
      * @param Options $options
-     * @param Auth $auth
-     *
-     * @throws Exception
+     * @param Contracts\AuthorizationInterface $auth
      */
-    public function __construct(Subscription $subscription, string $payload, Options $options, Auth $auth)
+    public function __construct(Contracts\SubscriptionInterface $subscription, Payload $payload, Options $options, Contracts\AuthorizationInterface $auth)
     {
         $this->subscription = $subscription;
-        $this->setPayload($payload);
+        $this->payload = $payload;
         $this->auth = $auth;
         $this->options = $options;
     }
 
-    public function getSubscription(): Subscription
+    public function getSubscription(): Contracts\SubscriptionInterface
     {
         return $this->subscription;
     }
@@ -55,18 +53,22 @@ class Notification
         return $this->options;
     }
 
-    public function getAuth(): Auth
+    public function getAuth(): Contracts\AuthorizationInterface
     {
         return $this->auth;
     }
 
-    public function getPayload(): string
+    public function getPayload(): Payload
     {
         return $this->payload;
     }
 
-    private function setPayload(string $payload): void
+    /**
+     * @return Headers
+     * @throws ErrorException
+     */
+    public function buildHeaders(): Headers
     {
-        $this->payload = $payload;
+        return (new HeadersBuilder())->build($this);
     }
 }
