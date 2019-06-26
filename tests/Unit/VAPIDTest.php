@@ -13,6 +13,7 @@ namespace Minishlink\WebPush\Tests\Unit;
  * file that was distributed with this source code.
  */
 
+use ErrorException;
 use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
@@ -60,8 +61,14 @@ final class VAPIDTest extends TestCase
      *
      * @throws ErrorException
      */
-    public function testGetVapidHeaders(string $audience, array $vapid, string $contentEncoding, int $expiration, string $expectedAuthorization, ?string $expectedCryptoKey)
-    {
+    public function testGetVapidHeaders(
+        string $audience,
+        array $vapid,
+        string $contentEncoding,
+        int $expiration,
+        string $expectedAuthorization,
+        ?string $expectedCryptoKey
+    ): void {
         $vapid = VAPID::validate($vapid);
         $headers = VAPID::getVapidHeaders(
             $audience,
@@ -74,7 +81,10 @@ final class VAPIDTest extends TestCase
 
         $this->assertArrayHasKey('Authorization', $headers);
         $this->assertEquals(Utils::safeStrlen($expectedAuthorization), Utils::safeStrlen($headers['Authorization']));
-        $this->assertEquals($this->explodeAuthorization($expectedAuthorization), $this->explodeAuthorization($headers['Authorization']));
+        $this->assertEquals(
+            $this->explodeAuthorization($expectedAuthorization),
+            $this->explodeAuthorization($headers['Authorization'])
+        );
 
         if ($expectedCryptoKey) {
             $this->assertArrayHasKey('Crypto-Key', $headers);

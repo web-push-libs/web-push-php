@@ -17,7 +17,10 @@ class SubscriptionFactory
             );
         }
 
-        if (array_key_exists('public_key', $array) || array_key_exists('auth_token', $array) || array_key_exists('encoding', $array)) {
+        if (array_key_exists('public_key', $array)
+            || array_key_exists('auth_token', $array)
+            || array_key_exists('encoding', $array)
+        ) {
             return new Subscription(
                 $array['endpoint'],
                 $array['public_key'],

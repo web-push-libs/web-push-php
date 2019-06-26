@@ -35,8 +35,12 @@ class Notification
      * @param Options $options
      * @param Contracts\AuthorizationInterface $auth
      */
-    public function __construct(Contracts\SubscriptionInterface $subscription, Payload $payload, Options $options, Contracts\AuthorizationInterface $auth)
-    {
+    public function __construct(
+        Contracts\SubscriptionInterface $subscription,
+        Payload $payload,
+        Options $options,
+        Contracts\AuthorizationInterface $auth
+    ) {
         $this->subscription = $subscription;
         $this->payload = $payload;
         $this->auth = $auth;

@@ -57,9 +57,18 @@ final class MessageSentReportTest extends TestCase
     public function generateReportsWithEndpoints(): array
     {
         return [
-            [new MessageSentReport(new Request('POST', 'https://www.example.com'), new Response(200)), 'https://www.example.com'],
-            [new MessageSentReport(new Request('POST', 'https://m.example.com'), new Response(200)), 'https://m.example.com'],
-            [new MessageSentReport(new Request('POST', 'https://test.net'), new Response(200)), 'https://test.net'],
+            [
+                new MessageSentReport(new Request('POST', 'https://www.example.com'), new Response(200)),
+                'https://www.example.com'
+            ],
+            [
+                new MessageSentReport(new Request('POST', 'https://m.example.com'), new Response(200)),
+                'https://m.example.com'
+            ],
+            [
+                new MessageSentReport(new Request('POST', 'https://test.net'), new Response(200)),
+                'https://test.net'
+            ],
         ];
     }
 

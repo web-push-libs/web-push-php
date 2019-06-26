@@ -60,7 +60,9 @@ class PayloadBuilder
     private function validate(string $payload): void
     {
         if (mb_strlen($payload, '8bit') > Encryption::MAX_PAYLOAD_LENGTH) {
-            throw new ErrorException('Size of payload must not be greater than ' . Encryption::MAX_PAYLOAD_LENGTH . ' octets.');
+            throw new ErrorException(
+                'Size of payload must not be greater than ' . Encryption::MAX_PAYLOAD_LENGTH . ' octets.'
+            );
         }
     }
 

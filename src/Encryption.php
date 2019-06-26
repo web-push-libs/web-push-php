@@ -60,8 +60,12 @@ class Encryption
      * @return array
      * @throws ErrorException
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $encoding): array
-    {
+    public static function encrypt(
+        string $payload,
+        string $userPublicKey,
+        string $userAuthToken,
+        string $encoding
+    ): array {
         return self::deterministicEncrypt(
             $payload,
             $userPublicKey,
@@ -83,8 +87,14 @@ class Encryption
      * @return array
      * @throws ErrorException
      */
-    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $encoding, array $localKeyObject, string $salt): array
-    {
+    public static function deterministicEncrypt(
+        string $payload,
+        string $userPublicKey,
+        string $userAuthToken,
+        string $encoding,
+        array $localKeyObject,
+        string $salt
+    ): array {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
@@ -128,7 +138,14 @@ class Encryption
         // encrypt
         // "The additional data passed to each invocation of AEAD_AES_128_GCM is a zero-length octet sequence."
         $tag = '';
-        $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+        $encryptedText = openssl_encrypt(
+            $payload,
+            'aes-128-gcm',
+            $contentEncryptionKey,
+            OPENSSL_RAW_DATA,
+            $nonce,
+            $tag
+        );
 
         // return values in url safe base64
         return [
@@ -311,8 +328,13 @@ class Encryption
      * @return string
      * @throws ErrorException
      */
-    private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, string $encoding): string
-    {
+    private static function getIKM(
+        string $userAuthToken,
+        string $userPublicKey,
+        string $localPublicKey,
+        string $sharedSecret,
+        string $encoding
+    ): string {
         if (!empty($userAuthToken)) {
             if ($encoding === 'aesgcm') {
                 $info = 'Content-Encoding: auth' . chr(0);

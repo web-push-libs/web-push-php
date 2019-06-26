@@ -67,7 +67,9 @@ class VAPID
                 throw new ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
             }
             $vapid['publicKey'] = base64_encode($binaryPublicKey);
-            $vapid['privateKey'] = base64_encode(str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
+            $vapid['privateKey'] = base64_encode(
+                str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)
+            );
         }
 
         if (!isset($vapid['publicKey'])) {
@@ -111,8 +113,14 @@ class VAPID
      * @return array Returns an array with the 'Authorization' and 'Crypto-Key' values to be used as headers
      * @throws ErrorException
      */
-    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, string $contentEncoding, ?int $expiration = null): array
-    {
+    public static function getVapidHeaders(
+        string $audience,
+        string $subject,
+        string $publicKey,
+        string $privateKey,
+        string $contentEncoding,
+        ?int $expiration = null
+    ): array {
         $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
         if (null === $expiration || $expiration > $expirationLimit) {
             $expiration = $expirationLimit;
@@ -187,7 +195,10 @@ class VAPID
             throw new ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
         }
 
-        $binaryPrivateKey = hex2bin(str_pad(gmp_strval($privateKey->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
+        $binaryPrivateKey = hex2bin(
+            str_pad(gmp_strval($privateKey->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT)
+        );
+
         if (!$binaryPrivateKey) {
             throw new ErrorException('Failed to convert VAPID private key from hexadecimal to binary');
         }

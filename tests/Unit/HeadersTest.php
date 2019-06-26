@@ -40,7 +40,10 @@ final class HeadersTest extends TestCase
         $default = new Headers(['default' => 'default']);
         $additional = new Headers(['default' => 'additional', 'additional' => 'additional']);
 
-        $this->assertEquals(['default' => 'default', 'additional' => 'additional'], $default->with($additional)->toArray());
+        $this->assertEquals(
+            ['default' => 'default', 'additional' => 'additional'],
+            $default->with($additional)->toArray()
+        );
     }
 
     public function testAddsAnArrayOfHeadersReplacingDuplicateValues(): void

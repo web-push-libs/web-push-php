@@ -13,8 +13,6 @@ declare(strict_types = 1);
 
 namespace Minishlink\WebPush;
 
-use InvalidArgumentException;
-
 class Subscription implements Contracts\SubscriptionInterface
 {
     /**
@@ -50,35 +48,6 @@ class Subscription implements Contracts\SubscriptionInterface
         $this->publicKey = $publicKey;
         $this->authToken = $authToken;
         $this->encoding = $encoding;
-    }
-
-    /**
-     * @param array $associativeArray (with keys endpoint, publicKey, authToken, encoding)
-     *
-     * @return Contracts\SubscriptionInterface
-     * @throws InvalidArgumentException
-     */
-    public static function create(array $associativeArray): Contracts\SubscriptionInterface
-    {
-        if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
-            return new static(
-                $associativeArray['endpoint'],
-                $associativeArray['keys']['p256dh'],
-                $associativeArray['keys']['auth'],
-                $associativeArray['encoding'] ?? 'aesgcm'
-            );
-        }
-
-        if (array_key_exists('public_key', $associativeArray) || array_key_exists('auth_token', $associativeArray) || array_key_exists('encoding', $associativeArray)) {
-            return new static(
-                $associativeArray['endpoint'],
-                $associativeArray['public_key'],
-                $associativeArray['auth_token'],
-                $associativeArray['encoding'] ?? 'aesgcm'
-            );
-        }
-
-        throw new InvalidArgumentException('Unable to create Subscription from the parameters provided.');
     }
 
     public function getEndpoint(): string

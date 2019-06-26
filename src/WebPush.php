@@ -41,8 +41,11 @@ class WebPush
      * @param Options|null $options
      * @param Client|null $client
      */
-    public function __construct(?Contracts\AuthorizationInterface $auth = null, ?Options $options = null, ?Client $client = null)
-    {
+    public function __construct(
+        ?Contracts\AuthorizationInterface $auth = null,
+        ?Options $options = null,
+        ?Client $client = null
+    ) {
         $this->auth = $auth;
         $this->options = Options::wrap($options);
         $this->client = $client ?? new Client();
@@ -137,7 +140,9 @@ class WebPush
     ): Notification {
         $auth = $auth ?? $this->auth;
         if ($auth === null) {
-            throw new ErrorException(sprintf('Authorization must be provided as a parameter to %s or %s.', __CLASS__, __METHOD__));
+            throw new ErrorException(
+                sprintf('Authorization must be provided as a parameter to %s or %s.', __CLASS__, __METHOD__)
+            );
         }
 
         return new Notification(
