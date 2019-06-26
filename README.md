@@ -44,11 +44,6 @@ $notifications = [
         'payload' => 'hello !',
     ], [
         'subscription' => SubscriptionFactory::create([
-            'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
-        ]),
-        'payload' => null,
-    ], [
-        'subscription' => SubscriptionFactory::create([
             'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
             'publicKey' => '(stringOf88Chars)',
             'authToken' => '(stringOf24Chars)',
