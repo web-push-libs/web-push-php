@@ -82,4 +82,11 @@ final class HeadersTest extends TestCase
             $this->assertEquals($array[$key], $value);
         }
     }
+
+    public function testRaisesAnExceptionIfTheKeyDoesNotExist(): void
+    {
+        $headers = new Headers();
+        $this->expectExceptionMessage('No value has been set for header with name "foo"');
+        $headers->get('foo', false);
+    }
 }

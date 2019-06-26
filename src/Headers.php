@@ -3,6 +3,7 @@
 namespace Minishlink\WebPush;
 
 use ArrayIterator;
+use Exception;
 use InvalidArgumentException;
 use IteratorAggregate;
 use Traversable;
@@ -41,16 +42,14 @@ class Headers implements IteratorAggregate
 
     /**
      * @param string $name
-     * @param string|array|int $value
+     * @param mixed $value
      *
      * @return Headers
      * @throws InvalidArgumentException
      */
     public function set(string $name, $value): self
     {
-        if (is_scalar($value) === false && is_array($value) === false) {
-            throw new InvalidArgumentException(sprintf('Invalid value specified for %s header', $name));
-        }
+        $this->validateValue($value);
 
         $this->headers[$name] = $value;
 
@@ -61,10 +60,15 @@ class Headers implements IteratorAggregate
      * @param string $name
      *
      * @return mixed Returns null if a header does not exist.
+     * @throws Exception
      */
     public function get(string $name)
     {
-        return $this->headers[$name] ?? null;
+        if ($this->has($name) === false) {
+            throw new Exception('No value has been set for header with name "' . $name . '"');
+        }
+
+        return $this->headers[$name];
     }
 
     public function add(array $headers): self
@@ -76,13 +80,22 @@ class Headers implements IteratorAggregate
         return $this;
     }
 
+    /**
+     * @param string $name
+     * @param string $value
+     * @param string|null $delimiter
+     *
+     * @return Headers
+     * @throws Exception
+     * @throws InvalidArgumentException
+     */
     public function append(string $name, string $value, string $delimiter = null): self
     {
-        if (($existing = $this->get($name)) === null) {
+        if ($this->has($name) === false) {
             return $this->set($name, $value);
         }
 
-        return $this->set($name, sprintf('%s%s%s', $existing, $delimiter, $value));
+        return $this->set($name, sprintf('%s%s%s', $this->get($name), $delimiter, $value));
     }
 
     public function has(string $name): bool
@@ -105,5 +118,17 @@ class Headers implements IteratorAggregate
     public function getIterator(): Traversable
     {
         return new ArrayIterator($this->toArray());
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @throws InvalidArgumentException
+     */
+    private function validateValue($value): void
+    {
+        if ($value !== null && is_scalar($value) === false && is_array($value) === false) {
+            throw new InvalidArgumentException('Invalid header value specified ' . json_encode($value));
+        }
     }
 }
