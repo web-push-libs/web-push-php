@@ -52,10 +52,7 @@
   "autoload": {
     "psr-4": {
       "Minishlink\\WebPush\\": "src"
-    },
-    "files": [
-      "dependency.php"
-    ]
+    }
   },
   "autoload-dev": {
     "psr-4": {
