@@ -37,7 +37,7 @@ final class MessageSentReportTest extends TestCase
             [new MessageSentReport($request, new Response(404)), true],
             [new MessageSentReport($request, new Response(410)), true],
             [new MessageSentReport($request, new Response(500)), false],
-            [new MessageSentReport($request, new Response(200)), false]
+            [new MessageSentReport($request, new Response(201)), false]
         ];
     }
 
@@ -58,15 +58,15 @@ final class MessageSentReportTest extends TestCase
     {
         return [
             [
-                new MessageSentReport(new Request('POST', 'https://www.example.com'), new Response(200)),
+                new MessageSentReport(new Request('POST', 'https://www.example.com'), new Response(201)),
                 'https://www.example.com'
             ],
             [
-                new MessageSentReport(new Request('POST', 'https://m.example.com'), new Response(200)),
+                new MessageSentReport(new Request('POST', 'https://m.example.com'), new Response(201)),
                 'https://m.example.com'
             ],
             [
-                new MessageSentReport(new Request('POST', 'https://test.net'), new Response(200)),
+                new MessageSentReport(new Request('POST', 'https://test.net'), new Response(201)),
                 'https://test.net'
             ],
         ];
@@ -89,8 +89,8 @@ final class MessageSentReportTest extends TestCase
     {
         $request = new Request('POST', 'https://example.com');
         return [
-            [new MessageSentReport($request, new Response(200)), true],
-            [new MessageSentReport($request, new Response(200)), true],
+            [new MessageSentReport($request, new Response(201)), true],
+            [new MessageSentReport($request, new Response(201)), true],
             [new MessageSentReport($request, new Response(404)), false],
         ];
     }

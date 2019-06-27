@@ -341,7 +341,7 @@ class Encryption
             } elseif ($encoding === 'aes128gcm') {
                 $info = 'WebPush: info' . chr(0) . $userPublicKey . $localPublicKey;
             } else {
-                throw new ErrorException('This content encoding is not supported');
+                throw new ErrorException('This content encoding is not supported.');
             }
 
             return self::hkdf($userAuthToken, $sharedSecret, $info, 32);

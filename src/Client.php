@@ -78,7 +78,7 @@ class Client
     private function withHeaders(Headers $headers): self
     {
         foreach ($headers as $header => $value) {
-            $this->request->withHeader($header, $value);
+            $this->request = $this->request->withHeader($header, $value);
         }
 
         return $this;
@@ -87,7 +87,7 @@ class Client
     private function withPayload(Payload $payload): self
     {
         if ($payload->isEmpty() === false) {
-            $this->request->withBody($this->streamFactory->createStream($payload->toString()));
+            $this->request = $this->request->withBody($this->streamFactory->createStream($payload->toString()));
         }
 
         return $this;

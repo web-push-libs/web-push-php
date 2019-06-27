@@ -30,7 +30,7 @@ class MessageSentReport implements ResponseInterface
 
     public function isSuccess(): bool
     {
-        return $this->response->getStatusCode() === 200;
+        return $this->response->getStatusCode() === 201;
     }
 
     public function getEndpoint(): string

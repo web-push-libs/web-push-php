@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Minishlink\WebPush\Tests\Integration;
 
@@ -13,234 +13,165 @@ namespace Minishlink\WebPush\Tests\Integration;
  * file that was distributed with this source code.
  */
 
+use Base64Url\Base64Url;
 use Exception;
-use Generator;
-use Minishlink\WebPush\MessageSentReport;
+use Minishlink\WebPush\Authorization;
+use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Tests\TestCase;
 use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Subscription;
 
 final class PushServiceTest extends TestCase
 {
-    private static $timeout = 30;
-    private static $portNumber = 9012;
-    private static $testSuiteId;
-    private static $testServiceUrl;
-    private static $vapidKeys = [
-        'subject' => 'http://test.com',
-        'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
-        'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
-    ];
-
-    /** @var WebPush WebPush with correct api keys */
-    private $webPush;
-
     /**
-     * {@inheritdoc}
+     * @var Authorization
      */
-    public static function setUpBeforeClass()
-    {
-        self::$testServiceUrl = 'http://localhost:' . self::$portNumber;
-    }
-
+    private $authorization;
     /**
-     * {@inheritdoc}
+     * @var string
      */
+    private $testSuiteId;
+
     protected function setUp()
     {
-        $startApiCurl = curl_init(self::$testServiceUrl . '/api/start-test-suite/');
-        curl_setopt_array($startApiCurl, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => [],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => self::$timeout,
-        ]);
-
-        $parsedResp = $this->getResponse($startApiCurl);
-        self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
+        parent::setUp();
+        $this->testSuiteId = $this->post('start-test-suite')['testSuiteId'];
+        $this->authorization = $this->getAuthorization();
     }
 
-    public function browserProvider()
+    public function browserProvider(): array
     {
         return [
-            // Web Push
-            ['firefox', 'stable', []],
-            ['firefox', 'beta', []],
+            ['chrome', 'stable', $this->getAuthorization()],
+            ['chrome', 'beta', $this->getAuthorization()],
 
-            // Web Push + VAPID
-            ['chrome', 'stable', ['VAPID' => self::$vapidKeys]],
-            ['chrome', 'beta', ['VAPID' => self::$vapidKeys]],
-
-            ['firefox', 'stable', ['VAPID' => self::$vapidKeys]],
-            ['firefox', 'beta', ['VAPID' => self::$vapidKeys]],
+            ['firefox', 'stable', $this->getAuthorization()],
+            ['firefox', 'beta', $this->getAuthorization()],
         ];
     }
 
     /**
-     * Selenium tests are flakey so add retries.
+     * @param int $attempts
+     * @param callable $test
+     *
+     * @throws Exception
      */
-    public function retryTest($retryCount, $test)
+    public function retry(int $attempts, callable $test): void
     {
-        // just like above without checking the annotation
-        for ($i = 0; $i < $retryCount; $i++) {
+        $attempt = 0;
+        do {
             try {
+                $exception = null;
                 $test();
+            } catch (Exception $exception) {
 
-                return;
-            } catch (Exception $e) {
-                // last one thrown below
             }
-        }
-        if (isset($e)) {
-            throw $e;
+        } while (++$attempt < $attempts);
+
+        if (isset($exception)) {
+            throw $exception;
         }
     }
 
     /**
      * @dataProvider browserProvider
-     * Run integration tests with browsers
+     *
+     * @param string $browser
+     * @param string $channel
+     * @param Authorization $authorization
+     *
+     * @throws Exception
      */
-    public function testBrowsers($browserId, $browserVersion, $options)
+    public function testBrowserCompatibility(string $browser, string $channel, Authorization $authorization): void
     {
-        $this->retryTest(2, $this->createClosureTest($browserId, $browserVersion, $options));
-    }
+        $this->retry(1, function () use ($browser, $channel, $authorization) {
+            $webpush = new WebPush($authorization);
 
-    protected function createClosureTest($browserId, $browserVersion, $options)
-    {
-        return function () use ($browserId, $browserVersion, $options) {
-            $this->webPush = new WebPush($options);
-
-            $subscriptionParameters = [
-                'testSuiteId' => self::$testSuiteId,
-                'browserName' => $browserId,
-                'browserVersion' => $browserVersion,
-            ];
-
-            if (array_key_exists('VAPID', $options)) {
-                $subscriptionParameters['vapidPublicKey'] = self::$vapidKeys['publicKey'];
-            }
-
-            $subscriptionParameters = json_encode($subscriptionParameters);
-
-            $getSubscriptionCurl = curl_init(self::$testServiceUrl . '/api/get-subscription/');
-            curl_setopt_array($getSubscriptionCurl, [
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $subscriptionParameters,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                    'Content-Length: ' . strlen($subscriptionParameters),
-                ],
-                CURLOPT_TIMEOUT => self::$timeout,
+            $response = $this->post('get-subscription', [
+                'testSuiteId' => $this->testSuiteId,
+                'browserName' => $browser,
+                'browserVersion' => $channel,
+                'vapidPublicKey' => Base64Url::encode($this->authorization->getPublicKey())
             ]);
 
-            $parsedResp = $this->getResponse($getSubscriptionCurl);
-            $testId = $parsedResp->{'data'}->{'testId'};
-            $subscription = $parsedResp->{'data'}->{'subscription'};
-
-            $supportedContentEncodings = property_exists($subscription, 'supportedContentEncodings') ?
-                $subscription->{'supportedContentEncodings'} :
-                ["aesgcm"];
-
-            $endpoint = $subscription->{'endpoint'};
-            $keys = $subscription->{'keys'};
-            $auth = $keys->{'auth'};
-            $p256dh = $keys->{'p256dh'};
+            $test_id = $response['testId'];
+            $endpoint = $response['subscription']['endpoint'];
+            $auth_token = $response['subscription']['keys']['auth'];
+            $public_key = $response['subscription']['keys']['p256dh'];
             $payload = 'hello';
 
-            foreach ($supportedContentEncodings as $contentEncoding) {
-                if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'])) {
-                    $this->expectException('ErrorException');
-                    $this->expectExceptionMessage('This content encoding (' . $contentEncoding . ') is not supported.');
-                    $this->markTestIncomplete('Unsupported content encoding: ' . $contentEncoding);
+            foreach ($subscription['supportedContentEncodings'] ?? ['aesgcm'] as $encoding) {
+                $this->setEncodingExpectations($encoding);
+                $subscription = new Subscription($endpoint, $public_key, $auth_token, $encoding);
+                foreach ($webpush->queueNotification($subscription, $payload)->deliver() as $report) {
+                    $this->assertTrue($report->isSuccess());
                 }
 
-                $subscription = new Subscription($endpoint, $p256dh, $auth, $contentEncoding);
+                $status = $this->post('get-notification-status', [
+                    'testSuiteId' => $this->testSuiteId,
+                    'testId' => $test_id
+                ]);
 
-                try {
-                    $sendResp = $this->webPush->queueNotification($subscription, $payload, true);
-                    $this->assertInstanceOf(Generator::class, $sendResp);
-
-                    /** @var MessageSentReport $report */
-                    foreach ($sendResp as $report) {
-                        $this->assertTrue($report->isSuccess());
-                    }
-
-                    $dataString = json_encode([
-                        'testSuiteId' => self::$testSuiteId,
-                        'testId' => $testId,
-                    ]);
-
-                    $getNotificationCurl = curl_init(self::$testServiceUrl . '/api/get-notification-status/');
-                    curl_setopt_array($getNotificationCurl, [
-                        CURLOPT_POST => true,
-                        CURLOPT_POSTFIELDS => $dataString,
-                        CURLOPT_RETURNTRANSFER => true,
-                        CURLOPT_HTTPHEADER => [
-                            'Content-Type: application/json',
-                            'Content-Length: ' . strlen($dataString),
-                        ],
-                        CURLOPT_TIMEOUT => self::$timeout,
-                    ]);
-
-                    $parsedResp = $this->getResponse($getNotificationCurl);
-
-                    if (!property_exists($parsedResp->{'data'}, 'messages')) {
-                        throw new Exception('web-push-testing-service error, no messages: ' . json_encode($parsedResp));
-                    }
-
-                    $messages = $parsedResp->{'data'}->{'messages'};
-                    $this->assertEquals(1, count($messages));
-                    $this->assertEquals($payload, $messages[0]);
-                } catch (Exception $e) {
-                    throw $e;
+                if (array_key_exists('messages', $status) === false) {
+                    throw new Exception('web-push-testing-service error, no messages: ' . json_encode($status));
                 }
+
+                $this->assertCount(1, $status['messages']);
+                $this->assertEquals($payload, $status['messages'][0]);
             }
-        };
+        });
+    }
+
+    /**
+     * @param string $encoding
+     */
+    private function setEncodingExpectations(string $encoding): void
+    {
+        if (in_array($encoding, ['aesgcm', 'aes128gcm'], true) === false) {
+            $this->expectException('ErrorException');
+            $this->expectExceptionMessage('This content encoding is not supported.');
+            $this->fail('Unsupported content encoding: ' . $encoding);
+        }
+    }
+
+    /**
+     * @param string $endpoint
+     * @param array $parameters
+     *
+     * @return mixed
+     * @throws Exception
+     */
+    private function post(string $endpoint, array $parameters = [])
+    {
+        $payload = json_encode($parameters);
+        $curl = curl_init('http://localhost:9012/api/' . $endpoint);
+        curl_setopt_array($curl, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($payload),
+            ],
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_CONNECTTIMEOUT => 5
+        ]);
+
+        $response = curl_exec($curl);
+        if ($response === false) {
+            throw new Exception('Curl error: n' . curl_errno($curl) . ' - ' . curl_error($curl));
+        }
+
+        $parsed = json_decode($response, true);
+        if (!array_key_exists('data', $parsed)) {
+            throw new Exception('web-push-testing-service error: ' . $response);
+        }
+
+        return $parsed['data'];
     }
 
     protected function tearDown()
     {
-        $dataString = '{ "testSuiteId": ' . self::$testSuiteId . ' }';
-        $curl = curl_init(self::$testServiceUrl . '/api/end-test-suite/');
-        curl_setopt_array($curl, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $dataString,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($dataString),
-            ],
-            CURLOPT_TIMEOUT => self::$timeout,
-        ]);
-        $this->getResponse($curl);
-        self::$testSuiteId = null;
-    }
-
-    public static function tearDownAfterClass()
-    {
-        exec('web-push-testing-service stop phpunit');
-    }
-
-    private function getResponse($ch)
-    {
-        $resp = curl_exec($ch);
-
-        if (!$resp) {
-            $error = 'Curl error: n' . curl_errno($ch) . ' - ' . curl_error($ch);
-            curl_close($ch);
-            throw new Exception($error);
-        }
-
-        $parsedResp = json_decode($resp);
-
-        if (!property_exists($parsedResp, 'data')) {
-            throw new Exception('web-push-testing-service error: ' . $resp);
-        }
-
-        // Close request to clear up some resources
-        curl_close($ch);
-
-        return $parsedResp;
+        $this->post('end-test-suite', ['testSuiteId' => $this->testSuiteId]);
+        $this->testSuiteId = null;
     }
 }

@@ -49,7 +49,7 @@ final class ClientTest extends TestCase
     public function providesResponses(): array
     {
         return [
-            [new Response(200)],
+            [new Response(201)],
             [new Response(302)],
             [new Response(400)],
             [new Response(404)],

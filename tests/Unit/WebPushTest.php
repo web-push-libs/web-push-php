@@ -23,7 +23,7 @@ final class WebPushTest extends TestCase
     {
         parent::setUp();
         $this->webpush = new WebPush($this->getAuthorization(), null, new Client($mock = new MockClient()));
-        $mock->setDefaultResponse(new Response(200));
+        $mock->setDefaultResponse(new Response(201));
     }
 
     /**
