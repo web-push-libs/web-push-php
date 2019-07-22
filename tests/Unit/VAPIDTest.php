@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
 /*
  * This file is part of the WebPush library.
@@ -14,9 +14,9 @@ namespace Minishlink\WebPush\Tests\Unit;
  */
 
 use ErrorException;
-use Minishlink\WebPush\Tests\TestCase;
-use Minishlink\WebPush\Utils;
-use Minishlink\WebPush\VAPID;
+use WebPush\Tests\TestCase;
+use WebPush\Utils;
+use WebPush\VAPID;
 
 final class VAPIDTest extends TestCase
 {

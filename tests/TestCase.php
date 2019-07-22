@@ -2,14 +2,14 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests;
+namespace WebPush\Tests;
 
 use Base64Url\Base64Url;
-use Minishlink\WebPush\Authorization;
-use Minishlink\WebPush\Contracts\SubscriptionInterface;
-use Minishlink\WebPush\Options;
-use Minishlink\WebPush\Payload;
-use Minishlink\WebPush\Subscription;
+use WebPush\Authorization;
+use WebPush\Contracts\SubscriptionInterface;
+use WebPush\Options;
+use WebPush\Payload;
+use WebPush\Subscription;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
 class TestCase extends \PHPUnit\Framework\TestCase

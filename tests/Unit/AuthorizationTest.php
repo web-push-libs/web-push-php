@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
 use Base64Url\Base64Url;
-use Minishlink\WebPush\Authorization;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\Authorization;
+use WebPush\Tests\TestCase;
 
 final class AuthorizationTest extends TestCase
 {

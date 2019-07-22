@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush;
+namespace WebPush;
 
 class Options
 {

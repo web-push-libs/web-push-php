@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush;
+namespace WebPush;
 
 use Exception;
 use Http\Client\HttpAsyncClient;

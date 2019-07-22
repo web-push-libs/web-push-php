@@ -2,15 +2,15 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
 use ErrorException;
 use GuzzleHttp\Psr7\Response;
 use Http\Mock\Client as MockClient;
-use Minishlink\WebPush\Client;
-use Minishlink\WebPush\MessageSentReport;
-use Minishlink\WebPush\Tests\TestCase;
-use Minishlink\WebPush\WebPush;
+use WebPush\Client;
+use WebPush\MessageSentReport;
+use WebPush\Tests\TestCase;
+use WebPush\WebPush;
 
 final class WebPushTest extends TestCase
 {

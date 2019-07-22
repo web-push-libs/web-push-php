@@ -1,6 +1,6 @@
 <?php
 
-namespace Minishlink\WebPush;
+namespace WebPush;
 
 use Base64Url\Base64Url;
 use ErrorException;

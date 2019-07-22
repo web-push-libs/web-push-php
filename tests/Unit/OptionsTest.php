@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\Options;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\Options;
+use WebPush\Tests\TestCase;
 
 final class OptionsTest extends TestCase
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\Cache;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\Cache;
+use WebPush\Tests\TestCase;
 
 final class CacheTest extends TestCase
 {

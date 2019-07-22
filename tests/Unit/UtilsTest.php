@@ -1,10 +1,10 @@
 <?php
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
 use Jose\Component\Core\Util\Ecc\NistCurve;
-use Minishlink\WebPush\Tests\TestCase;
-use Minishlink\WebPush\Utils;
+use WebPush\Tests\TestCase;
+use WebPush\Utils;
 
 final class UtilsTest extends TestCase
 {

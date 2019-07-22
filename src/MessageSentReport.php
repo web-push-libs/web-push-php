@@ -4,7 +4,7 @@
  * @started: 03.09.2018 9:21
  */
 
-namespace Minishlink\WebPush;
+namespace WebPush;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;

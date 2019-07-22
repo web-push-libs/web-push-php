@@ -1,6 +1,6 @@
 <?php
 
-namespace Minishlink\WebPush;
+namespace WebPush;
 
 class Queue
 {

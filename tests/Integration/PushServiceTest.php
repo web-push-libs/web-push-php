@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Integration;
+namespace WebPush\Tests\Integration;
 
 /*
  * This file is part of the WebPush library.
@@ -15,10 +15,10 @@ namespace Minishlink\WebPush\Tests\Integration;
 
 use Base64Url\Base64Url;
 use Exception;
-use Minishlink\WebPush\Authorization;
-use Minishlink\WebPush\Subscription;
-use Minishlink\WebPush\Tests\TestCase;
-use Minishlink\WebPush\WebPush;
+use WebPush\Authorization;
+use WebPush\Subscription;
+use WebPush\Tests\TestCase;
+use WebPush\WebPush;
 
 final class PushServiceTest extends TestCase
 {

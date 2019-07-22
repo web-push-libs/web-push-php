@@ -25,14 +25,14 @@ There is no support and maintenance for older PHP versions, however you are free
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
 
-`composer require minishlink/web-push php-http/guzzle6-adapter guzzlehttp/psr7`
+`composer require ryancco/web-push php-http/guzzle6-adapter guzzlehttp/psr7`
 
 ## Usage
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\SubscriptionFactory;
+use WebPush\WebPush;
+use WebPush\SubscriptionFactory;
 
 $notifications = [
     [
@@ -74,7 +74,7 @@ foreach ($notifications as $notification) {
 
 /**
  * Check sent results
- * @var Minishlink\WebPush\MessageSentReport $report
+ * @var WebPush\MessageSentReport $report
  */
 foreach ($webPush->deliver() as $report) {
     $endpoint = $report->getEndpoint();
@@ -88,11 +88,7 @@ foreach ($webPush->deliver() as $report) {
 ```
 
 ### Full examples of Web Push implementations
-* An example with web-push-php: [Minishlink/web-push-php-example](https://github.com/Minishlink/web-push-php-example)
-* Matthew Gaunt's [Web Push Book](https://web-push-book.gauntface.com) - a must read
-* Mozilla's [ServiceWorker Cookbooks](https://serviceworke.rs/push-payload_index_doc.html) (don't mind the `server.js` file: it should be replaced by your PHP server code with this library)
-* Google's [introduction to push notifications](https://developers.google.com/web/fundamentals/getting-started/push-notifications/) (as of 03-20-2016, it doesn't mention notifications with payload)
-* you may want to take a look at my own implementation: [sw.js](https://github.com/Minishlink/physbook/blob/9bfcc2bbf7311a5de4628eb8f3ae56b6c3e74067/web/service-worker.js) and [app.js](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/app/Resources/public/js/app.js)
+Coming Soon!
 
 ### Authentication (VAPID)
 Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server. These keys must be safely stored and should not change.
@@ -101,8 +97,8 @@ You can specify your authentication details when instantiating WebPush. The keys
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Authorization;
+use WebPush\WebPush;
+use WebPush\Authorization;
 
 $endpoint = 'https://android.googleapis.com/gcm/send/abcdef...'; // Chrome
 
@@ -151,8 +147,8 @@ You can specify options by specifying the `$options` parameter to the `WebPush` 
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Options;
+use WebPush\WebPush;
+use WebPush\Options;
 
 $options = new Options([
     'ttl' => 300, // defaults to 4 weeks if left empty
@@ -193,7 +189,7 @@ To loop through the results, just pass it into `foreach`. You can also use [`ite
 ```php
 <?php
 
-/** @var Minishlink\WebPush\MessageSentReport $report */
+/** @var WebPush\MessageSentReport $report */
 foreach ($webPush->deliver() as $report) {
     $endpoint = $report->getEndpoint();
 
@@ -246,7 +242,7 @@ Here are some ideas of settings:
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
+use WebPush\WebPush;
 
 $webPush = new WebPush();
 $webPush->setPadding(false); // disable automatic padding
@@ -261,12 +257,7 @@ but you must first install [one](https://packagist.org/providers/php-http/async-
 ## Common questions
 
 ### Is there any plugin/bundle/extension for my favorite PHP framework?
-The following are available:
-
-- Symfony: 
-    - [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
-    - [bentools/webpush-bundle](https://github.com/bpolaszek/webpush-bundle) (associate your Symfony users to WebPush subscriptions)
-- Laravel: [laravel-notification-channels/webpush](https://github.com/laravel-notification-channels/webpush)
+Coming Soon!
 
 Feel free to add your own!
 
@@ -298,17 +289,12 @@ You can also force using a client without peer verification.
 ### How to solve "Bad key encryption key length" or "Unsupported key type"?
 Disable `mbstring.func_overload` in your `php.ini`.
 
-### How to solve "Class 'Minishlink\WebPush\WebPush' not found"
+### How to solve "Class 'WebPush\WebPush' not found"
 Make sure to require Composer's [autoloader](https://getcomposer.org/doc/01-basic-usage.md#autoloading).
 
 ```php
 require __DIR__ . '/path/to/vendor/autoload.php';
 ```
-
-### I must use PHP 5.4 or 5.5. What can I do?
-You won't be able to send any payload, so you'll only be able to use `sendNotification($subscription)`.
-Install the library with `composer` using `--ignore-platform-reqs`.
-The workaround for getting the payload is to fetch it in the service worker ([example](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js#L75)). 
 
 ### I lost my VAPID keys!
 See [issue #58](https://github.com/web-push-libs/web-push-php/issues/58).
@@ -325,10 +311,10 @@ You need something like [RMSPushNotificationsBundle](https://github.com/richsage
 This library was inspired by the Node.js [marco-c/web-push](https://github.com/marco-c/web-push) library.
 
 ## Contributing
-See [CONTRIBUTING.md](https://github.com/Minishlink/web-push/blob/master/CONTRIBUTING.md).
+See [CONTRIBUTING.md](https://github.com/ryancco/web-push/blob/master/CONTRIBUTING.md).
 
 ## License
-[MIT](https://github.com/Minishlink/web-push/blob/master/LICENSE)
+[MIT](https://github.com/ryancco/web-push/blob/master/LICENSE)
 
 ## Sponsors
 Thanks to [JetBrains](https://www.jetbrains.com/) for supporting the project through sponsoring some [All Products Packs](https://www.jetbrains.com/products.html) within their [Free Open Source License](https://www.jetbrains.com/buy/opensource/) program.

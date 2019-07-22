@@ -2,10 +2,10 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\SubscriptionFactory;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\SubscriptionFactory;
+use WebPush\Tests\TestCase;
 
 class SubscriptionFactoryTest extends TestCase
 {

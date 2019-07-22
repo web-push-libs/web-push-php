@@ -2,10 +2,10 @@
 
 declare(strict_types  = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\Queue;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\Queue;
+use WebPush\Tests\TestCase;
 
 final class QueueTest extends TestCase
 {

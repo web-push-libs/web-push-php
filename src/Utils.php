@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Minishlink\WebPush;
+namespace WebPush;
 
 use InvalidArgumentException;
 use Jose\Component\Core\Util\Ecc\PublicKey;

@@ -2,12 +2,12 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\PayloadBuilder;
-use Minishlink\WebPush\Subscription;
-use Minishlink\WebPush\SubscriptionFactory;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\PayloadBuilder;
+use WebPush\Subscription;
+use WebPush\SubscriptionFactory;
+use WebPush\Tests\TestCase;
 
 final class PayloadBuilderTest extends TestCase
 {

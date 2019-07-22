@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\CacheFactory;
-use Minishlink\WebPush\QueueFactory;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\CacheFactory;
+use WebPush\QueueFactory;
+use WebPush\Tests\TestCase;
 
 final class QueueFactoryTest extends TestCase
 {

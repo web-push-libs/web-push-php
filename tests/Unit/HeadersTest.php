@@ -2,11 +2,11 @@
 
 declare(strict_types = 1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
 use InvalidArgumentException;
-use Minishlink\WebPush\Headers;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\Headers;
+use WebPush\Tests\TestCase;
 use stdClass;
 
 final class HeadersTest extends TestCase

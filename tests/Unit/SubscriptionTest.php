@@ -1,9 +1,9 @@
 <?php
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
-use Minishlink\WebPush\Subscription;
-use Minishlink\WebPush\Tests\TestCase;
+use WebPush\Subscription;
+use WebPush\Tests\TestCase;
 
 final class SubscriptionTest extends TestCase
 {

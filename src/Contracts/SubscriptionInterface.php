@@ -1,6 +1,6 @@
 <?php
 
-namespace Minishlink\WebPush\Contracts;
+namespace WebPush\Contracts;
 
 interface SubscriptionInterface
 {

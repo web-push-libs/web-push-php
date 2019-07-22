@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Minishlink\WebPush\Tests\Unit;
+namespace WebPush\Tests\Unit;
 
 /*
  * This file is part of the WebPush library.
@@ -17,9 +17,9 @@ use Base64Url\Base64Url;
 use ErrorException;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
-use Minishlink\WebPush\Encryption;
-use Minishlink\WebPush\Tests\TestCase;
-use Minishlink\WebPush\Utils;
+use WebPush\Encryption;
+use WebPush\Tests\TestCase;
+use WebPush\Utils;
 
 final class EncryptionTest extends TestCase
 {
