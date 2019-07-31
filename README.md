@@ -139,7 +139,7 @@ $webPush->sendNotification(...);
 In order to generate the uncompressed public and secret key, encoded in Base64, enter the following in your Linux bash:
 ```
 $ openssl ecparam -genkey -name prime256v1 -out private_key.pem
-$ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64|tr -d '=' |tr '/+' '_-' >> public_key.txt
+$ openssl ec -in private_key.pem -pubout -outform DER|tail -c 65|base64 -w0|tr -d '=' |tr '/+' '_-' >> public_key.txt
 $ openssl ec -in private_key.pem -outform DER|tail -c +8|head -c 32|base64|tr -d '=' |tr '/+' '_-' >> private_key.txt
 ```
 
