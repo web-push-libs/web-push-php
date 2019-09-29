@@ -27,8 +27,8 @@ use Jose\Component\Signature\Serializer\CompactSerializer;
 
 class VAPID
 {
-    private const PUBLIC_KEY_LENGTH = 65;
-    private const PRIVATE_KEY_LENGTH = 32;
+    const PUBLIC_KEY_LENGTH = 65;
+    const PRIVATE_KEY_LENGTH = 32;
 
     /**
      * @param array $vapid
