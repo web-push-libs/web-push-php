@@ -21,8 +21,8 @@ use Jose\Component\Core\Util\Ecc\PublicKey;
 
 class Encryption
 {
-    public const MAX_PAYLOAD_LENGTH = 4078;
-    public const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;
+    const MAX_PAYLOAD_LENGTH = 4078;
+    const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;
 
     /**
      * @param string $payload
