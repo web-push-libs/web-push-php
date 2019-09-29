@@ -21,8 +21,8 @@ use Psr\Http\Message\ResponseInterface;
 
 class WebPush
 {
-    public const GCM_URL = 'https://android.googleapis.com/gcm/send';
-    public const FCM_BASE_URL = 'https://fcm.googleapis.com';
+    const GCM_URL = 'https://android.googleapis.com/gcm/send';
+    const FCM_BASE_URL = 'https://fcm.googleapis.com';
 
     /**
      * @var Client
