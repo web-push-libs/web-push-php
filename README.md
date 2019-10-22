@@ -64,7 +64,7 @@ $notifications = [
                   'auth' => '(stringOf24Chars)'
               ],
           ]),
-          'payload' => '{msg:"Hello World!"}',
+          'payload' => '{"msg":"Hello World!"}',
       ],
 ];
 
