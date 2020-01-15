@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\SubscriptionInterface;
 
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
@@ -88,7 +89,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider notificationProvider
      *
-     * @param Subscription $subscription
+     * @param SubscriptionInterface $subscription
      * @param string $payload
      * @throws ErrorException
      */
