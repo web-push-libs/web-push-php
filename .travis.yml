@@ -12,11 +12,15 @@ cache:
     - $HOME/.composer/cache   # and composer packages
     - vendor
 
-php:
-    - 7.1
-    - 7.2
-    - 7.3
-    - nightly
+matrix:
+    allow_failures:
+        - php: nightly
+    fast_finish: true
+    include:
+        - php: 7.1
+        - php: 7.2
+        - php: 7.3
+        - php: nightly
 
 env:
   - TRAVIS_NODE_VERSION="stable"
