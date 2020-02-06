@@ -16,6 +16,7 @@ cache:
 
 addons:
   chrome: stable
+  firefox: latest
 
 matrix:
     allow_failures:
