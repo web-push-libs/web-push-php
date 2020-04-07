@@ -10,17 +10,16 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 ## Requirements
 
-* PHP 7.1+
-  * gmp
-  * mbstring
-  * curl
-  * openssl
-
-PHP 7.2+ is recommended for better performance.
+PHP 7.2+ and the following extensions:
+ * gmp
+ * mbstring
+ * curl
+ * openssl
 
 There is no support and maintenance for older PHP versions, however you are free to use the following compatible versions:
 - PHP 5.6 or HHVM: `v1.x`
 - PHP 7.0: `v2.x`
+- PHP 7.1: `v3.x-v5.x`
 
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
