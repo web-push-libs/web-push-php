@@ -1,40 +1,51 @@
-dist: trusty
+os: linux
+dist: xenial
 language: php
 
-sudo: required
+addons:
+  chrome: stable
+  firefox: latest
+  apt:
+    update: true
+    packages:
+      # Ubuntu 16+ does not install this dependency by default.
+      - libgconf-2-4
+      - chromium-chromedriver
 
- # Downloaded browsers will be cached in selenium-assistant by
- # web-push-testing-service. Caching will speed up build time.
+services:
+  - xvfb
+
+# Downloaded browsers will be cached in selenium-assistant by
+# web-push-testing-service. Caching will speed up build time.
 cache:
   directories:
     - ~/.selenium-assistant
-    - node_modules                  # cache modules too
-    - $HOME/.composer/cache/files   # and composer packages
+    - $COMPOSER_CACHE_DIR
+    - $HOME/.composer/cache
+    - node_modules
+    - vendor
 
-matrix:
-    allow_failures:
-        - php: nightly
-    fast_finish: true
-    include:
-        - php: 7.1
-        - php: 7.2
-        - php: 7.3
-        - php: nightly
+jobs:
+  include:
+    - php: 7.1
+    - php: 7.2
+    - php: 7.3
+    - php: 7.4
+    - php: nightly
+  allow_failures:
+    - php: nightly
+  fast_finish: true
 
 env:
-  - TRAVIS_NODE_VERSION="stable"
+  global:
+    - TRAVIS_NODE_VERSION="stable"
 
 before_install:
   - nvm install node
 
 install:
-  - npm install github:GoogleChromeLabs/web-push-testing-service -g
-
-before_script:
+  - npm i -g "https://github.com/GoogleChromeLabs/web-push-testing-service.git#012508983fa5dd3d25d06f0b937f92c33fc71382"
   - composer install --prefer-source -n
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start || echo \"Unable to start virtual display.\""
-  - sleep 3 # give xvfb some time to start
 
 script:
   - web-push-testing-service start example -p 9012

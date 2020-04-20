@@ -18,7 +18,7 @@ alias web-push-testing-service='/usr/local/Cellar/node/7.4.0/bin/web-push-testin
 
 After that, please create your own configuration file by copying
 `phpunit.dist.xml` to phpunit.xml and filling in the fields you need for
-testing (i.e. STANDARD_ENDPOINT, GCM_API_KEY etc.).
+testing (i.e. STANDARD_ENDPOINT, etc.).
 
 ## Running Tests
 
