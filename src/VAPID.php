@@ -15,7 +15,6 @@ namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
 use Jose\Component\Core\AlgorithmManager;
-use Jose\Component\Core\Converter\StandardConverter;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\Point;
@@ -56,7 +55,7 @@ class VAPID
             if ($jwk->get('kty') !== 'EC' || !$jwk->has('d') || !$jwk->has('x') || !$jwk->has('y')) {
                 throw new \ErrorException('Invalid PEM data.');
             }
-            $publicKey = PublicKey::create(Point::create(
+            $publicKey = new PublicKey(Point::create(
                 gmp_init(bin2hex(Base64Url::decode($jwk->get('x'))), 16),
                 gmp_init(bin2hex(Base64Url::decode($jwk->get('y'))), 16)
             ));
@@ -132,7 +131,7 @@ class VAPID
         }
 
         list($x, $y) = Utils::unserializePublicKey($publicKey);
-        $jwk = JWK::create([
+        $jwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
             'x' => Base64Url::encode($x),
@@ -140,9 +139,8 @@ class VAPID
             'd' => Base64Url::encode($privateKey),
         ]);
 
-        $jsonConverter = new StandardConverter();
-        $jwsCompactSerializer = new CompactSerializer($jsonConverter);
-        $jwsBuilder = new JWSBuilder($jsonConverter, AlgorithmManager::create([new ES256()]));
+        $jwsCompactSerializer = new CompactSerializer();
+        $jwsBuilder = new JWSBuilder(new AlgorithmManager([new ES256()]));
         $jws = $jwsBuilder
             ->create()
             ->withPayload($jwtPayload)
@@ -190,8 +188,8 @@ class VAPID
         }
 
         return [
-            'publicKey' => base64_encode($binaryPublicKey),
-            'privateKey' => base64_encode($binaryPrivateKey)
+            'publicKey'  => Base64Url::encode($binaryPublicKey),
+            'privateKey' => Base64Url::encode($binaryPrivateKey)
         ];
     }
 }

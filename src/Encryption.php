@@ -285,7 +285,7 @@ class Encryption
         }
 
         return [
-            PublicKey::create(Point::create(
+            new PublicKey(Point::create(
                 gmp_init(bin2hex($details['ec']['x']), 16),
                 gmp_init(bin2hex($details['ec']['y']), 16)
             )),

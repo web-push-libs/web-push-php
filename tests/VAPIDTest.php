@@ -98,7 +98,7 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
         $keys = VAPID::createVapidKeys();
         $this->assertArrayHasKey('publicKey', $keys);
         $this->assertArrayHasKey('privateKey', $keys);
-        $this->assertEquals(strlen($keys['publicKey']), 88);
-        $this->assertEquals(strlen($keys['privateKey']), 44);
+        $this->assertGreaterThanOrEqual(86, strlen($keys['publicKey']));
+        $this->assertGreaterThanOrEqual(42, strlen($keys['privateKey']));
     }
 }

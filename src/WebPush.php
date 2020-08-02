@@ -104,14 +104,14 @@ class WebPush
     /**
      * Queue a notification. Will be sent when flush() is called.
      *
-     * @param Subscription $subscription
+     * @param SubscriptionInterface $subscription
      * @param string|null $payload If you want to send an array or object, json_encode it
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
      * @throws \ErrorException
      */
-    public function queueNotification(Subscription $subscription, ?string $payload = null, array $options = [], array $auth = []): void
+    public function queueNotification(SubscriptionInterface $subscription, ?string $payload = null, array $options = [], array $auth = []): void
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
@@ -134,14 +134,14 @@ class WebPush
     }
 
     /**
-     * @param Subscription $subscription
+     * @param SubscriptionInterface $subscription
      * @param string|null $payload If you want to send an array or object, json_encode it
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      * @return MessageSentReport
      * @throws \ErrorException
      */
-    public function sendOneNotification(Subscription $subscription, ?string $payload = null, array $options = [], array $auth = []): MessageSentReport
+    public function sendOneNotification(SubscriptionInterface $subscription, ?string $payload = null, array $options = [], array $auth = []): MessageSentReport
     {
         $this->queueNotification($subscription, $payload, $options, $auth);
         return $this->flush()->current();
