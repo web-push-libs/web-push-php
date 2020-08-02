@@ -44,7 +44,7 @@ $notifications = [
         'payload' => 'hello !',
     ], [
         'subscription' => Subscription::create([
-            'endpoint' => 'https://android.googleapis.com/gcm/send/abcdef...', // Chrome
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abcdef...', // Chrome
         ]),
         'payload' => null,
     ], [
@@ -117,10 +117,9 @@ You can specify your authentication details when instantiating WebPush. The keys
 
 use Minishlink\WebPush\WebPush;
 
-$endpoint = 'https://android.googleapis.com/gcm/send/abcdef...'; // Chrome
+$endpoint = 'https://fcm.googleapis.com/fcm/send/abcdef...'; // Chrome
 
 $auth = [
-    'GCM' => 'MY_GCM_API_KEY', // deprecated and optional, it's here only for compatibility reasons
     'VAPID' => [
         'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
         'publicKey' => '~88 chars', // (recommended) uncompressed public key P-256 encoded in Base64-URL
