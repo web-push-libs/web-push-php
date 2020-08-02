@@ -104,7 +104,7 @@ class WebPush
     /**
      * Send a notification.
      *
-     * @param Subscription $subscription
+     * @param SubscriptionInterface $subscription
      * @param string|null $payload If you want to send an array, json_encode it
      * @param bool $flush If you want to flush directly (usually when you send only one notification)
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
@@ -115,7 +115,7 @@ class WebPush
      *
      * @throws \ErrorException
      */
-    public function sendNotification(Subscription $subscription, ?string $payload = null, bool $flush = false, array $options = [], array $auth = [])
+    public function sendNotification(SubscriptionInterface $subscription, ?string $payload = null, bool $flush = false, array $options = [], array $auth = [])
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
