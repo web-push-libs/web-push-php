@@ -152,10 +152,9 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $sendResp = $this->webPush->sendNotification($subscription, $payload, true);
                 $this->assertInstanceOf(\Generator::class, $sendResp);
 
-                /** @var \Minishlink\WebPush\MessageSentReport $report */
-                foreach ($sendResp as $report) {
-                    $this->assertTrue($report->isSuccess());
-                }
+                $report = $this->webPush->sendOneNotification($subscription, $payload);
+                $this->assertInstanceOf(\Minishlink\WebPush\MessageSentReport::class, $report);
+                $this->assertTrue($report->isSuccess());
 
                 $dataString = json_encode([
                     'testSuiteId' => self::$testSuiteId,
@@ -176,12 +175,13 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
                 $parsedResp = $this->getResponse($getNotificationCurl);
 
-                if (!property_exists($parsedResp->data, 'messages')) {
+                if (!property_exists($parsedResp->{'data'}, 'messages')) {
                     throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
                 }
 
-                $this->assertEquals(1, count($parsedResp->data->messages));
-                $this->assertEquals($payload, $parsedResp->data->messages[0]);
+                $messages = $parsedResp->{'data'}->{'messages'};
+                $this->assertEquals(1, count($messages));
+                $this->assertEquals($payload, $messages[0]);
             }
         };
     }

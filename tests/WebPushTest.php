@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\SubscriptionInterface;
 
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
@@ -88,17 +89,14 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider notificationProvider
      *
-     * @param Subscription $subscription
+     * @param SubscriptionInterface $subscription
      * @param string $payload
      * @throws ErrorException
      */
-    public function testSendNotification($subscription, $payload)
+    public function testSendOneNotification($subscription, $payload)
     {
-        $reports = $this->webPush->sendNotification($subscription, $payload, true);
-
-        foreach ($reports as $report) {
-            $this->assertTrue($report->isSuccess());
-        }
+        $report = $this->webPush->sendOneNotification($subscription, $payload);
+        $this->assertTrue($report->isSuccess());
     }
 
     /**
@@ -113,7 +111,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $notifications = array_fill(0, $total, $notifications[0]);
 
         foreach ($notifications as $notification) {
-            $this->webPush->sendNotification($notification[0], $notification[1]);
+            $this->webPush->queueNotification($notification[0], $notification[1]);
         }
 
         $reports = $this->webPush->flush($batchSize);
@@ -126,16 +124,15 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testSendNotificationWithTooBigPayload()
+    public function testSendOneNotificationWithTooBigPayload()
     {
         $this->expectException('ErrorException');
         $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
 
         $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);
-        $this->webPush->sendNotification(
+        $this->webPush->sendOneNotification(
             $subscription,
-            str_repeat('test', 1020),
-            true
+            str_repeat('test', 1020)
         );
     }
 
@@ -145,14 +142,14 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     public function testFlush() {
 	    $subscription = new Subscription(self::$endpoints['standard']);
 
-	    $this->webPush->sendNotification($subscription);
-	    $this->assertNotEmpty(iterator_to_array($this->webPush->flush()));
+	    $report = $this->webPush->sendOneNotification($subscription);
+	    $this->assertFalse($report->isSuccess()); // it doesn't have VAPID
 
 	    // queue has been reset
 	    $this->assertEmpty(iterator_to_array($this->webPush->flush()));
 
-	    $this->webPush->sendNotification($subscription);
-	    $this->assertNotEmpty(iterator_to_array($this->webPush->flush()));
+        $report = $this->webPush->sendOneNotification($subscription);
+        $this->assertFalse($report->isSuccess());  // it doesn't have VAPID
 
 	    $nonExistantSubscription = Subscription::create([
 		    'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
@@ -162,9 +159,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 	    ]);
 
 	    // test multiple requests
-	    $this->webPush->sendNotification($nonExistantSubscription, json_encode(['test' => 1]));
-	    $this->webPush->sendNotification($nonExistantSubscription, json_encode(['test' => 2]));
-	    $this->webPush->sendNotification($nonExistantSubscription, json_encode(['test' => 3]));
+	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 1]));
+	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 2]));
+	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 3]));
 
 	    /** @var \Minishlink\WebPush\MessageSentReport $report */
 	    foreach ($this->webPush->flush() as $report) {
@@ -186,10 +183,10 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 	public function testCount(): void {
 		$subscription = new Subscription(self::$endpoints['standard']);
 
-		$this->webPush->sendNotification($subscription);
-		$this->webPush->sendNotification($subscription);
-		$this->webPush->sendNotification($subscription);
-		$this->webPush->sendNotification($subscription);
+		$this->webPush->queueNotification($subscription);
+		$this->webPush->queueNotification($subscription);
+		$this->webPush->queueNotification($subscription);
+		$this->webPush->queueNotification($subscription);
 
 		$this->assertEquals(4, $this->webPush->countPendingNotifications());
     }

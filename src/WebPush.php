@@ -99,20 +99,16 @@ class WebPush
     }
 
     /**
-     * Send a notification.
+     * Queue a notification. Will be sent when flush() is called.
      *
-     * @param Subscription $subscription
-     * @param string|null $payload If you want to send an array, json_encode it
-     * @param bool $flush If you want to flush directly (usually when you send only one notification)
+     * @param SubscriptionInterface $subscription
+     * @param string|null $payload If you want to send an array or object, json_encode it
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
      *
-     * @return \Generator|MessageSentReport[]|true Return an array of information if $flush is set to true and the queued requests has failed.
-     *                    Else return true
-     *
      * @throws \ErrorException
      */
-    public function sendNotification(Subscription $subscription, ?string $payload = null, bool $flush = false, array $options = [], array $auth = [])
+    public function queueNotification(SubscriptionInterface $subscription, ?string $payload = null, array $options = [], array $auth = []): void
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
@@ -132,8 +128,20 @@ class WebPush
         }
 
         $this->notifications[] = new Notification($subscription, $payload, $options, $auth);
+    }
 
-        return false !== $flush ? $this->flush() : true;
+    /**
+     * @param SubscriptionInterface $subscription
+     * @param string|null $payload If you want to send an array or object, json_encode it
+     * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
+     * @param array $auth Use this auth details instead of what you provided when creating WebPush
+     * @return MessageSentReport
+     * @throws \ErrorException
+     */
+    public function sendOneNotification(SubscriptionInterface $subscription, ?string $payload = null, array $options = [], array $auth = []): MessageSentReport
+    {
+        $this->queueNotification($subscription, $payload, $options, $auth);
+        return $this->flush()->current();
     }
 
     /**
