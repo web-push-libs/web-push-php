@@ -21,9 +21,6 @@ use Psr\Http\Message\ResponseInterface;
 
 class WebPush
 {
-    public const GCM_URL = 'https://android.googleapis.com/gcm/send';
-    public const FCM_BASE_URL = 'https://fcm.googleapis.com';
-
     /**
      * @var Client
      */
@@ -209,8 +206,8 @@ class WebPush
     private function prepare(array $notifications): array
     {
         $requests = [];
-        /** @var Notification $notification */
         foreach ($notifications as $notification) {
+            \assert($notification instanceof Notification);
             $subscription = $notification->getSubscription();
             $endpoint = $subscription->getEndpoint();
             $userPublicKey = $subscription->getPublicKey();
@@ -262,16 +259,7 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            // if GCM
-            if (substr($endpoint, 0, strlen(self::GCM_URL)) === self::GCM_URL) {
-                if (array_key_exists('GCM', $auth)) {
-                    $headers['Authorization'] = 'key='.$auth['GCM'];
-                } else {
-                    throw new \ErrorException('No GCM API Key specified.');
-                }
-            }
-            // if VAPID (GCM doesn't support it but FCM does)
-            elseif (array_key_exists('VAPID', $auth) && $contentEncoding) {
+            if (array_key_exists('VAPID', $auth) && $contentEncoding) {
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
