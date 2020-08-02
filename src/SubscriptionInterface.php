@@ -16,7 +16,8 @@ namespace Minishlink\WebPush;
 /**
  * @author Sergii Bondarenko <sb@firstvector.org>
  */
-interface SubscriptionInterface {
+interface SubscriptionInterface
+{
     /**
      * @return string
      */
