@@ -15,7 +15,7 @@ namespace Minishlink\WebPush;
 
 class Notification
 {
-    /** @var Subscription */
+    /** @var SubscriptionInterface */
     private $subscription;
 
     /** @var null|string */
@@ -24,18 +24,18 @@ class Notification
     /** @var array Options : TTL, urgency, topic */
     private $options;
 
-    /** @var array Auth details : GCM, VAPID */
+    /** @var array Auth details : VAPID */
     private $auth;
 
     /**
      * Notification constructor.
      *
-     * @param Subscription $subscription
+     * @param SubscriptionInterface $subscription
      * @param null|string $payload
      * @param array $options
      * @param array $auth
      */
-    public function __construct(Subscription $subscription, ?string $payload, array $options, array $auth)
+    public function __construct(SubscriptionInterface $subscription, ?string $payload, array $options, array $auth)
     {
         $this->subscription = $subscription;
         $this->payload = $payload;
@@ -44,9 +44,9 @@ class Notification
     }
 
     /**
-     * @return Subscription
+     * @return SubscriptionInterface
      */
-    public function getSubscription(): Subscription
+    public function getSubscription(): SubscriptionInterface
     {
         return $this->subscription;
     }

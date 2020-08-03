@@ -44,7 +44,6 @@ helps with diagnosing problems quicker.
 # Features Used
 
 - [ ] VAPID Support
-- [ ] GCM API Key
 - [ ] Sending with Payload
 
 # Example / Reproduce Case
