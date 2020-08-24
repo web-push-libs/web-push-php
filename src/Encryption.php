@@ -18,6 +18,8 @@ use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\Point;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\Ecc\PublicKey;
+use Brick\Math\BigInteger;
+
 
 class Encryption
 {
@@ -94,13 +96,13 @@ class Encryption
         // get user public key object
         [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
         $userPublicKeyObject = $curve->getPublicKeyFrom(
-            gmp_init(bin2hex($userPublicKeyObjectX), 16),
-            gmp_init(bin2hex($userPublicKeyObjectY), 16)
+            BigInteger::fromBase(bin2hex($userPublicKeyObjectX), 16),
+            BigInteger::fromBase(bin2hex($userPublicKeyObjectY), 16)
         );
 
         // get shared secret from user public key and local private key
         $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
-        $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+        $sharedSecret = hex2bin(str_pad($sharedSecret->toBase(16), 64, '0', STR_PAD_LEFT));
         if (!$sharedSecret) {
             throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
         }
@@ -286,10 +288,10 @@ class Encryption
 
         return [
             new PublicKey(Point::create(
-                gmp_init(bin2hex($details['ec']['x']), 16),
-                gmp_init(bin2hex($details['ec']['y']), 16)
+                BigInteger::fromBase(bin2hex($details['ec']['x']), 16),
+                BigInteger::fromBase(bin2hex($details['ec']['y']), 16)
             )),
-            PrivateKey::create(gmp_init(bin2hex($details['ec']['d']), 16))
+            PrivateKey::create(BigInteger::fromBase(bin2hex($details['ec']['d']), 16))
         ];
     }
 

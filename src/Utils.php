@@ -35,8 +35,8 @@ class Utils
     public static function serializePublicKey(PublicKey $publicKey): string
     {
         $hexString = '04';
-        $hexString .= str_pad(gmp_strval($publicKey->getPoint()->getX(), 16), 64, '0', STR_PAD_LEFT);
-        $hexString .= str_pad(gmp_strval($publicKey->getPoint()->getY(), 16), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad($publicKey->getPoint()->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad($publicKey->getPoint()->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
 
         return $hexString;
     }
