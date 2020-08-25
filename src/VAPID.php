@@ -173,16 +173,14 @@ class VAPID
      */
     public static function createVapidKeys(): array
     {
-        $curve = NistCurve::curve256();
-        $privateKey = $curve->createPrivateKey();
-        $publicKey = $curve->createPublicKey($privateKey);
+        $jwk = JWKFactory::createECKey('P-256');
 
-        $binaryPublicKey = hex2bin(Utils::serializePublicKey($publicKey));
+        $binaryPublicKey = hex2bin(Utils::serializePublicKeyFromJWK($jwk));
         if (!$binaryPublicKey) {
             throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
         }
 
-        $binaryPrivateKey = hex2bin(str_pad(gmp_strval($privateKey->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
+        $binaryPrivateKey = hex2bin(str_pad(bin2hex(Base64Url::decode($jwk->get('d'))), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         if (!$binaryPrivateKey) {
             throw new \ErrorException('Failed to convert VAPID private key from hexadecimal to binary');
         }

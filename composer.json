@@ -20,7 +20,6 @@
   "require": {
     "php": "^7.2",
     "ext-curl": "*",
-    "ext-gmp": "*",
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
