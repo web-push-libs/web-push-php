@@ -20,6 +20,7 @@ use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\Point;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\Ecc\PublicKey;
+use Jose\Component\Core\Util\ECKey;
 
 class Encryption
 {
@@ -339,7 +340,7 @@ class Encryption
 
     private static function calculateAgreementKey(JWK $private_key, JWK $public_key): string
     {
-        /*if (function_exists('openssl_pkey_derive')) {
+        if (function_exists('openssl_pkey_derive')) {
             try {
                 $publicPem = ECKey::convertPublicKeyToPEM($public_key);
                 $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
@@ -348,7 +349,7 @@ class Encryption
             } catch (Throwable $throwable) {
                 //Does nothing. Will fallback to the pure PHP function
             }
-        }*/
+        }
 
 
         $curve = NistCurve::curve256();
