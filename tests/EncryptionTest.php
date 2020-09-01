@@ -89,7 +89,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     {
         $res = Encryption::padPayload($payload, $maxLengthToPad, "aesgcm");
 
-        $this->assertContains('test', $res);
+        $this->assertStringContainsString('test', $res);
         $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
     }
 

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
+use Brick\Math\BigInteger;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PublicKey;
 
@@ -37,8 +38,14 @@ class Utils
     public static function serializePublicKey(PublicKey $publicKey): string
     {
         $hexString = '04';
-        $hexString .= str_pad(gmp_strval($publicKey->getPoint()->getX(), 16), 64, '0', STR_PAD_LEFT);
-        $hexString .= str_pad(gmp_strval($publicKey->getPoint()->getY(), 16), 64, '0', STR_PAD_LEFT);
+        $point = $publicKey->getPoint();
+        if ($point->getX() instanceof BigInteger) {
+            $hexString .= str_pad($point->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
+            $hexString .= str_pad($point->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
+        } else {
+            $hexString .= str_pad(gmp_strval($point->getX(), 16), 64, '0', STR_PAD_LEFT);
+            $hexString .= str_pad(gmp_strval($point->getY(), 16), 64, '0', STR_PAD_LEFT);
+        }
 
         return $hexString;
     }

@@ -16,10 +16,9 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Brick\Math\BigInteger;
 use Jose\Component\Core\JWK;
+use Jose\Component\Core\Util\Ecc\Curve;
 use Jose\Component\Core\Util\Ecc\NistCurve;
-use Jose\Component\Core\Util\Ecc\Point;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
-use Jose\Component\Core\Util\Ecc\PublicKey;
 use Jose\Component\Core\Util\ECKey;
 
 class Encryption
@@ -275,9 +274,10 @@ class Encryption
     {
         $curve = NistCurve::curve256();
         $privateKey = $curve->createPrivateKey();
+        $publicKey = $curve->createPublicKey($privateKey);
 
         return [
-            $curve->createPublicKey($privateKey),
+            $publicKey,
             $privateKey,
         ];
     }
@@ -304,11 +304,13 @@ class Encryption
         }
 
         return [
-            new PublicKey(Point::create(
-                gmp_init(bin2hex($details['ec']['x']), 16),
-                gmp_init(bin2hex($details['ec']['y']), 16)
-            )),
-            PrivateKey::create(gmp_init(bin2hex($details['ec']['d']), 16))
+            new JWK([
+                'kty' => 'EC',
+                'crv' => 'P-256',
+                'x' => Base64Url::encode($details['ec']['x']),
+                'y' => Base64Url::encode($details['ec']['y']),
+                'd' => Base64Url::encode($details['ec']['d']),
+            ])
         ];
     }
 
@@ -346,7 +348,7 @@ class Encryption
                 $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
 
                 return openssl_pkey_derive($publicPem, $privatePem, 256);
-            } catch (Throwable $throwable) {
+            } catch (\Throwable $throwable) {
                 //Does nothing. Will fallback to the pure PHP function
             }
         }
