@@ -40,6 +40,7 @@ env:
     - TRAVIS_NODE_VERSION="stable"
 
 before_install:
+  - composer config discard-changes true
   - nvm install node
 
 install:
