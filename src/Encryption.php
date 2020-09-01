@@ -93,16 +93,16 @@ class Encryption
             /** @var PrivateKey $localPrivateKeyObject */
             list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
             $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
-            if (!$localPublicKey) {
-                throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
-            }
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => $localPrivateKeyObject->getSecret()->getX(),
+                'd' => $localPrivateKeyObject->getSecret()->getX(), // @phpstan-ignore-line
                 'x' => Base64Url::encode($localPublicKeyObject[0]),
                 'y' => Base64Url::encode($localPublicKeyObject[1]),
             ]);
+        }
+        if (!$localPublicKey) {
+            throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
         }
 
         // get user public key object
@@ -150,7 +150,7 @@ class Encryption
         ];
     }
 
-    public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
+    public static function getContentCodingHeader(string $salt, string $localPublicKey, string $contentEncoding): string
     {
         if ($contentEncoding === "aes128gcm") {
             return $salt
@@ -204,7 +204,7 @@ class Encryption
      *
      * @throws \ErrorException
      */
-    private static function createContext(string $clientPublicKey, string $serverPublicKey, $contentEncoding): ?string
+    private static function createContext(string $clientPublicKey, string $serverPublicKey, string $contentEncoding): ?string
     {
         if ($contentEncoding === "aes128gcm") {
             return null;
@@ -347,7 +347,11 @@ class Encryption
                 $publicPem = ECKey::convertPublicKeyToPEM($public_key);
                 $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
 
-                return openssl_pkey_derive($publicPem, $privatePem, 256);
+                $result = openssl_pkey_derive($publicPem, $privatePem, 256); // @phpstan-ignore-line
+                if ($result === false) {
+                    throw new \Exception('Unable to compute the agreement key');
+                }
+                return $result;
             } catch (\Throwable $throwable) {
                 //Does nothing. Will fallback to the pure PHP function
             }
@@ -362,15 +366,15 @@ class Encryption
             $priv_key = PrivateKey::create($sen_d);
             $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
 
-            return hex2bin($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16));
+            return hex2bin($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16)); // @phpstan-ignore-line
         } catch (\Throwable $e) {
             $rec_x = self::convertBase64ToGMP($public_key->get('x'));
             $rec_y = self::convertBase64ToGMP($public_key->get('y'));
             $sen_d = self::convertBase64ToGMP($private_key->get('d'));
-            $priv_key = PrivateKey::create($sen_d);
-            $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
+            $priv_key = PrivateKey::create($sen_d); // @phpstan-ignore-line
+            $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y); // @phpstan-ignore-line
 
-            return hex2bin(gmp_strval($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX(), 16));
+            return hex2bin(gmp_strval($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX(), 16)); // @phpstan-ignore-line
         }
     }
 

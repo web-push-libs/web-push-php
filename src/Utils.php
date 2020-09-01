@@ -42,9 +42,9 @@ class Utils
         if ($point->getX() instanceof BigInteger) {
             $hexString .= str_pad($point->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
             $hexString .= str_pad($point->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
-        } else {
+        } else { // @phpstan-ignore-line
             $hexString .= str_pad(gmp_strval($point->getX(), 16), 64, '0', STR_PAD_LEFT);
-            $hexString .= str_pad(gmp_strval($point->getY(), 16), 64, '0', STR_PAD_LEFT);
+            $hexString .= str_pad(gmp_strval($point->getY(), 16), 64, '0', STR_PAD_LEFT); // @phpstan-ignore-line
         }
 
         return $hexString;
