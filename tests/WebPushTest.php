@@ -27,7 +27,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * {@inheritdoc}
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         self::$endpoints = [
             'standard' => getenv('STANDARD_ENDPOINT'),
@@ -45,7 +45,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * {@inheritdoc}
      */
-    public function setUp()
+    public function setUp(): void
     {
         $envs = [
             'STANDARD_ENDPOINT',

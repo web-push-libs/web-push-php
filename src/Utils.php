@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Base64Url\Base64Url;
+use Brick\Math\BigInteger;
+use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PublicKey;
 
 class Utils
@@ -35,8 +38,28 @@ class Utils
     public static function serializePublicKey(PublicKey $publicKey): string
     {
         $hexString = '04';
-        $hexString .= str_pad(gmp_strval($publicKey->getPoint()->getX(), 16), 64, '0', STR_PAD_LEFT);
-        $hexString .= str_pad(gmp_strval($publicKey->getPoint()->getY(), 16), 64, '0', STR_PAD_LEFT);
+        $point = $publicKey->getPoint();
+        if ($point->getX() instanceof BigInteger) {
+            $hexString .= str_pad($point->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
+            $hexString .= str_pad($point->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
+        } else { // @phpstan-ignore-line
+            $hexString .= str_pad(gmp_strval($point->getX(), 16), 64, '0', STR_PAD_LEFT);
+            $hexString .= str_pad(gmp_strval($point->getY(), 16), 64, '0', STR_PAD_LEFT); // @phpstan-ignore-line
+        }
+
+        return $hexString;
+    }
+
+    /**
+     * @param JWK $jwk
+     *
+     * @return string
+     */
+    public static function serializePublicKeyFromJWK(JWK $jwk): string
+    {
+        $hexString = '04';
+        $hexString .= str_pad(bin2hex(Base64Url::decode($jwk->get('x'))), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad(bin2hex(Base64Url::decode($jwk->get('y'))), 64, '0', STR_PAD_LEFT);
 
         return $hexString;
     }

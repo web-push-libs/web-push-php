@@ -12,8 +12,10 @@ declare(strict_types=1);
  */
 
 use Base64Url\Base64Url;
+use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
+use Jose\Component\KeyManagement\JWKFactory;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
 
@@ -32,16 +34,16 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $userAuthToken = 'BTBZMqHH6r4Tts7J_aSIgg';
 
         $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
-        $localPrivateKey = Base64Url::decode('yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw');
         $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
 
-        $localPrivateKeyObject = PrivateKey::create(gmp_init(bin2hex($localPrivateKey), 16));
-        $curve = NistCurve::curve256();
         [$localPublicKeyObjectX, $localPublicKeyObjectY] = Utils::unserializePublicKey($localPublicKey);
-        $localPublicKeyObject = $curve->getPublicKeyFrom(
-            gmp_init(bin2hex($localPublicKeyObjectX), 16),
-            gmp_init(bin2hex($localPublicKeyObjectY), 16)
-        );
+        $localJwk = new JWK([
+            'kty' => 'EC',
+            'crv' => 'P-256',
+            'd' => 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw',
+            'x' => Base64Url::encode($localPublicKeyObjectX),
+            'y' => Base64Url::encode($localPublicKeyObjectY),
+        ]);
 
         $expected = [
             'localPublicKey' => $localPublicKey,
@@ -54,7 +56,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
             $userPublicKey,
             $userAuthToken,
             $contentEncoding,
-            [$localPublicKeyObject, $localPrivateKeyObject],
+            [$localJwk],
             $salt
         );
 
@@ -87,7 +89,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     {
         $res = Encryption::padPayload($payload, $maxLengthToPad, "aesgcm");
 
-        $this->assertContains('test', $res);
+        $this->assertStringContainsString('test', $res);
         $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
     }
 

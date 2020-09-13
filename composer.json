@@ -14,13 +14,12 @@
   ],
   "scripts": {
     "test:unit": "./vendor/bin/phpunit --color",
-    "test:typing": "./vendor/bin/phpstan analyse --level max src",
+    "test:typing": "./vendor/bin/phpstan analyse",
     "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no"
   },
   "require": {
     "php": "^7.2",
     "ext-curl": "*",
-    "ext-gmp": "*",
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
@@ -31,8 +30,8 @@
     "web-token/jwt-util-ecc": "^2.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^7.0",
-    "phpstan/phpstan": "0.11.19",
+    "phpunit/phpunit": "^8.0|^9.0",
+    "phpstan/phpstan": "^0.11|^0.12",
     "friendsofphp/php-cs-fixer": "^2.14"
   },
   "autoload": {

@@ -16,9 +16,6 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
-use Jose\Component\Core\Util\Ecc\NistCurve;
-use Jose\Component\Core\Util\Ecc\Point;
-use Jose\Component\Core\Util\Ecc\PublicKey;
 use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\JWSBuilder;
@@ -55,12 +52,8 @@ class VAPID
             if ($jwk->get('kty') !== 'EC' || !$jwk->has('d') || !$jwk->has('x') || !$jwk->has('y')) {
                 throw new \ErrorException('Invalid PEM data.');
             }
-            $publicKey = new PublicKey(Point::create(
-                gmp_init(bin2hex(Base64Url::decode($jwk->get('x'))), 16),
-                gmp_init(bin2hex(Base64Url::decode($jwk->get('y'))), 16)
-            ));
 
-            $binaryPublicKey = hex2bin(Utils::serializePublicKey($publicKey));
+            $binaryPublicKey = hex2bin(Utils::serializePublicKeyFromJWK($jwk));
             if (!$binaryPublicKey) {
                 throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
             }
@@ -173,16 +166,14 @@ class VAPID
      */
     public static function createVapidKeys(): array
     {
-        $curve = NistCurve::curve256();
-        $privateKey = $curve->createPrivateKey();
-        $publicKey = $curve->createPublicKey($privateKey);
+        $jwk = JWKFactory::createECKey('P-256');
 
-        $binaryPublicKey = hex2bin(Utils::serializePublicKey($publicKey));
+        $binaryPublicKey = hex2bin(Utils::serializePublicKeyFromJWK($jwk));
         if (!$binaryPublicKey) {
             throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
         }
 
-        $binaryPrivateKey = hex2bin(str_pad(gmp_strval($privateKey->getSecret(), 16), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
+        $binaryPrivateKey = hex2bin(str_pad(bin2hex(Base64Url::decode($jwk->get('d'))), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         if (!$binaryPrivateKey) {
             throw new \ErrorException('Failed to convert VAPID private key from hexadecimal to binary');
         }

@@ -32,7 +32,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     /**
      * {@inheritdoc}
      */
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
     }
@@ -40,7 +40,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     /**
      * {@inheritdoc}
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         if (!(getenv('TRAVIS') || getenv('CI'))) {
             $this->markTestSkipped('This test does not run on Travis.');
@@ -184,7 +184,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         };
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $dataString = '{ "testSuiteId": '.self::$testSuiteId.' }';
         $curl = curl_init(self::$testServiceUrl.'/api/end-test-suite/');
@@ -202,7 +202,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         self::$testSuiteId = null;
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         exec('web-push-testing-service stop phpunit');
     }

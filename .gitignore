@@ -7,3 +7,4 @@ cli.log
 module.log
 .vagrant
 Vagrantfile # temp, may be?
+/.phpunit.result.cache

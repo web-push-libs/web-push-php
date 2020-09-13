@@ -14,10 +14,12 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
+use Brick\Math\BigInteger;
+use Jose\Component\Core\JWK;
+use Jose\Component\Core\Util\Ecc\Curve;
 use Jose\Component\Core\Util\Ecc\NistCurve;
-use Jose\Component\Core\Util\Ecc\Point;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
-use Jose\Component\Core\Util\Ecc\PublicKey;
+use Jose\Component\Core\Util\ECKey;
 
 class Encryption
 {
@@ -82,25 +84,41 @@ class Encryption
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
-        $curve = NistCurve::curve256();
-
         // get local key pair
-        list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
-        $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
+        if (count($localKeyObject) === 1) {
+            /** @var JWK $localJwk */
+            $localJwk = current($localKeyObject);
+            $localPublicKey = hex2bin(Utils::serializePublicKeyFromJWK($localJwk));
+        } else {
+            /** @var PrivateKey $localPrivateKeyObject */
+            list($localPublicKeyObject, $localPrivateKeyObject) = $localKeyObject;
+            $localPublicKey = hex2bin(Utils::serializePublicKey($localPublicKeyObject));
+            $localJwk = new JWK([
+                'kty' => 'EC',
+                'crv' => 'P-256',
+                'd' => $localPrivateKeyObject->getSecret()->getX(), // @phpstan-ignore-line
+                'x' => Base64Url::encode($localPublicKeyObject[0]),
+                'y' => Base64Url::encode($localPublicKeyObject[1]),
+            ]);
+        }
         if (!$localPublicKey) {
             throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
         }
 
         // get user public key object
         [$userPublicKeyObjectX, $userPublicKeyObjectY] = Utils::unserializePublicKey($userPublicKey);
-        $userPublicKeyObject = $curve->getPublicKeyFrom(
-            gmp_init(bin2hex($userPublicKeyObjectX), 16),
-            gmp_init(bin2hex($userPublicKeyObjectY), 16)
-        );
+        $userJwk = new JWK([
+            'kty' => 'EC',
+            'crv' => 'P-256',
+            'x' => Base64Url::encode($userPublicKeyObjectX),
+            'y' => Base64Url::encode($userPublicKeyObjectY),
+        ]);
 
         // get shared secret from user public key and local private key
-        $sharedSecret = $curve->mul($userPublicKeyObject->getPoint(), $localPrivateKeyObject->getSecret())->getX();
-        $sharedSecret = hex2bin(str_pad(gmp_strval($sharedSecret, 16), 64, '0', STR_PAD_LEFT));
+
+        $sharedSecret = self::calculateAgreementKey($localJwk, $userJwk);
+
+        $sharedSecret = str_pad($sharedSecret, 32, chr(0), STR_PAD_LEFT);
         if (!$sharedSecret) {
             throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
         }
@@ -132,7 +150,7 @@ class Encryption
         ];
     }
 
-    public static function getContentCodingHeader($salt, $localPublicKey, $contentEncoding): string
+    public static function getContentCodingHeader(string $salt, string $localPublicKey, string $contentEncoding): string
     {
         if ($contentEncoding === "aes128gcm") {
             return $salt
@@ -186,7 +204,7 @@ class Encryption
      *
      * @throws \ErrorException
      */
-    private static function createContext(string $clientPublicKey, string $serverPublicKey, $contentEncoding): ?string
+    private static function createContext(string $clientPublicKey, string $serverPublicKey, string $contentEncoding): ?string
     {
         if ($contentEncoding === "aes128gcm") {
             return null;
@@ -256,9 +274,10 @@ class Encryption
     {
         $curve = NistCurve::curve256();
         $privateKey = $curve->createPrivateKey();
+        $publicKey = $curve->createPublicKey($privateKey);
 
         return [
-            $curve->createPublicKey($privateKey),
+            $publicKey,
             $privateKey,
         ];
     }
@@ -285,11 +304,13 @@ class Encryption
         }
 
         return [
-            new PublicKey(Point::create(
-                gmp_init(bin2hex($details['ec']['x']), 16),
-                gmp_init(bin2hex($details['ec']['y']), 16)
-            )),
-            PrivateKey::create(gmp_init(bin2hex($details['ec']['d']), 16))
+            new JWK([
+                'kty' => 'EC',
+                'crv' => 'P-256',
+                'x' => Base64Url::encode($details['ec']['x']),
+                'y' => Base64Url::encode($details['ec']['y']),
+                'd' => Base64Url::encode($details['ec']['d']),
+            ])
         ];
     }
 
@@ -317,5 +338,65 @@ class Encryption
         }
 
         return $sharedSecret;
+    }
+
+    private static function calculateAgreementKey(JWK $private_key, JWK $public_key): string
+    {
+        if (function_exists('openssl_pkey_derive')) {
+            try {
+                $publicPem = ECKey::convertPublicKeyToPEM($public_key);
+                $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
+
+                $result = openssl_pkey_derive($publicPem, $privatePem, 256); // @phpstan-ignore-line
+                if ($result === false) {
+                    throw new \Exception('Unable to compute the agreement key');
+                }
+                return $result;
+            } catch (\Throwable $throwable) {
+                //Does nothing. Will fallback to the pure PHP function
+            }
+        }
+
+
+        $curve = NistCurve::curve256();
+        try {
+            $rec_x = self::convertBase64ToBigInteger($public_key->get('x'));
+            $rec_y = self::convertBase64ToBigInteger($public_key->get('y'));
+            $sen_d = self::convertBase64ToBigInteger($private_key->get('d'));
+            $priv_key = PrivateKey::create($sen_d);
+            $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
+
+            return hex2bin($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16)); // @phpstan-ignore-line
+        } catch (\Throwable $e) {
+            $rec_x = self::convertBase64ToGMP($public_key->get('x'));
+            $rec_y = self::convertBase64ToGMP($public_key->get('y'));
+            $sen_d = self::convertBase64ToGMP($private_key->get('d'));
+            $priv_key = PrivateKey::create($sen_d); // @phpstan-ignore-line
+            $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y); // @phpstan-ignore-line
+
+            return hex2bin(gmp_strval($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX(), 16)); // @phpstan-ignore-line
+        }
+    }
+
+    /**
+     * @param string $value
+     * @return BigInteger
+     */
+    private static function convertBase64ToBigInteger(string $value): BigInteger
+    {
+        $value = unpack('H*', Base64Url::decode($value));
+
+        return BigInteger::fromBase($value[1], 16);
+    }
+
+    /**
+     * @param string $value
+     * @return \GMP
+     */
+    private static function convertBase64ToGMP(string $value): \GMP
+    {
+        $value = unpack('H*', Base64Url::decode($value));
+
+        return gmp_init($value[1], 16);
     }
 }
