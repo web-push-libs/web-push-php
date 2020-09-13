@@ -11,7 +11,7 @@ As it is standardized, you don't have to worry about what server type it relies 
 ## Requirements
 
 PHP 7.2+ and the following extensions:
- * gmp
+ * gmp (optional but better for performance)
  * mbstring
  * curl
  * openssl
