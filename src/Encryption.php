@@ -16,7 +16,6 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Brick\Math\BigInteger;
 use Jose\Component\Core\JWK;
-use Jose\Component\Core\Util\Ecc\Curve;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
@@ -96,7 +95,7 @@ class Encryption
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => $localPrivateKeyObject->getSecret()->getX(), // @phpstan-ignore-line
+                'd' => Base64Url::encode($localPrivateKeyObject->getSecret()->toBytes()),
                 'x' => Base64Url::encode($localPublicKeyObject[0]),
                 'y' => Base64Url::encode($localPublicKeyObject[1]),
             ]);
