@@ -19,7 +19,6 @@ use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
-use Brick\Math\BigInteger;
 
 class Encryption
 {
@@ -324,9 +323,9 @@ class Encryption
             new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'x' => Base64Url::encode($details['ec']['x']),
-                'y' => Base64Url::encode($details['ec']['y']),
-                'd' => Base64Url::encode($details['ec']['d']),
+                'x' => Base64Url::encode(str_pad($details['ec']['x'], 32, char(0), STR_PAD_LEFT)),
+                'y' => Base64Url::encode(str_pad($details['ec']['y'], 32, char(0), STR_PAD_LEFT)),
+                'd' => Base64Url::encode(str_pad($details['ec']['d'], 32, char(0), STR_PAD_LEFT)),
             ])
         ];
     }
