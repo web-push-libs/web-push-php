@@ -19,6 +19,7 @@ use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
+use Brick\Math\BigInteger;
 
 class Encryption
 {
@@ -275,13 +276,25 @@ class Encryption
         $privateKey = $curve->createPrivateKey();
         $publicKey = $curve->createPublicKey($privateKey);
 
+        if ($publicKey->getPoint()->getX() instanceof BigInteger) {
+            return [
+                new JWK([
+                    'kty' => 'EC',
+                    'crv' => 'P-256',
+                    'x' => Base64Url::encode($publicKey->getPoint()->getX()->toBytes()),
+                    'y' => Base64Url::encode($publicKey->getPoint()->getY()->toBytes()),
+                    'd' => Base64Url::encode($privateKey->getSecret()->toBytes()),
+                ])
+            ];
+        }
+
         return [
             new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'x' => Base64Url::encode($publicKey->getPoint()->getX()->toBytes()),
-                'y' => Base64Url::encode($publicKey->getPoint()->getY()->toBytes()),
-                'd' => Base64Url::encode($privateKey->getSecret()->toBytes()),
+                'x' => Base64Url::encode(hex2bin(gmp_strval($publicKey->getPoint()->getX(), 16))),
+                'y' => Base64Url::encode(hex2bin(gmp_strval($publicKey->getPoint()->getY(), 16))),
+                'd' => Base64Url::encode(hex2bin(gmp_strval($privateKey->getSecret(), 16))),
             ])
         ];
     }
