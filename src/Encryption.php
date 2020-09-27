@@ -418,6 +418,6 @@ class Encryption
 
     private static function addNullPadding(string $data): string
     {
-        return str_pad($data, 32, char(0), STR_PAD_LEFT);
+        return str_pad($data, 32, chr(0), STR_PAD_LEFT);
     }
 }
