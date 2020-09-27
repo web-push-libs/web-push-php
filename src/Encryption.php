@@ -276,8 +276,13 @@ class Encryption
         $publicKey = $curve->createPublicKey($privateKey);
 
         return [
-            $publicKey,
-            $privateKey,
+            new JWK([
+                'kty' => 'EC',
+                'crv' => 'P-256',
+                'x' => Base64Url::encode($publicKey->getPoint()->getX()->toBytes()),
+                'y' => Base64Url::encode($publicKey->getPoint()->getY()->toBytes()),
+                'd' => Base64Url::encode($privateKey->getSecret()->toBytes()),
+            ])
         ];
     }
 
