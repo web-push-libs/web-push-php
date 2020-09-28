@@ -1,0 +1,1102 @@
+Escaped mutants:
+================
+
+1) /home/florent/PhpstormProjects/web-push-php-ng/src/Keys.php:42    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+     }
+     public function get(string $name) : string
+     {
+-        Assertion::true($this->has($name), sprintf('Undefined key name "%s"', $name));
++        
+         return $this->keys[$name];
+     }
+     /**
+
+
+2) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:51    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $userAgentPublicKey = $keys->get('p256dh');
+         Assertion::true($keys->has('auth'), 'The user-agent authentication token is missing');
+         $userAgentAuthToken = $keys->get('auth');
+-        $salt = random_bytes(16);
++        $salt = random_bytes(15);
+         //Agreement key
+         $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey);
+         //IKM
+
+
+3) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:51    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $userAgentPublicKey = $keys->get('p256dh');
+         Assertion::true($keys->has('auth'), 'The user-agent authentication token is missing');
+         $userAgentAuthToken = $keys->get('auth');
+-        $salt = random_bytes(16);
++        $salt = random_bytes(17);
+         //Agreement key
+         $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey);
+         //IKM
+
+
+4) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:57    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         //Agreement key
+         $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey);
+         //IKM
+-        $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $this->serverPublicKey;
++        $keyInfo = 'WebPush: info' . chr(-1) . $userAgentPublicKey . $this->serverPublicKey;
+         $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+         //PRK
+         $prk = hash_hmac('sha256', $ikm, $salt, true);
+
+
+5) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:57    [M] OneZeroInteger
+
+--- Original
++++ New
+@@ @@
+         //Agreement key
+         $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey);
+         //IKM
+-        $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $this->serverPublicKey;
++        $keyInfo = 'WebPush: info' . chr(1) . $userAgentPublicKey . $this->serverPublicKey;
+         $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+         //PRK
+         $prk = hash_hmac('sha256', $ikm, $salt, true);
+
+
+6) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:58    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey);
+         //IKM
+         $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $this->serverPublicKey;
+-        $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
++        $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 31);
+         //PRK
+         $prk = hash_hmac('sha256', $ikm, $salt, true);
+         // Derive the Content Encryption Key
+
+
+7) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:65    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $prk = hash_hmac('sha256', $ikm, $salt, true);
+         // Derive the Content Encryption Key
+         $contentEncryptionKeyInfo = $this->createInfo('aesgcm', $userAgentPublicKey);
+-        $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
++        $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 15);
+         // Derive the Nonce
+         $nonceInfo = $this->createInfo('nonce', $userAgentPublicKey);
+         $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
+
+
+8) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:65    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $prk = hash_hmac('sha256', $ikm, $salt, true);
+         // Derive the Content Encryption Key
+         $contentEncryptionKeyInfo = $this->createInfo('aesgcm', $userAgentPublicKey);
+-        $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
++        $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 17);
+         // Derive the Nonce
+         $nonceInfo = $this->createInfo('nonce', $userAgentPublicKey);
+         $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
+
+
+9) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:69    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
+         // Derive the Nonce
+         $nonceInfo = $this->createInfo('nonce', $userAgentPublicKey);
+-        $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
++        $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 11);
+         $tag = '';
+         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+         $encryptedTextLength = mb_strlen($encryptedText, '8bit');
+
+
+10) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:69    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
+         // Derive the Nonce
+         $nonceInfo = $this->createInfo('nonce', $userAgentPublicKey);
+-        $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
++        $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 13);
+         $tag = '';
+         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+         $encryptedTextLength = mb_strlen($encryptedText, '8bit');
+
+
+11) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:74    [M] MBString
+
+--- Original
++++ New
+@@ @@
+         $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
+         $tag = '';
+         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+-        $encryptedTextLength = mb_strlen($encryptedText, '8bit');
++        $encryptedTextLength = strlen($encryptedText);
+         Assertion::lessOrEqualThan($encryptedTextLength, 4078, 'Payload too large');
+         $request->getBody()->write($encryptedText);
+         return $request->withHeader('Encryption', 'salt=' . Base64Url::encode($salt))->withHeader('Crypto-Key', 'dh=' . Base64Url::encode($this->serverPublicKey))->withHeader('Content-Length', (string) $encryptedTextLength);
+
+
+12) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:75    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $tag = '';
+         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+         $encryptedTextLength = mb_strlen($encryptedText, '8bit');
+-        Assertion::lessOrEqualThan($encryptedTextLength, 4078, 'Payload too large');
++        Assertion::lessOrEqualThan($encryptedTextLength, 4079, 'Payload too large');
+         $request->getBody()->write($encryptedText);
+         return $request->withHeader('Encryption', 'salt=' . Base64Url::encode($salt))->withHeader('Crypto-Key', 'dh=' . Base64Url::encode($this->serverPublicKey))->withHeader('Content-Length', (string) $encryptedTextLength);
+     }
+
+
+13) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:75    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $tag = '';
+         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+         $encryptedTextLength = mb_strlen($encryptedText, '8bit');
+-        Assertion::lessOrEqualThan($encryptedTextLength, 4078, 'Payload too large');
++        Assertion::lessOrEqualThan($encryptedTextLength, 4077, 'Payload too large');
+         $request->getBody()->write($encryptedText);
+         return $request->withHeader('Encryption', 'salt=' . Base64Url::encode($salt))->withHeader('Crypto-Key', 'dh=' . Base64Url::encode($this->serverPublicKey))->withHeader('Content-Length', (string) $encryptedTextLength);
+     }
+
+
+14) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:75    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+         $tag = '';
+         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+         $encryptedTextLength = mb_strlen($encryptedText, '8bit');
+-        Assertion::lessOrEqualThan($encryptedTextLength, 4078, 'Payload too large');
++        
+         $request->getBody()->write($encryptedText);
+         return $request->withHeader('Encryption', 'salt=' . Base64Url::encode($salt))->withHeader('Crypto-Key', 'dh=' . Base64Url::encode($this->serverPublicKey))->withHeader('Content-Length', (string) $encryptedTextLength);
+     }
+
+
+15) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:85    [M] CastString
+
+--- Original
++++ New
+@@ @@
+         $encryptedTextLength = mb_strlen($encryptedText, '8bit');
+         Assertion::lessOrEqualThan($encryptedTextLength, 4078, 'Payload too large');
+         $request->getBody()->write($encryptedText);
+-        return $request->withHeader('Encryption', 'salt=' . Base64Url::encode($salt))->withHeader('Crypto-Key', 'dh=' . Base64Url::encode($this->serverPublicKey))->withHeader('Content-Length', (string) $encryptedTextLength);
++        return $request->withHeader('Encryption', 'salt=' . Base64Url::encode($salt))->withHeader('Crypto-Key', 'dh=' . Base64Url::encode($this->serverPublicKey))->withHeader('Content-Length', $encryptedTextLength);
+     }
+     private function createInfo(string $type, string $userAgentPublicKey) : string
+     {
+
+
+16) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:92    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+     private function createInfo(string $type, string $userAgentPublicKey) : string
+     {
+         $info = 'Content-Encoding: ';
+-        $info .= $type;
++        $info = $type;
+         $info .= chr(0);
+         $info .= 'P-256';
+         $info .= chr(0);
+
+
+17) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:93    [M] OneZeroInteger
+
+--- Original
++++ New
+@@ @@
+     {
+         $info = 'Content-Encoding: ';
+         $info .= $type;
+-        $info .= chr(0);
++        $info .= chr(1);
+         $info .= 'P-256';
+         $info .= chr(0);
+         $info .= chr(65);
+
+
+18) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:93    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+     {
+         $info = 'Content-Encoding: ';
+         $info .= $type;
+-        $info .= chr(0);
++        $info = chr(0);
+         $info .= 'P-256';
+         $info .= chr(0);
+         $info .= chr(65);
+
+
+19) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:93    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+     {
+         $info = 'Content-Encoding: ';
+         $info .= $type;
+-        $info .= chr(0);
++        $info .= chr(-1);
+         $info .= 'P-256';
+         $info .= chr(0);
+         $info .= chr(65);
+
+
+20) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:94    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+         $info = 'Content-Encoding: ';
+         $info .= $type;
+         $info .= chr(0);
+-        $info .= 'P-256';
++        $info = 'P-256';
+         $info .= chr(0);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+
+
+21) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:95    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $info .= $type;
+         $info .= chr(0);
+         $info .= 'P-256';
+-        $info .= chr(0);
++        $info .= chr(-1);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+
+
+22) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:95    [M] OneZeroInteger
+
+--- Original
++++ New
+@@ @@
+         $info .= $type;
+         $info .= chr(0);
+         $info .= 'P-256';
+-        $info .= chr(0);
++        $info .= chr(1);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+
+
+23) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:95    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+         $info .= $type;
+         $info .= chr(0);
+         $info .= 'P-256';
+-        $info .= chr(0);
++        $info = chr(0);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+
+
+24) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:96    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(0);
+         $info .= 'P-256';
+         $info .= chr(0);
+-        $info .= chr(65);
++        $info .= chr(64);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+         $info .= $this->serverPublicKey;
+
+
+25) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:96    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(0);
+         $info .= 'P-256';
+         $info .= chr(0);
+-        $info .= chr(65);
++        $info .= chr(66);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+         $info .= $this->serverPublicKey;
+
+
+26) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:96    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(0);
+         $info .= 'P-256';
+         $info .= chr(0);
+-        $info .= chr(65);
++        $info = chr(65);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+         $info .= $this->serverPublicKey;
+
+
+27) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:97    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+         $info .= 'P-256';
+         $info .= chr(0);
+         $info .= chr(65);
+-        $info .= $userAgentPublicKey;
++        $info = $userAgentPublicKey;
+         $info .= chr(65);
+         $info .= $this->serverPublicKey;
+         return $info;
+     }
+ }
+
+
+28) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:98    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(0);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+-        $info .= chr(65);
++        $info .= chr(64);
+         $info .= $this->serverPublicKey;
+         return $info;
+     }
+ }
+
+
+29) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:98    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(0);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+-        $info .= chr(65);
++        $info = chr(65);
+         $info .= $this->serverPublicKey;
+         return $info;
+     }
+ }
+
+
+30) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:98    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(0);
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+-        $info .= chr(65);
++        $info .= chr(66);
+         $info .= $this->serverPublicKey;
+         return $info;
+     }
+ }
+
+
+31) /home/florent/PhpstormProjects/web-push-php-ng/src/Payload/AESGCM.php:99    [M] Assignment
+
+--- Original
++++ New
+@@ @@
+         $info .= chr(65);
+         $info .= $userAgentPublicKey;
+         $info .= chr(65);
+-        $info .= $this->serverPublicKey;
++        $info = $this->serverPublicKey;
+         return $info;
+     }
+ }
+
+
+32) /home/florent/PhpstormProjects/web-push-php-ng/src/Subscription.php:69    [M] PublicVisibility
+
+--- Original
++++ New
+@@ @@
+     {
+         return $this->keys;
+     }
+-    public function setKeys(Keys $keys) : self
++    protected function setKeys(Keys $keys) : self
+     {
+         $this->keys = $keys;
+         return $this;
+
+
+33) /home/florent/PhpstormProjects/web-push-php-ng/src/Subscription.php:113    [M] LogicalAnd
+
+--- Original
++++ New
+@@ @@
+             Assertion::nullOrString($input['contentEncoding'], 'Invalid input');
+             $object->witContentEncoding($input['contentEncoding']);
+         }
+-        if (array_key_exists('keys', $input) && null !== $input['keys']) {
++        if (array_key_exists('keys', $input) || null !== $input['keys']) {
+             Assertion::isArray($input['keys'], 'Invalid input');
+             $object->setKeys(Keys::createFromAssociativeArray($input['keys']));
+         }
+
+
+34) /home/florent/PhpstormProjects/web-push-php-ng/src/Subscription.php:114    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+             $object->witContentEncoding($input['contentEncoding']);
+         }
+         if (array_key_exists('keys', $input) && null !== $input['keys']) {
+-            Assertion::isArray($input['keys'], 'Invalid input');
++            
+             $object->setKeys(Keys::createFromAssociativeArray($input['keys']));
+         }
+         return $object;
+     }
+ }
+
+
+35) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:30    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+     {
+         $key = openssl_pkey_get_private($privateKey, $passphrase);
+         $details = openssl_pkey_get_details($key);
+-        Assertion::isArray($details, 'It was not possible to parse your key');
++        
+         if (!isset($details['ec'])) {
+             throw new InvalidArgumentException('This key is not suitable for ECDSA signature');
+         }
+
+
+36) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:37    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+             throw new InvalidArgumentException('This key is not suitable for ECDSA signature');
+         }
+         $hexString = '04';
+-        $hexString .= str_pad(bin2hex($details['ec']['x']), 64, '0', STR_PAD_LEFT);
++        $hexString .= str_pad(bin2hex($details['ec']['x']), 63, '0', STR_PAD_LEFT);
+         $hexString .= str_pad(bin2hex($details['ec']['y']), 64, '0', STR_PAD_LEFT);
+         return Base64Url::encode(hex2bin($hexString));
+     }
+
+
+37) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:38    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         }
+         $hexString = '04';
+         $hexString .= str_pad(bin2hex($details['ec']['x']), 64, '0', STR_PAD_LEFT);
+-        $hexString .= str_pad(bin2hex($details['ec']['y']), 64, '0', STR_PAD_LEFT);
++        $hexString .= str_pad(bin2hex($details['ec']['y']), 63, '0', STR_PAD_LEFT);
+         return Base64Url::encode(hex2bin($hexString));
+     }
+     public static function privateKeyToPEM(string $privateKey, string $publicKey) : string
+
+
+38) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:45    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+     }
+     public static function privateKeyToPEM(string $privateKey, string $publicKey) : string
+     {
+-        $d = unpack('H*', str_pad($privateKey, 32, "\0", STR_PAD_LEFT))[1];
++        $d = unpack('H*', str_pad($privateKey, 31, "\0", STR_PAD_LEFT))[1];
+         $der = pack('H*', '3077' . '020101' . '0420' . $d . 'a00a' . '0608' . '2a8648ce3d030107' . 'a144' . '0342' . '00');
+         $der .= $publicKey;
+         $pem = '-----BEGIN EC PRIVATE KEY-----' . PHP_EOL;
+
+
+39) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:63    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $der = pack('H*', '3077' . '020101' . '0420' . $d . 'a00a' . '0608' . '2a8648ce3d030107' . 'a144' . '0342' . '00');
+         $der .= $publicKey;
+         $pem = '-----BEGIN EC PRIVATE KEY-----' . PHP_EOL;
+-        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
++        $pem .= chunk_split(base64_encode($der), 63, PHP_EOL);
+         $pem .= '-----END EC PRIVATE KEY-----' . PHP_EOL;
+         return $pem;
+     }
+
+
+40) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:63    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $der = pack('H*', '3077' . '020101' . '0420' . $d . 'a00a' . '0608' . '2a8648ce3d030107' . 'a144' . '0342' . '00');
+         $der .= $publicKey;
+         $pem = '-----BEGIN EC PRIVATE KEY-----' . PHP_EOL;
+-        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
++        $pem .= chunk_split(base64_encode($der), 65, PHP_EOL);
+         $pem .= '-----END EC PRIVATE KEY-----' . PHP_EOL;
+         return $pem;
+     }
+
+
+41) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:69    [M] PublicVisibility
+
+--- Original
++++ New
+@@ @@
+         $pem .= '-----END EC PRIVATE KEY-----' . PHP_EOL;
+         return $pem;
+     }
+-    public static function publicKeyToPEM(string $publicKey) : string
++    protected static function publicKeyToPEM(string $publicKey) : string
+     {
+         $der = pack('H*', '3059' . '3013' . '0607' . '2a8648ce3d0201' . '0608' . '2a8648ce3d030107' . '0342' . '00');
+         $der .= $publicKey;
+
+
+42) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:85    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $der = pack('H*', '3059' . '3013' . '0607' . '2a8648ce3d0201' . '0608' . '2a8648ce3d030107' . '0342' . '00');
+         $der .= $publicKey;
+         $pem = '-----BEGIN PUBLIC KEY-----' . PHP_EOL;
+-        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
++        $pem .= chunk_split(base64_encode($der), 63, PHP_EOL);
+         $pem .= '-----END PUBLIC KEY-----' . PHP_EOL;
+         return $pem;
+     }
+
+
+43) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:85    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $der = pack('H*', '3059' . '3013' . '0607' . '2a8648ce3d0201' . '0608' . '2a8648ce3d030107' . '0342' . '00');
+         $der .= $publicKey;
+         $pem = '-----BEGIN PUBLIC KEY-----' . PHP_EOL;
+-        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
++        $pem .= chunk_split(base64_encode($der), 65, PHP_EOL);
+         $pem .= '-----END PUBLIC KEY-----' . PHP_EOL;
+         return $pem;
+     }
+
+
+44) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:94    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+     public static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey) : string
+     {
+         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+-        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
++        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 255);
+         Assertion::string($result, 'Unable to compute the agreement key');
+         return str_pad($result, 32, chr(0), STR_PAD_LEFT);
+     }
+
+
+45) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:94    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+     public static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey) : string
+     {
+         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+-        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
++        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 257);
+         Assertion::string($result, 'Unable to compute the agreement key');
+         return str_pad($result, 32, chr(0), STR_PAD_LEFT);
+     }
+
+
+46) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:95    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+     {
+         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+         $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
+-        Assertion::string($result, 'Unable to compute the agreement key');
++        
+         return str_pad($result, 32, chr(0), STR_PAD_LEFT);
+     }
+     public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+
+
+47) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:97    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+         $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
+         Assertion::string($result, 'Unable to compute the agreement key');
+-        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
++        return str_pad($result, 31, chr(0), STR_PAD_LEFT);
+     }
+     public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+     {
+
+
+48) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:97    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+         $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
+         Assertion::string($result, 'Unable to compute the agreement key');
+-        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
++        return str_pad($result, 32, chr(-1), STR_PAD_LEFT);
+     }
+     public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+     {
+
+
+49) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:97    [M] OneZeroInteger
+
+--- Original
++++ New
+@@ @@
+         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+         $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
+         Assertion::string($result, 'Unable to compute the agreement key');
+-        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
++        return str_pad($result, 32, chr(1), STR_PAD_LEFT);
+     }
+     public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+     {
+
+
+50) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:110    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+     }
+     public static function hkdf(string $salt, string $ikm, string $info, int $length) : string
+     {
+-        Assertion::lessOrEqualThan($length, 32, sprintf('Cannot return keys of more than 32 bytes, %d requested', $length));
++        Assertion::lessOrEqualThan($length, 33, sprintf('Cannot return keys of more than 32 bytes, %d requested', $length));
+         $keyHmac = hash_hmac('sha256', $ikm, $salt, true);
+         $infoHmac = hash_hmac('sha256', $info . chr(1), $keyHmac, true);
+         return mb_substr($infoHmac, 0, $length, '8bit');
+     }
+ }
+
+
+51) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:110    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+     }
+     public static function hkdf(string $salt, string $ikm, string $info, int $length) : string
+     {
+-        Assertion::lessOrEqualThan($length, 32, sprintf('Cannot return keys of more than 32 bytes, %d requested', $length));
++        
+         $keyHmac = hash_hmac('sha256', $ikm, $salt, true);
+         $infoHmac = hash_hmac('sha256', $info . chr(1), $keyHmac, true);
+         return mb_substr($infoHmac, 0, $length, '8bit');
+     }
+ }
+
+
+52) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:114    [M] MBString
+
+--- Original
++++ New
+@@ @@
+         Assertion::lessOrEqualThan($length, 32, sprintf('Cannot return keys of more than 32 bytes, %d requested', $length));
+         $keyHmac = hash_hmac('sha256', $ikm, $salt, true);
+         $infoHmac = hash_hmac('sha256', $info . chr(1), $keyHmac, true);
+-        return mb_substr($infoHmac, 0, $length, '8bit');
++        return substr($infoHmac, 0, $length);
+     }
+ }
+
+
+Timed Out mutants:
+==================
+
+Skipped mutants:
+================
+
+Not Covered mutants:
+====================
+
+1) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:100    [M] PublicVisibility
+
+--- Original
++++ New
+@@ @@
+         Assertion::string($result, 'Unable to compute the agreement key');
+         return str_pad($result, 32, chr(0), STR_PAD_LEFT);
+     }
+-    public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
++    protected static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+     {
+         $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $serverPublicKey;
+         $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
+
+
+2) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:102    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+     }
+     public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+     {
+-        $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $serverPublicKey;
++        $keyInfo = 'WebPush: info' . chr(-1) . $userAgentPublicKey . $serverPublicKey;
+         $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
+         return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+     }
+
+
+3) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:102    [M] OneZeroInteger
+
+--- Original
++++ New
+@@ @@
+     }
+     public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey) : string
+     {
+-        $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $serverPublicKey;
++        $keyInfo = 'WebPush: info' . chr(1) . $userAgentPublicKey . $serverPublicKey;
+         $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
+         return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+     }
+
+
+4) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:105    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+     {
+         $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $serverPublicKey;
+         $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
+-        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
++        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 31);
+     }
+     public static function hkdf(string $salt, string $ikm, string $info, int $length) : string
+     {
+
+
+5) /home/florent/PhpstormProjects/web-push-php-ng/src/Utils.php:105    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+     {
+         $keyInfo = 'WebPush: info' . chr(0) . $userAgentPublicKey . $serverPublicKey;
+         $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
+-        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
++        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 33);
+     }
+     public static function hkdf(string $salt, string $ikm, string $info, int $length) : string
+     {
+
+
+6) /home/florent/PhpstormProjects/web-push-php-ng/src/VAPID/VAPID.php:90    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+         $expirationTime = $this->expirationTime;
+         return $this->cache->get($this->cacheKey, static function (ItemInterface $item) use($jwsProvider, $expirationTime) : Header {
+             $expiresAt = new DateTimeImmutable($expirationTime);
+-            $item->expiresAt($expiresAt);
++            
+             return $jwsProvider->computeHeader($expiresAt);
+         });
+     }
+ }
+
+
+7) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:39    [M] PublicVisibility
+
+--- Original
++++ New
+@@ @@
+         $this->logger = new NullLogger();
+         $this->eventDispatcher = new NullEventDispatcher();
+     }
+-    public function setLogger(LoggerInterface $logger) : self
++    protected function setLogger(LoggerInterface $logger) : self
+     {
+         $this->logger = $logger;
+         return $this;
+
+
+8) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:46    [M] PublicVisibility
+
+--- Original
++++ New
+@@ @@
+         $this->logger = $logger;
+         return $this;
+     }
+-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher) : self
++    protected function setEventDispatcher(EventDispatcherInterface $eventDispatcher) : self
+     {
+         $this->eventDispatcher = $eventDispatcher;
+         return $this;
+
+
+9) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:53    [M] PublicVisibility
+
+--- Original
++++ New
+@@ @@
+         $this->eventDispatcher = $eventDispatcher;
+         return $this;
+     }
+-    public function send(Notification $notification, Subscription $subscription) : void
++    protected function send(Notification $notification, Subscription $subscription) : void
+     {
+         $this->logger->debug('Sending notification', ['notification' => $notification, 'subscription' => $subscription]);
+         $request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
+
+
+10) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:55    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+     }
+     public function send(Notification $notification, Subscription $subscription) : void
+     {
+-        $this->logger->debug('Sending notification', ['notification' => $notification, 'subscription' => $subscription]);
++        
+         $request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
+         $request = $this->extensionManager->process($request, $notification, $subscription);
+         $this->logger->debug('Request ready', ['request' => $request]);
+
+
+11) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:55    [M] ArrayItemRemoval
+
+--- Original
++++ New
+@@ @@
+     }
+     public function send(Notification $notification, Subscription $subscription) : void
+     {
+-        $this->logger->debug('Sending notification', ['notification' => $notification, 'subscription' => $subscription]);
++        $this->logger->debug('Sending notification', ['subscription' => $subscription]);
+         $request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
+         $request = $this->extensionManager->process($request, $notification, $subscription);
+         $this->logger->debug('Request ready', ['request' => $request]);
+
+
+12) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:58    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+         $this->logger->debug('Sending notification', ['notification' => $notification, 'subscription' => $subscription]);
+         $request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
+         $request = $this->extensionManager->process($request, $notification, $subscription);
+-        $this->logger->debug('Request ready', ['request' => $request]);
++        
+         $response = $this->client->sendRequest($request);
+         $this->logger->debug('Response received', ['response' => $response]);
+         if (200 === $response->getStatusCode()) {
+
+
+13) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:58    [M] ArrayItemRemoval
+
+--- Original
++++ New
+@@ @@
+         $this->logger->debug('Sending notification', ['notification' => $notification, 'subscription' => $subscription]);
+         $request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
+         $request = $this->extensionManager->process($request, $notification, $subscription);
+-        $this->logger->debug('Request ready', ['request' => $request]);
++        $this->logger->debug('Request ready', []);
+         $response = $this->client->sendRequest($request);
+         $this->logger->debug('Response received', ['response' => $response]);
+         if (200 === $response->getStatusCode()) {
+
+
+14) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:61    [M] ArrayItemRemoval
+
+--- Original
++++ New
+@@ @@
+         $request = $this->extensionManager->process($request, $notification, $subscription);
+         $this->logger->debug('Request ready', ['request' => $request]);
+         $response = $this->client->sendRequest($request);
+-        $this->logger->debug('Response received', ['response' => $response]);
++        $this->logger->debug('Response received', []);
+         if (200 === $response->getStatusCode()) {
+             $location = $response->getHeaderLine('location');
+             $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
+
+
+15) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:61    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+         $request = $this->extensionManager->process($request, $notification, $subscription);
+         $this->logger->debug('Request ready', ['request' => $request]);
+         $response = $this->client->sendRequest($request);
+-        $this->logger->debug('Response received', ['response' => $response]);
++        
+         if (200 === $response->getStatusCode()) {
+             $location = $response->getHeaderLine('location');
+             $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
+
+
+16) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:62    [M] DecrementInteger
+
+--- Original
++++ New
+@@ @@
+         $this->logger->debug('Request ready', ['request' => $request]);
+         $response = $this->client->sendRequest($request);
+         $this->logger->debug('Response received', ['response' => $response]);
+-        if (200 === $response->getStatusCode()) {
++        if (199 === $response->getStatusCode()) {
+             $location = $response->getHeaderLine('location');
+             $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
+             return;
+
+
+17) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:62    [M] IncrementInteger
+
+--- Original
++++ New
+@@ @@
+         $this->logger->debug('Request ready', ['request' => $request]);
+         $response = $this->client->sendRequest($request);
+         $this->logger->debug('Response received', ['response' => $response]);
+-        if (200 === $response->getStatusCode()) {
++        if (201 === $response->getStatusCode()) {
+             $location = $response->getHeaderLine('location');
+             $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
+             return;
+
+
+18) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:62    [M] Identical
+
+--- Original
++++ New
+@@ @@
+         $this->logger->debug('Request ready', ['request' => $request]);
+         $response = $this->client->sendRequest($request);
+         $this->logger->debug('Response received', ['response' => $response]);
+-        if (200 === $response->getStatusCode()) {
++        if (200 !== $response->getStatusCode()) {
+             $location = $response->getHeaderLine('location');
+             $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
+             return;
+
+
+19) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:64    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+         $this->logger->debug('Response received', ['response' => $response]);
+         if (200 === $response->getStatusCode()) {
+             $location = $response->getHeaderLine('location');
+-            $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
++            
+             return;
+         }
+         $this->eventDispatcher->dispatch(new StatusReportFailure($subscription, $notification, $response->getStatusCode(), $response->getBody()->getContents()));
+     }
+ }
+
+
+20) /home/florent/PhpstormProjects/web-push-php-ng/src/WebPush.php:69    [M] MethodCallRemoval
+
+--- Original
++++ New
+@@ @@
+             $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
+             return;
+         }
+-        $this->eventDispatcher->dispatch(new StatusReportFailure($subscription, $notification, $response->getStatusCode(), $response->getBody()->getContents()));
++        
+     }
+ }

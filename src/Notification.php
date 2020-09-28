@@ -3,84 +3,116 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the WebPush library.
+ * The MIT License (MIT)
  *
- * (c) Louis Lagrange <lagrange.louis@gmail.com>
+ * Copyright (c) 2020 Spomky-Labs
  *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  */
 
 namespace Minishlink\WebPush;
 
+use Assert\Assertion;
+
 class Notification
 {
-    /** @var SubscriptionInterface */
-    private $subscription;
+    public const URGENCY_VERY_LOW = 'very-low';
+    public const URGENCY_LOW = 'low';
+    public const URGENCY_NORMAL = 'normal';
+    public const URGENCY_HIGH = 'high';
 
-    /** @var null|string */
-    private $payload;
+    private ?string $payload = null;
+    private int $ttl = 0;
+    private string $urgency = self::URGENCY_NORMAL;
+    private ?string $topic = null;
 
-    /** @var array Options : TTL, urgency, topic */
-    private $options;
-
-    /** @var array Auth details : VAPID */
-    private $auth;
-
-    /**
-     * Notification constructor.
-     *
-     * @param SubscriptionInterface $subscription
-     * @param null|string $payload
-     * @param array $options
-     * @param array $auth
-     */
-    public function __construct(SubscriptionInterface $subscription, ?string $payload, array $options, array $auth)
+    public static function create(): self
     {
-        $this->subscription = $subscription;
+        return new self();
+    }
+
+    public function veryLow(): self
+    {
+        $this->urgency = self::URGENCY_VERY_LOW;
+
+        return $this;
+    }
+
+    public function low(): self
+    {
+        $this->urgency = self::URGENCY_LOW;
+
+        return $this;
+    }
+
+    public function normal(): self
+    {
+        $this->urgency = self::URGENCY_NORMAL;
+
+        return $this;
+    }
+
+    public function high(): self
+    {
+        $this->urgency = self::URGENCY_HIGH;
+
+        return $this;
+    }
+
+    public function withUrgency(string $urgency): self
+    {
+        Assertion::inArray($urgency, [
+            self::URGENCY_VERY_LOW,
+            self::URGENCY_LOW,
+            self::URGENCY_NORMAL,
+            self::URGENCY_HIGH,
+        ], 'Invalid urgency parameter');
+        $this->urgency = $urgency;
+
+        return $this;
+    }
+
+    public function getUrgency(): string
+    {
+        return $this->urgency;
+    }
+
+    public function withPayload(string $payload): self
+    {
         $this->payload = $payload;
-        $this->options = $options;
-        $this->auth = $auth;
+
+        return $this;
     }
 
-    /**
-     * @return SubscriptionInterface
-     */
-    public function getSubscription(): SubscriptionInterface
-    {
-        return $this->subscription;
-    }
-
-    /**
-     * @return null|string
-     */
     public function getPayload(): ?string
     {
         return $this->payload;
     }
 
-    /**
-     * @param array $defaultOptions
-     *
-     * @return array
-     */
-    public function getOptions(array $defaultOptions = []): array
+    public function withTopic(string $topic): self
     {
-        $options = $this->options;
-        $options['TTL'] = array_key_exists('TTL', $options) ? $options['TTL'] : $defaultOptions['TTL'];
-        $options['urgency'] = array_key_exists('urgency', $options) ? $options['urgency'] : $defaultOptions['urgency'];
-        $options['topic'] = array_key_exists('topic', $options) ? $options['topic'] : $defaultOptions['topic'];
+        Assertion::notBlank($topic, 'Invalid topic');
+        $this->topic = $topic;
 
-        return $options;
+        return $this;
     }
 
-    /**
-     * @param array $defaultAuth
-     *
-     * @return array
-     */
-    public function getAuth(array $defaultAuth): array
+    public function getTopic(): ?string
     {
-        return count($this->auth) > 0 ? $this->auth : $defaultAuth;
+        return $this->topic;
+    }
+
+    public function withTTL(int $ttl): self
+    {
+        Assertion::greaterOrEqualThan($ttl, 0, 'Invalid TTL');
+        $this->ttl = $ttl;
+
+        return $this;
+    }
+
+    public function getTTL(): int
+    {
+        return $this->ttl;
     }
 }

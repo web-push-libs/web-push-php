@@ -1,0 +1,25 @@
+name: Tests with Code Coverage
+
+on: [push]
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: ['7.4']
+    name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest
+
+      - name: Run test suite
+        run: |
+          vendor/bin/phpunit -c phpunit.xml.dist --coverage-text

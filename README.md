@@ -30,8 +30,8 @@ Use [composer](https://getcomposer.org/) to download and install the library and
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
-use Minishlink\WebPush\Subscription;
+use Minishlink\lib\WebPush;
+use Minishlink\lib\Subscription;
 
 // array of notifications
 $notifications = [
@@ -115,7 +115,7 @@ You can specify your authentication details when instantiating WebPush. The keys
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
+use Minishlink\lib\WebPush;
 
 $endpoint = 'https://fcm.googleapis.com/fcm/send/abcdef...'; // Chrome
 
@@ -168,7 +168,7 @@ You can change the default options with `setDefaultOptions()` or in the construc
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
+use Minishlink\lib\WebPush;
 
 $defaultOptions = [
     'TTL' => 300, // defaults to 4 weeks
@@ -213,7 +213,7 @@ You can see what the browser vendor's server sends back in case it encountered a
 ```php
 <?php
 
-/** @var \Minishlink\WebPush\MessageSentReport $report */
+/** @var \Minishlink\lib\MessageSentReport $report */
 foreach ($webPush->flush() as $report) {
     $endpoint = $report->getEndpoint();
 
@@ -272,7 +272,7 @@ Here are some ideas of settings:
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
+use Minishlink\lib\WebPush;
 
 $webPush = new WebPush();
 $webPush->setAutomaticPadding(false); // disable automatic padding
@@ -288,7 +288,7 @@ You can customize the default request options and timeout when instantiating Web
 ```php
 <?php
 
-use Minishlink\WebPush\WebPush;
+use Minishlink\lib\WebPush;
 
 $timeout = 20; // seconds
 $clientOptions = [

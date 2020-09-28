@@ -3,84 +3,114 @@
 declare(strict_types=1);
 
 /*
- * This file is part of the WebPush library.
+ * The MIT License (MIT)
  *
- * (c) Louis Lagrange <lagrange.louis@gmail.com>
+ * Copyright (c) 2020 Spomky-Labs
  *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * This software may be modified and distributed under the terms
+ * of the MIT license.  See the LICENSE file for details.
  */
 
 namespace Minishlink\WebPush;
 
+use Assert\Assertion;
 use Base64Url\Base64Url;
-use Brick\Math\BigInteger;
-use Jose\Component\Core\JWK;
-use Jose\Component\Core\Util\Ecc\PublicKey;
+use function chr;
+use InvalidArgumentException;
+use function Safe\hex2bin;
+use function Safe\openssl_pkey_get_private;
+use function Safe\sprintf;
 
-class Utils
+abstract class Utils
 {
-    /**
-     * @param string $value
-     *
-     * @return int
-     */
-    public static function safeStrlen(string $value): int
+    public static function serializePublicKey(string $privateKey, string $passphrase = ''): string
     {
-        return mb_strlen($value, '8bit');
-    }
+        $key = openssl_pkey_get_private($privateKey, $passphrase);
+        $details = openssl_pkey_get_details($key);
+        Assertion::isArray($details, 'It was not possible to parse your key');
 
-    /**
-     * @param PublicKey $publicKey
-     *
-     * @return string
-     */
-    public static function serializePublicKey(PublicKey $publicKey): string
-    {
-        $hexString = '04';
-        $point = $publicKey->getPoint();
-        if ($point->getX() instanceof BigInteger) {
-            $hexString .= str_pad($point->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
-            $hexString .= str_pad($point->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
-        } else { // @phpstan-ignore-line
-            $hexString .= str_pad(gmp_strval($point->getX(), 16), 64, '0', STR_PAD_LEFT);
-            $hexString .= str_pad(gmp_strval($point->getY(), 16), 64, '0', STR_PAD_LEFT); // @phpstan-ignore-line
+        if (!isset($details['ec'])) {
+            throw new InvalidArgumentException('This key is not suitable for ECDSA signature');
         }
 
-        return $hexString;
-    }
-
-    /**
-     * @param JWK $jwk
-     *
-     * @return string
-     */
-    public static function serializePublicKeyFromJWK(JWK $jwk): string
-    {
         $hexString = '04';
-        $hexString .= str_pad(bin2hex(Base64Url::decode($jwk->get('x'))), 64, '0', STR_PAD_LEFT);
-        $hexString .= str_pad(bin2hex(Base64Url::decode($jwk->get('y'))), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad(bin2hex($details['ec']['x']), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad(bin2hex($details['ec']['y']), 64, '0', STR_PAD_LEFT);
 
-        return $hexString;
+        return Base64Url::encode(hex2bin($hexString));
     }
 
-    /**
-     * @param string $data
-     *
-     * @return array
-     */
-    public static function unserializePublicKey(string $data): array
+    public static function privateKeyToPEM(string $privateKey, string $publicKey): string
     {
-        $data = bin2hex($data);
-        if (mb_substr($data, 0, 2, '8bit') !== '04') {
-            throw new \InvalidArgumentException('Invalid data: only uncompressed keys are supported.');
-        }
-        $data = mb_substr($data, 2, null, '8bit');
-        $dataLength = self::safeStrlen($data);
+        $d = unpack('H*', str_pad($privateKey, 32, "\0", STR_PAD_LEFT))[1];
 
-        return [
-            hex2bin(mb_substr($data, 0, $dataLength / 2, '8bit')),
-            hex2bin(mb_substr($data, $dataLength / 2, null, '8bit')),
-        ];
+        $der = pack(
+            'H*',
+            '3077' // SEQUENCE, length 87+length($d)=32
+                .'020101' // INTEGER, 1
+                    .'0420'   // OCTET STRING, length($d) = 32
+                        .$d
+                    .'a00a' // TAGGED OBJECT #0, length 10
+                        .'0608' // OID, length 8
+                            .'2a8648ce3d030107' // 1.3.132.0.34 = P-256 Curve
+                    .'a144' //  TAGGED OBJECT #1, length 68
+                        .'0342' // BIT STRING, length 66
+                            .'00' // prepend with NUL - pubkey will follow
+        );
+        $der .= $publicKey;
+
+        $pem = '-----BEGIN EC PRIVATE KEY-----'.PHP_EOL;
+        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
+        $pem .= '-----END EC PRIVATE KEY-----'.PHP_EOL;
+
+        return $pem;
+    }
+
+    public static function publicKeyToPEM(string $publicKey): string
+    {
+        $der = pack(
+            'H*',
+            '3059' // SEQUENCE, length 89
+                .'3013' // SEQUENCE, length 19
+                    .'0607' // OID, length 7
+                        .'2a8648ce3d0201' // 1.2.840.10045.2.1 = EC Public Key
+                    .'0608' // OID, length 8
+                        .'2a8648ce3d030107' // 1.2.840.10045.3.1.7 = P-256 Curve
+                .'0342' // BIT STRING, length 66
+                    .'00' // prepend with NUL - pubkey will follow
+        );
+        $der .= $publicKey;
+
+        $pem = '-----BEGIN PUBLIC KEY-----'.PHP_EOL;
+        $pem .= chunk_split(base64_encode($der), 64, PHP_EOL);
+        $pem .= '-----END PUBLIC KEY-----'.PHP_EOL;
+
+        return $pem;
+    }
+
+    public static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey): string
+    {
+        $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
+        Assertion::string($result, 'Unable to compute the agreement key');
+
+        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
+    }
+
+    public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey): string
+    {
+        $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$serverPublicKey;
+        $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
+
+        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+    }
+
+    public static function hkdf(string $salt, string $ikm, string $info, int $length): string
+    {
+        Assertion::lessOrEqualThan($length, 32, sprintf('Cannot return keys of more than 32 bytes, %d requested', $length));
+        $keyHmac = hash_hmac('sha256', $ikm, $salt, true);
+        $infoHmac = hash_hmac('sha256', $info.chr(1), $keyHmac, true);
+
+        return mb_substr($infoHmac, 0, $length, '8bit');
     }
 }

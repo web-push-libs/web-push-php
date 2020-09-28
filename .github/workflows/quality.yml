@@ -1,0 +1,43 @@
+name: Quality
+
+on: [push]
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: ['7.4']
+    name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse
+
+      - name: PHP-CS-FIXER
+        run: |
+          wget https://cs.symfony.com/download/php-cs-fixer-v2.phar -O php-cs-fixer
+          chmod a+x php-cs-fixer
+          ./php-cs-fixer fix --dry-run --stop-on-violation --using-cache=no
+
+      - name: Infection
+        run: |
+          wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar
+          wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar.asc
+          chmod +x infection.phar
+          ./infection -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95
+
+      - name: Security Check
+        run: |
+          wget -c https://get.sensiolabs.org/security-checker.phar
+          chmod +x security-checker.phar
+          ./security-checker.phar security:check
