@@ -19,10 +19,7 @@
   },
   "require": {
     "php": ">=7.4",
-    "ext-curl": "*",
     "ext-json": "*",
-    "ext-mbstring": "*",
-    "ext-openssl": "*",
     "beberlei/assert": "^3.2",
     "psr/event-dispatcher": "^1.0",
     "psr/http-client": "^1.0",
@@ -58,8 +55,10 @@
     "sort-packages": true
   },
   "suggest": {
-    "psr/log-implementation": "Recommended to receive logs from the library",
-    "web-token/jwt-signature-algorithm-ecdsa": "Required if you want to use VAPID using web-token/jwt-framework",
-    "lcobucci/jwt": "Required if you want to use VAPID using lcobucci/jwt"
+    "ext-mbstring": "Mandatory when using Payload or VAPID extensions",
+    "ext-openssl": "Mandatory when using Payload or VAPID extensions",
+    "web-token/jwt-signature-algorithm-ecdsa": "Mandatory if you want to use VAPID using web-token/jwt-framework",
+    "lcobucci/jwt": "Mandatory if you want to use VAPID using lcobucci/jwt",
+    "psr/log-implementation": "Recommended to receive logs from the library"
   }
 }
