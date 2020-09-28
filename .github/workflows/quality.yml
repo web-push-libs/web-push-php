@@ -29,6 +29,12 @@ jobs:
           chmod a+x php-cs-fixer
           ./php-cs-fixer fix --dry-run --stop-on-violation --using-cache=no
 
+      - name: Security Check
+        run: |
+          wget -c https://get.sensiolabs.org/security-checker.phar
+          chmod +x security-checker.phar
+          ./security-checker.phar security:check
+
       - name: Infection
         run: |
           wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar
@@ -36,8 +42,3 @@ jobs:
           chmod +x infection.phar
           ./infection -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95
 
-      - name: Security Check
-        run: |
-          wget -c https://get.sensiolabs.org/security-checker.phar
-          chmod +x security-checker.phar
-          ./security-checker.phar security:check

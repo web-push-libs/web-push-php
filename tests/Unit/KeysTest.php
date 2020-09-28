@@ -37,6 +37,6 @@ final class KeysTest extends TestCase
         static::assertEquals(['foo' => 'BAR'], $keys->all());
         static::assertEquals(['foo'], $keys->list());
         static::assertEquals('{"foo":"BAR"}', json_encode($keys));
-        static::assertEquals($keys, Keys::createFromAssociativeArray(['foo'=>'BAR']));
+        static::assertEquals($keys, Keys::createFromAssociativeArray(['foo' => 'BAR']));
     }
 }
