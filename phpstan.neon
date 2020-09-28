@@ -3,6 +3,9 @@ parameters:
     paths:
         - src
     checkMissingIterableValueType: false
+    ignoreErrors:
+        - '#arameter .* of function openssl_pkey_derive expects resource\, string given\.#'
+        - '#Expression on left side of \?\? is not nullable\.#'
 includes:
     - vendor/phpstan/phpstan-strict-rules/rules.neon
     - vendor/phpstan/phpstan-phpunit/extension.neon
