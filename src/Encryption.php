@@ -382,7 +382,7 @@ class Encryption
             $priv_key = PrivateKey::create($sen_d);
             $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
 
-            return hex2bin(str_pad(self::$curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16), 64, '0', STR_PAD_LEFT)); // @phpstan-ignore-line
+            return hex2bin(str_pad($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16), 64, '0', STR_PAD_LEFT)); // @phpstan-ignore-line
         } catch (\Throwable $e) {
             $rec_x = self::convertBase64ToGMP($public_key->get('x'));
             $rec_y = self::convertBase64ToGMP($public_key->get('y'));
