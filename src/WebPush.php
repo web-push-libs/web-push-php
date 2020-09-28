@@ -50,7 +50,7 @@ class WebPush
         return $this;
     }
 
-    public function send(Notification $notification, Subscription $subscription): void
+    public function send(Notification $notification, Subscription $subscription): StatusReport
     {
         $this->logger->debug('Sending notification', ['notification' => $notification, 'subscription' => $subscription]);
         $request = $this->requestFactory->createRequest('POST', $subscription->getEndpoint());
@@ -61,16 +61,22 @@ class WebPush
         $this->logger->debug('Response received', ['response' => $response]);
         if (200 === $response->getStatusCode()) {
             $location = $response->getHeaderLine('location');
-            $this->eventDispatcher->dispatch(new StatusReportSuccess($subscription, $notification, $location));
-
-            return;
+            $statusReport = new StatusReportSuccess(
+                $subscription,
+                $notification,
+                $location
+            );
+        } else {
+            $statusReport = new StatusReportFailure(
+                $subscription,
+                $notification,
+                $response->getStatusCode(),
+                $response->getBody()->getContents()
+            );
         }
 
-        $this->eventDispatcher->dispatch(new StatusReportFailure(
-            $subscription,
-            $notification,
-            $response->getStatusCode(),
-            $response->getBody()->getContents()
-        ));
+        $this->eventDispatcher->dispatch($statusReport);
+
+        return $statusReport;
     }
 }
