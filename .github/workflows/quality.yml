@@ -40,5 +40,5 @@ jobs:
           wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar
           wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar.asc
           chmod +x infection.phar
-          ./infection -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95
+          ./infection.phar -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95
 
