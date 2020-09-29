@@ -182,7 +182,12 @@ class WebPush
                     })
                     ->otherwise(function ($reason) {
                         /** @var RequestException $reason **/
-                        return new MessageSentReport($reason->getRequest(), $reason->getResponse(), false, $reason->getMessage());
+                        if(method_exists($reason, 'getResponse')){
+                            $response = $reason->getResponse();
+                        }else{
+                            $response = null;
+                        }
+                        return new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage());
                     });
             }
 
