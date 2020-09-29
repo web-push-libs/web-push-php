@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\WebPush\Payload;
@@ -25,13 +25,16 @@ final class AESGCM implements ContentEncoding
 {
     private const ENCODING = 'aesgcm';
 
-    private string $serverPrivateKey;
     private string $serverPublicKey;
+    private string $serverPrivateKeyPEM;
 
-    public function __construct(string $serverPrivateKey, string $passphrase = '')
+    public function __construct(string $serverPrivateKey, $serverPublicKey)
     {
-        $this->serverPrivateKey = $serverPrivateKey;
-        $this->serverPublicKey = Utils::serializePublicKey($serverPrivateKey, $passphrase);
+        $this->serverPublicKey = Base64Url::decode($serverPublicKey);
+        $this->serverPrivateKeyPEM = Utils::privateKeyToPEM(
+            Base64Url::decode($serverPrivateKey),
+            $this->serverPublicKey
+        );
     }
 
     public function name(): string
@@ -43,15 +46,15 @@ final class AESGCM implements ContentEncoding
     {
         $keys = $subscription->getKeys();
         Assertion::true($keys->has('p256dh'), 'The user-agent public key is missing');
-        $userAgentPublicKey = $keys->get('p256dh');
+        $userAgentPublicKey = Base64Url::decode($keys->get('p256dh'));
 
         Assertion::true($keys->has('auth'), 'The user-agent authentication token is missing');
-        $userAgentAuthToken = $keys->get('auth');
+        $userAgentAuthToken = Base64Url::decode($keys->get('auth'));
 
         $salt = random_bytes(16);
 
         //Agreement key
-        $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey);
+        $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKeyPEM);
 
         //IKM
         $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;
@@ -71,18 +74,19 @@ final class AESGCM implements ContentEncoding
         $tag = '';
         $encryptedText = openssl_encrypt($payload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
 
-        $encryptedTextLength = mb_strlen($encryptedText, '8bit');
-        Assertion::lessOrEqualThan($encryptedTextLength, 4078, 'Payload too large');
+        $encryptedTextB64 = base64_encode($encryptedText);
+        $encryptedTextB64Length = mb_strlen($encryptedTextB64, '8bit');
+        Assertion::lessOrEqualThan($encryptedTextB64Length, 4078, 'Payload too large');
 
         $request
             ->getBody()
-            ->write($encryptedText)
+            ->write($encryptedTextB64)
         ;
 
         return $request
             ->withHeader('Encryption', 'salt='.Base64Url::encode($salt))
             ->withHeader('Crypto-Key', 'dh='.Base64Url::encode($this->serverPublicKey))
-            ->withHeader('Content-Length', (string) $encryptedTextLength)
+            ->withHeader('Content-Length', (string) $encryptedTextB64Length)
         ;
     }
 

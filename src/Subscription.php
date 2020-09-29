@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\WebPush;
@@ -54,7 +54,7 @@ class Subscription implements JsonSerializable
         return $this;
     }
 
-    public function witContentEncoding(string $contentEncoding): self
+    public function withContentEncoding(string $contentEncoding): self
     {
         $this->contentEncoding = $contentEncoding;
 
@@ -108,9 +108,9 @@ class Subscription implements JsonSerializable
         $object = self::create($input['endpoint']);
         if (array_key_exists('contentEncoding', $input)) {
             Assertion::nullOrString($input['contentEncoding'], 'Invalid input');
-            $object->witContentEncoding($input['contentEncoding']);
+            $object->withContentEncoding($input['contentEncoding']);
         }
-        if (array_key_exists('keys', $input) && null !== $input['keys']) {
+        if (array_key_exists('keys', $input)) {
             Assertion::isArray($input['keys'], 'Invalid input');
             $object->setKeys(Keys::createFromAssociativeArray($input['keys']));
         }

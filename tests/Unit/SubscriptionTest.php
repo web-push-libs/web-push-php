@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\Tests\Unit;
@@ -56,6 +56,19 @@ final class SubscriptionTest extends TestCase
     /**
      * @test
      */
+    public function createSubscriptionFromJson(): void
+    {
+        $subscription = Subscription::createFromString('{"endpoint": "https://some.pushservice.com/something-unique","keys": {"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="}}');
+
+        static::assertEquals('https://some.pushservice.com/something-unique', $subscription->getEndpoint());
+        static::assertEquals('BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=', $subscription->getKeys()->get('p256dh'));
+        static::assertEquals('FPssNDTKnInHVndSTdbKFw==', $subscription->getKeys()->get('auth'));
+        static::assertEquals(Subscription::CONTENT_ENCODING_AESGCM, $subscription->getContentEncoding());
+    }
+
+    /**
+     * @test
+     */
     public function createSubscriptionWithAESGCMENCODINGFluent(): void
     {
         $subscription = Subscription::create('https://foo.bar')
@@ -86,7 +99,7 @@ final class SubscriptionTest extends TestCase
     public function createSubscription(string $endpoint, ?string $contentEncoding, array $keys): void
     {
         $subscription = Subscription::create($endpoint)
-            ->witContentEncoding($contentEncoding)
+            ->withContentEncoding($contentEncoding)
         ;
         foreach ($keys as $k => $v) {
             $subscription->getKeys()->set($k, $v);

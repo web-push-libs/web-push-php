@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\Tests\Unit;
@@ -119,7 +119,7 @@ final class UtilsTest extends TestCase
             ->willReturn($keys)
         ;
 
-        $encoder = new AESGCM($serverPrivateKeyPEM);
+        $encoder = new AESGCM($serverPrivateKey, $serverPublicKey);
         $encoder->encode('Hello world!', $request, $subscription);
     }
 
@@ -128,8 +128,8 @@ final class UtilsTest extends TestCase
         return [
             [
                 'uaPublicKey' => Base64Url::decode('BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4'),
-                'sPrivateKey' => Base64Url::decode('yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw'),
-                'sPublicKey' => Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8'),
+                'sPrivateKey' => 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw',
+                'sPublicKey' => 'BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8',
                 'salt' => Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw'),
                 'uaAuthSecret' => Base64Url::decode('BTBZMqHH6r4Tts7J_aSIgg'),
 

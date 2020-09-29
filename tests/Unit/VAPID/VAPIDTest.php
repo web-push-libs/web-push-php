@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\Tests\Unit\VAPID;
@@ -67,7 +67,7 @@ final class VAPIDTest extends TestCase
         $request
             ->expects(static::once())
             ->method('withHeader')
-            ->with('Authorization', 't=TOKEN k=KEY')
+            ->with('Authorization', 'vapid t=TOKEN, k=KEY')
             ->willReturnSelf()
         ;
 
@@ -120,7 +120,7 @@ final class VAPIDTest extends TestCase
         $request
             ->expects(static::once())
             ->method('withHeader')
-            ->with('Authorization', 't=TOKEN__CACHE k=KEY__CACHE')
+            ->with('Authorization', 'vapid t=TOKEN__CACHE, k=KEY__CACHE')
             ->willReturnSelf()
         ;
 

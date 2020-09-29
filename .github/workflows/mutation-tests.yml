@@ -1,0 +1,28 @@
+name: Mutation Testing
+
+on: [push]
+
+jobs:
+  tests:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest]
+        php-versions: ['7.4']
+    name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Infection
+        run: |
+          wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar
+          wget https://github.com/infection/infection/releases/download/0.17.0/infection.phar.asc
+          chmod +x infection.phar
+          ./infection.phar -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95

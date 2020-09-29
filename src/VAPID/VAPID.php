@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\WebPush\VAPID;
@@ -32,7 +32,7 @@ class VAPID implements Extension
     private JWSProvider $jwsProvider;
     private ?CacheInterface $cache = null;
     private ?string $cacheKey = self::DEFAULT_CACHE_KEY;
-    private ?string $expirationTime = null;
+    private string $expirationTime = 'now +1h';
     private LoggerInterface $logger;
 
     public function __construct(JWSProvider $jwsProvider)
@@ -48,7 +48,7 @@ class VAPID implements Extension
         return $this;
     }
 
-    public function setCache(CacheInterface $cache, string $expirationTime = 'now +1 hour', ?string $cacheKey = null): self
+    public function setCache(CacheInterface $cache, string $expirationTime = 'now +1h', ?string $cacheKey = null): self
     {
         $this->cache = $cache;
         $this->expirationTime = $expirationTime;
@@ -76,7 +76,7 @@ class VAPID implements Extension
 
         return  $request->withHeader(
             'Authorization',
-            sprintf('t=%s k=%s', $header->getToken(), $header->getKey())
+            sprintf('vapid t=%s, k=%s', $header->getToken(), $header->getKey())
         );
     }
 
