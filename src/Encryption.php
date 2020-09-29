@@ -16,7 +16,6 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use Brick\Math\BigInteger;
 use Jose\Component\Core\JWK;
-use Jose\Component\Core\Util\Ecc\Curve;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
@@ -96,7 +95,7 @@ class Encryption
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => $localPrivateKeyObject->getSecret()->getX(), // @phpstan-ignore-line
+                'd' => Base64Url::encode($localPrivateKeyObject->getSecret()->toBytes()),
                 'x' => Base64Url::encode($localPublicKeyObject[0]),
                 'y' => Base64Url::encode($localPublicKeyObject[1]),
             ]);
@@ -276,9 +275,26 @@ class Encryption
         $privateKey = $curve->createPrivateKey();
         $publicKey = $curve->createPublicKey($privateKey);
 
+        if ($publicKey->getPoint()->getX() instanceof BigInteger) {
+            return [
+                new JWK([
+                    'kty' => 'EC',
+                    'crv' => 'P-256',
+                    'x' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getX()->toBytes())),
+                    'y' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getY()->toBytes())),
+                    'd' => Base64Url::encode(self::addNullPadding($privateKey->getSecret()->toBytes())),
+                ])
+            ];
+        }
+
         return [
-            $publicKey,
-            $privateKey,
+            new JWK([
+                'kty' => 'EC',
+                'crv' => 'P-256',
+                'x' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($publicKey->getPoint()->getX(), 16)))),
+                'y' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($publicKey->getPoint()->getY(), 16)))),
+                'd' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($privateKey->getSecret(), 16)))),
+            ])
         ];
     }
 
@@ -307,9 +323,9 @@ class Encryption
             new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'x' => Base64Url::encode($details['ec']['x']),
-                'y' => Base64Url::encode($details['ec']['y']),
-                'd' => Base64Url::encode($details['ec']['d']),
+                'x' => Base64Url::encode(self::addNullPadding($details['ec']['x'])),
+                'y' => Base64Url::encode(self::addNullPadding($details['ec']['y'])),
+                'd' => Base64Url::encode(self::addNullPadding($details['ec']['d'])),
             ])
         ];
     }
@@ -366,7 +382,7 @@ class Encryption
             $priv_key = PrivateKey::create($sen_d);
             $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
 
-            return hex2bin($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16)); // @phpstan-ignore-line
+            return hex2bin(str_pad($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16), 64, '0', STR_PAD_LEFT)); // @phpstan-ignore-line
         } catch (\Throwable $e) {
             $rec_x = self::convertBase64ToGMP($public_key->get('x'));
             $rec_y = self::convertBase64ToGMP($public_key->get('y'));
@@ -398,5 +414,10 @@ class Encryption
         $value = unpack('H*', Base64Url::decode($value));
 
         return gmp_init($value[1], 16);
+    }
+
+    private static function addNullPadding(string $data): string
+    {
+        return str_pad($data, 32, chr(0), STR_PAD_LEFT);
     }
 }
