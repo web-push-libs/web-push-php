@@ -3,16 +3,17 @@
 declare(strict_types=1);
 
 /*
- * The MIT License (MIT)
+ * This file is part of the WebPush library.
  *
- * Copyright (c) 2014-2020 Spomky-Labs
+ * (c) Louis Lagrange <lagrange.louis@gmail.com>
  *
- * This software may be modified and distributed under the terms
- * of the MIT license.  See the LICENSE file for details.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\Tests\Benchmark;
 
+use Http\Mock\Client;
 use Jose\Component\Core\JWK;
 use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Notification;
@@ -25,7 +26,6 @@ use Minishlink\WebPush\UrgencyExtension;
 use Minishlink\WebPush\VAPID\VAPID;
 use Minishlink\WebPush\VAPID\WebTokenProvider;
 use Minishlink\WebPush\WebPush;
-use Http\Mock\Client;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use PhpBench\Benchmark\Metadata\Annotations\Revs;
 use PhpBench\Benchmark\Metadata\Annotations\Subject;

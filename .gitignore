@@ -8,3 +8,4 @@ module.log
 .vagrant
 Vagrantfile # temp, may be?
 /.phpunit.result.cache
+/infection.log

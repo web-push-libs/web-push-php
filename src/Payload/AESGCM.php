@@ -26,15 +26,16 @@ final class AESGCM implements ContentEncoding
     private const ENCODING = 'aesgcm';
 
     private string $serverPublicKey;
-    private string $serverPrivateKeyPEM;
+    private string $serverPrivateKey;
 
-    public function __construct(string $serverPrivateKey, $serverPublicKey)
+    public function __construct(string $serverPrivateKey, string $serverPublicKey)
     {
         $this->serverPublicKey = Base64Url::decode($serverPublicKey);
-        $this->serverPrivateKeyPEM = Utils::privateKeyToPEM(
+        $this->serverPrivateKey = Base64Url::decode($serverPrivateKey);
+        /*$this->serverPrivateKeyPEM = Utils::privateKeyToPEM(
             Base64Url::decode($serverPrivateKey),
-            $this->serverPublicKey
-        );
+            Base64Url::decode($serverPublicKey)
+        );*/
     }
 
     public function name(): string
@@ -54,7 +55,7 @@ final class AESGCM implements ContentEncoding
         $salt = random_bytes(16);
 
         //Agreement key
-        $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKeyPEM);
+        $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
 
         //IKM
         $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;

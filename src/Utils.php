@@ -88,10 +88,11 @@ abstract class Utils
         return $pem;
     }
 
-    public static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey): string
+    public static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
     {
+        $serverPrivateKeyPEM = self::privateKeyToPEM($serverPrivateKey, $serverPublicKey);
         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
-        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKey, 256);
+        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKeyPEM, 256);
         Assertion::string($result, 'Unable to compute the agreement key');
 
         return str_pad($result, 32, chr(0), STR_PAD_LEFT);

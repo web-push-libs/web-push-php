@@ -42,7 +42,7 @@ class WebPushTest extends TestCase
         $response
             ->expects(static::once())
             ->method('getStatusCode')
-            ->willReturn(200)
+            ->willReturn(201)
         ;
         $response
             ->expects(static::once())
