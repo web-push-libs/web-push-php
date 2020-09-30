@@ -83,7 +83,7 @@ final class AES128GCM implements ContentEncoding
         $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
 
         // Key Info
-        $keyInfo = "WebPush: info".chr(0).$userAgentPublicKey.$this->serverPublicKey;
+        $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;
 
         //IKM
         $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
@@ -110,7 +110,7 @@ final class AES128GCM implements ContentEncoding
         $encryptedText = openssl_encrypt($paddedPayload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
 
         // Body to be sent
-        $body = $salt .pack('N*', 4096) .pack('C*', mb_strlen($this->serverPublicKey, '8bit')) .$this->serverPublicKey;
+        $body = $salt.pack('N*', 4096).pack('C*', mb_strlen($this->serverPublicKey, '8bit')).$this->serverPublicKey;
         $body .= $encryptedText;
 
         $bodyB64 = base64_encode($body);

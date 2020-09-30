@@ -71,7 +71,7 @@ class PayloadExtension implements Extension
             ->withHeader('Content-Encoding', $contentEncoding)
         ;
 
-        if ($payload === '') {
+        if ('' === $payload) {
             return $request->withHeader('Content-Length', '0');
         }
 

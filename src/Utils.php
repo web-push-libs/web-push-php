@@ -19,7 +19,6 @@ use function chr;
 use InvalidArgumentException;
 use function Safe\hex2bin;
 use function Safe\openssl_pkey_get_private;
-use function Safe\sprintf;
 
 abstract class Utils
 {
@@ -115,4 +114,3 @@ abstract class Utils
         return mb_substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length, '8bit');
     }
 }
-
