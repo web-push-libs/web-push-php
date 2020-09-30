@@ -21,9 +21,9 @@ use Minishlink\WebPush\Utils;
 use Psr\Http\Message\RequestInterface;
 use function Safe\openssl_encrypt;
 
-final class AESGCM implements ContentEncoding
+final class AES128GCM implements ContentEncoding
 {
-    private const ENCODING = 'aesgcm';
+    private const ENCODING = 'aes128gcm';
     private const PADDING_NONE = 0;
     private const PADDING_MAX = 4078;
     private const PADDING_RECOMMENDED = 3052;
@@ -36,6 +36,10 @@ final class AESGCM implements ContentEncoding
     {
         $this->serverPublicKey = Base64Url::decode($serverPublicKey);
         $this->serverPrivateKey = Base64Url::decode($serverPrivateKey);
+        /*$this->serverPrivateKeyPEM = Utils::privateKeyToPEM(
+            Base64Url::decode($serverPrivateKey),
+            Base64Url::decode($serverPublicKey)
+        );*/
     }
 
     public function noPadding(): self
@@ -88,23 +92,18 @@ final class AESGCM implements ContentEncoding
         $prk = hash_hmac('sha256', $ikm, $salt, true);
 
         // Context
-        $context = 'P-256';
-        $context .= chr(0);
-        $context .= chr(65);
-        $context .= $userAgentPublicKey;
-        $context .= chr(65);
-        $context .= $this->serverPublicKey;
+        $context = '';
 
         // Derive the Content Encryption Key
-        $contentEncryptionKeyInfo = $this->createInfo('aesgcm', $context);
+        $contentEncryptionKeyInfo = $this->createInfo('aes128gcm', $context, $userAgentPublicKey);
         $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
 
         // Derive the Nonce
-        $nonceInfo = $this->createInfo('nonce', $context,);
+        $nonceInfo = $this->createInfo('nonce', $context, $userAgentPublicKey);
         $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
 
         // Padding
-        $paddedPayload = pack('n*', $this->padding).str_pad($payload, $this->padding, chr(0), STR_PAD_LEFT);
+        $paddedPayload = str_pad($payload.chr(2), $this->padding, chr(0), STR_PAD_LEFT);
 
         // Encryption
         $tag = '';
@@ -123,18 +122,24 @@ final class AESGCM implements ContentEncoding
         ;
 
         return $request
-            ->withHeader('Encryption', 'salt='.Base64Url::encode($salt))
-            ->withHeader('Crypto-Key', 'dh='.Base64Url::encode($this->serverPublicKey))
+//            ->withHeader('Encryption', 'salt='.Base64Url::encode($salt))
+//            ->withHeader('Crypto-Key', 'dh='.Base64Url::encode($this->serverPublicKey))
             ->withHeader('Content-Length', (string) $bodyLength)
             ;
     }
 
-    private function createInfo(string $type, string $context): string
+    private function createInfo(string $type, string $context, string $userAgentPublicKey): string
     {
         $info = 'Content-Encoding: ';
         $info .= $type;
         $info .= chr(0);
         $info .= $context;
+        /*$info .= 'P-256';
+        $info .= chr(0);
+        $info .= chr(65);
+        $info .= $userAgentPublicKey;
+        $info .= chr(65);
+        $info .= $this->serverPublicKey;*/
 
         return $info;
     }

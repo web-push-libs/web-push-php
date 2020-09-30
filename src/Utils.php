@@ -108,10 +108,11 @@ abstract class Utils
 
     public static function hkdf(string $salt, string $ikm, string $info, int $length): string
     {
-        Assertion::lessOrEqualThan($length, 32, sprintf('Cannot return keys of more than 32 bytes, %d requested', $length));
-        $keyHmac = hash_hmac('sha256', $ikm, $salt, true);
-        $infoHmac = hash_hmac('sha256', $info.chr(1), $keyHmac, true);
+        // Extract
+        $prk = hash_hmac('sha256', $ikm, $salt, true);
 
-        return mb_substr($infoHmac, 0, $length, '8bit');
+        // Expand
+        return mb_substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length, '8bit');
     }
 }
+

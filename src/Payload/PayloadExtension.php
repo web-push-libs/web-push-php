@@ -66,10 +66,15 @@ class PayloadExtension implements Extension
         $encoder = $this->contentEncodings[$contentEncoding];
         $this->logger->debug(sprintf('Encoder found: %s. Processing with the encoder.', $contentEncoding));
 
-        return $encoder
-            ->encode($payload, $request, $subscription)
+        $request = $request
             ->withHeader('Content-Type', 'application/octet-stream')
             ->withHeader('Content-Encoding', $contentEncoding)
         ;
+
+        if ($payload === '') {
+            return $request->withHeader('Content-Length', '0');
+        }
+
+        return $encoder->encode($payload, $request, $subscription);
     }
 }
