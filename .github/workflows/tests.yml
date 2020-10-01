@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           composer install --no-progress --no-suggest
-          npm i -g "https://github.com/GoogleChromeLabs/web-push-testing-service.git"
+          sudo npm i -g "https://github.com/GoogleChromeLabs/web-push-testing-service.git"
 
       - name: Run headless test
         uses: GabrielBB/xvfb-action@v1
