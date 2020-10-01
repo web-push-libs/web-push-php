@@ -19,9 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Run headless test
-        uses: GabrielBB/xvfb-action@v1
-
       - name: Validate composer.json and composer.lock
         run: composer validate
 
@@ -32,9 +29,10 @@ jobs:
         run: |
           web-push-testing-service start test -p 8090
 
-      - name: Run test suite
-        run: |
-          vendor/bin/phpunit -c phpunit.xml.dist --coverage-text
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: vendor/bin/phpunit -c phpunit.xml.dist --coverage-text
 
       - name: Stop WPTS
         run: |
