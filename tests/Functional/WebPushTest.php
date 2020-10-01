@@ -99,6 +99,7 @@ class WebPushTest extends TestCase
 
     /**
      * @dataProvider browserProvider
+     * @test
      * Run integration tests with browsers
      */
     public function browsers(string $browserName, string $browserVersion/*, $options*/): void

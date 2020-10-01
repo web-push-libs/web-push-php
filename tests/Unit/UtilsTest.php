@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\Tests\Unit;
 
-use function chr;
 use InvalidArgumentException;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Keys;
@@ -59,7 +58,7 @@ final class UtilsTest extends TestCase
                 ['Crypto-Key', static::callback(static function (string $data) {
                     return 0 === mb_strpos($data, 'dh=');
                 })],
-                ['Content-Length', 16],
+                ['Content-Length', 3140],
             )
             ->willReturnSelf()
         ;
@@ -125,20 +124,5 @@ final class UtilsTest extends TestCase
                 'expectedNonce' => Base64Url::decode('Ig5YZ6b2gFFQinhs'),
             ],
         ];
-    }
-
-    public static function createInfo(string $type, string $userAgentPublicKey, string $serverPublicKey): string
-    {
-        $info = 'Content-Encoding: ';
-        $info .= $type;
-        $info .= chr(0);
-        $info .= 'P-256';
-        $info .= chr(0);
-        $info .= chr(65);
-        $info .= $userAgentPublicKey;
-        $info .= chr(65);
-        $info .= $serverPublicKey;
-
-        return $info;
     }
 }
