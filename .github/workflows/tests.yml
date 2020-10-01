@@ -1,5 +1,4 @@
 name: Tests with Code Coverage
-run: sudo apt-get install libgconf-2-4 chromium-chromedriver
 
 on: [push]
 
@@ -13,6 +12,10 @@ jobs:
     name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
 
     steps:
+      - name: Install WPTS
+        run: |
+          sudo apt-get install libgconf-2-4 chromium-chromedriver
+
       - name: Checkout
         uses: actions/checkout@v1
 
