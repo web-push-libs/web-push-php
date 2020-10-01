@@ -1,4 +1,5 @@
 name: Tests with Code Coverage
+run: sudo apt-get install libgconf-2-4 chromium-chromedriver
 
 on: [push]
 
@@ -12,7 +13,11 @@ jobs:
     name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
 
     steps:
-      - uses: actions/checkout@v1
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Run headless test
+        uses: GabrielBB/xvfb-action@v1
 
       - name: Validate composer.json and composer.lock
         run: composer validate
@@ -20,6 +25,14 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress --no-suggest
 
+      - name: Run WPTS
+        run: |
+          web-push-testing-service start test -p 8090
+
       - name: Run test suite
         run: |
           vendor/bin/phpunit -c phpunit.xml.dist --coverage-text
+
+      - name: Stop WPTS
+        run: |
+          web-push-testing-service stop test
