@@ -18,6 +18,8 @@ use Minishlink\WebPush\StatusReportFailure;
 use Minishlink\WebPush\StatusReportSuccess;
 use Minishlink\WebPush\Subscription;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * @internal
@@ -50,11 +52,15 @@ final class StatusReportTest extends TestCase
     {
         $subscription = self::createMock(Subscription::class);
         $notification = self::createMock(Notification::class);
+        $request = self::createMock(RequestInterface::class);
+        $response = self::createMock(ResponseInterface::class);
         $report = new StatusReportFailure(
             $subscription,
             $notification,
             409,
-            'reason'
+            'reason',
+            $request,
+            $response
         );
 
         static::assertEquals($subscription, $report->getSubscription());
@@ -62,5 +68,7 @@ final class StatusReportTest extends TestCase
         static::assertEquals(false, $report->isSuccess());
         static::assertEquals(409, $report->getCode());
         static::assertEquals('reason', $report->getReason());
+        static::assertSame($request, $report->getRequest());
+        static::assertSame($response, $report->getResponse());
     }
 }

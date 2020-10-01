@@ -73,7 +73,9 @@ class WebPush
                 $subscription,
                 $notification,
                 $statusCode,
-                $response->getReasonPhrase()
+                $response->getReasonPhrase(),
+                $request,
+                $response
             );
         }
 

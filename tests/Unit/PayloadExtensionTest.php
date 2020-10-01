@@ -86,7 +86,7 @@ final class PayloadExtensionTest extends TestCase
             ->method('withHeader')
             ->withConsecutive(
                 ['Content-Type', 'application/octet-stream'],
-                ['Content-Encoding', Subscription::CONTENT_ENCODING_AESGCM],
+                ['Content-Encoding', 'aesgcm'],
             )
             ->willReturnSelf()
         ;
@@ -101,14 +101,14 @@ final class PayloadExtensionTest extends TestCase
         $subscription
             ->expects(static::once())
             ->method('getContentEncoding')
-            ->willReturn(Subscription::CONTENT_ENCODING_AESGCM)
+            ->willReturn('aesgcm')
         ;
 
         $contentEncoding = self::createMock(ContentEncoding::class);
         $contentEncoding
             ->expects(static::once())
             ->method('name')
-            ->willReturn(Subscription::CONTENT_ENCODING_AESGCM)
+            ->willReturn('aesgcm')
         ;
         $contentEncoding
             ->expects(static::once())
@@ -162,7 +162,7 @@ final class PayloadExtensionTest extends TestCase
         $subscription
             ->expects(static::once())
             ->method('getContentEncoding')
-            ->willReturn(Subscription::CONTENT_ENCODING_AESGCM)
+            ->willReturn('aesgcm')
         ;
 
         $contentEncoding = self::createMock(ContentEncoding::class);

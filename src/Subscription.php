@@ -15,19 +15,20 @@ namespace Minishlink\WebPush;
 
 use function array_key_exists;
 use Assert\Assertion;
+use DateTimeInterface;
 use JsonSerializable;
+use Safe\DateTimeImmutable;
 use function Safe\json_decode;
 
 class Subscription implements JsonSerializable
 {
-    public const CONTENT_ENCODING_AESGCM = 'aesgcm';
-    public const CONTENT_ENCODING_AES128GCM = 'aes128gcm';
-
     private string $endpoint;
 
     private Keys $keys;
 
-    private string $contentEncoding = self::CONTENT_ENCODING_AESGCM;
+    private string $contentEncoding = 'aesgcm';
+
+    private ?int $expirationTime = null;
 
     public function __construct(string $endpoint)
     {
@@ -38,20 +39,6 @@ class Subscription implements JsonSerializable
     public static function create(string $endpoint): self
     {
         return new self($endpoint);
-    }
-
-    public function withAESGCMContentEncoding(): self
-    {
-        $this->contentEncoding = self::CONTENT_ENCODING_AESGCM;
-
-        return $this;
-    }
-
-    public function withAES128GCMContentEncoding(): self
-    {
-        $this->contentEncoding = self::CONTENT_ENCODING_AES128GCM;
-
-        return $this;
     }
 
     public function withContentEncoding(string $contentEncoding): self
@@ -66,11 +53,14 @@ class Subscription implements JsonSerializable
         return $this->keys;
     }
 
-    public function setKeys(Keys $keys): self
+    public function getExpirationTime(): ?int
     {
-        $this->keys = $keys;
+        return $this->expirationTime;
+    }
 
-        return $this;
+    public function expiresAt(): ?DateTimeInterface
+    {
+        return null === $this->expirationTime ? null : (new DateTimeImmutable())->setTimestamp($this->expirationTime);
     }
 
     public function getEndpoint(): string
@@ -105,14 +95,18 @@ class Subscription implements JsonSerializable
         Assertion::keyExists($input, 'endpoint', 'Invalid input');
         Assertion::string($input['endpoint'], 'Invalid input');
 
-        $object = self::create($input['endpoint']);
+        $object = new self($input['endpoint']);
         if (array_key_exists('contentEncoding', $input)) {
             Assertion::nullOrString($input['contentEncoding'], 'Invalid input');
-            $object->withContentEncoding($input['contentEncoding']);
+            $object->contentEncoding = $input['contentEncoding'];
+        }
+        if (array_key_exists('expirationTime', $input)) {
+            Assertion::nullOrInteger($input['expirationTime'], 'Invalid input');
+            $object->expirationTime = $input['expirationTime'];
         }
         if (array_key_exists('keys', $input)) {
             Assertion::isArray($input['keys'], 'Invalid input');
-            $object->setKeys(Keys::createFromAssociativeArray($input['keys']));
+            $object->keys = Keys::createFromAssociativeArray($input['keys']);
         }
 
         return $object;

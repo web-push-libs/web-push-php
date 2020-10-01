@@ -13,29 +13,28 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\VAPID;
 
-use DateTimeInterface;
 use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 use Lcobucci\JWT\Signer\Key;
+use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Utils;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 final class LcobucciProvider implements JWSProvider
 {
-    private string $audience;
-    private string $subject;
-    private string $serializedPublicKey;
+    private string $publicKey;
     private LoggerInterface $logger;
+    private Key $key;
 
-    public function __construct(string $audience, string $subject, Key $signatureKey)
+    public function __construct(string $publicKey, string $privateKey)
     {
-        $this->audience = $audience;
-        $this->subject = $subject;
-        $this->serializedPublicKey = Utils::serializePublicKey(
-            $signatureKey->getContent(),
-            $signatureKey->getPassphrase() ?? ''
+        $this->publicKey = $publicKey;
+        $pem = Utils::privateKeyToPEM(
+            Base64Url::decode($privateKey),
+            Base64Url::decode($publicKey)
         );
+        $this->key = new Key($pem);
         $this->logger = new NullLogger();
     }
 
@@ -46,25 +45,27 @@ final class LcobucciProvider implements JWSProvider
         return $this;
     }
 
-    public function computeHeader(DateTimeInterface $expiresAt): Header
+    public function computeHeader(array $claims): Header
     {
         $this->logger->debug('Computing the JWS');
         $signer = new Sha256();
-        $token = (new Builder())
-            ->withClaim('aud', $this->audience)
-            ->withClaim('sub', $this->subject)
-            ->expiresAt($expiresAt->getTimestamp())
+        $builder = (new Builder())
             ->withHeader('typ', 'JWT')
             ->withHeader('alg', 'ES256')
-            ->getToken($signer)
+        ;
+        foreach ($claims as $k => $v) {
+            $builder->withClaim($k, $v);
+        }
+        $token = $builder
+            ->getToken($signer, $this->key)
             ->__toString()
         ;
 
-        $this->logger->debug('JWS computed', ['token' => $token, 'key' => $this->serializedPublicKey]);
+        $this->logger->debug('JWS computed', ['token' => $token, 'key' => $this->publicKey]);
 
         return new Header(
             $token,
-            $this->serializedPublicKey
+            $this->publicKey
         );
     }
 }

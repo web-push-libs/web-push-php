@@ -20,6 +20,7 @@ use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Utils;
 use Psr\Http\Message\RequestInterface;
 use function Safe\openssl_encrypt;
+use function Safe\sprintf;
 
 final class AES128GCM implements ContentEncoding
 {
@@ -36,10 +37,6 @@ final class AES128GCM implements ContentEncoding
     {
         $this->serverPublicKey = Base64Url::decode($serverPublicKey);
         $this->serverPrivateKey = Base64Url::decode($serverPrivateKey);
-        /*$this->serverPrivateKeyPEM = Utils::privateKeyToPEM(
-            Base64Url::decode($serverPrivateKey),
-            Base64Url::decode($serverPublicKey)
-        );*/
     }
 
     public function noPadding(): self
@@ -79,14 +76,7 @@ final class AES128GCM implements ContentEncoding
 
         $salt = random_bytes(16);
 
-        //Agreement key
-        $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
-
-        // Key Info
-        $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;
-
-        //IKM
-        $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+        $ikm = Utils::computeIKM($userAgentAuthToken, $userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
 
         //PRK
         $prk = hash_hmac('sha256', $ikm, $salt, true);
@@ -95,15 +85,15 @@ final class AES128GCM implements ContentEncoding
         $context = '';
 
         // Derive the Content Encryption Key
-        $contentEncryptionKeyInfo = $this->createInfo('aes128gcm', $context, $userAgentPublicKey);
-        $contentEncryptionKey = Utils::hkdf($salt, $prk, $contentEncryptionKeyInfo, 16);
+        $contentEncryptionKeyInfo = $this->createInfo('aes128gcm', $context);
+        $contentEncryptionKey = mb_substr(hash_hmac('sha256', $contentEncryptionKeyInfo.chr(1), $prk, true), 0, 16, '8bit');
 
         // Derive the Nonce
-        $nonceInfo = $this->createInfo('nonce', $context, $userAgentPublicKey);
-        $nonce = Utils::hkdf($salt, $prk, $nonceInfo, 12);
+        $nonceInfo = $this->createInfo('nonce', $context, );
+        $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
 
         // Padding
-        $paddedPayload = str_pad($payload.chr(2), $this->padding, chr(0), STR_PAD_LEFT);
+        $paddedPayload = str_pad($payload.chr(2), $this->padding, chr(0), STR_PAD_RIGHT);
 
         // Encryption
         $tag = '';
@@ -111,35 +101,25 @@ final class AES128GCM implements ContentEncoding
 
         // Body to be sent
         $body = $salt.pack('N*', 4096).pack('C*', mb_strlen($this->serverPublicKey, '8bit')).$this->serverPublicKey;
-        $body .= $encryptedText;
+        $body .= $encryptedText.$tag;
 
-        $bodyB64 = base64_encode($body);
+        $bodyB64 = Base64Url::encode($body);
         $bodyLength = mb_strlen($body, '8bit');
 
-        $request
-            ->getBody()
-            ->write($bodyB64)
-        ;
+        $request->getBody()->write($bodyB64);
 
         return $request
-//            ->withHeader('Encryption', 'salt='.Base64Url::encode($salt))
-//            ->withHeader('Crypto-Key', 'dh='.Base64Url::encode($this->serverPublicKey))
+            ->withAddedHeader('Crypto-Key', sprintf('dh=%s', Base64Url::encode($this->serverPublicKey)))
             ->withHeader('Content-Length', (string) $bodyLength)
-            ;
+        ;
     }
 
-    private function createInfo(string $type, string $context, string $userAgentPublicKey): string
+    private function createInfo(string $type, string $context): string
     {
         $info = 'Content-Encoding: ';
         $info .= $type;
         $info .= chr(0);
         $info .= $context;
-        /*$info .= 'P-256';
-        $info .= chr(0);
-        $info .= chr(65);
-        $info .= $userAgentPublicKey;
-        $info .= chr(65);
-        $info .= $this->serverPublicKey;*/
 
         return $info;
     }

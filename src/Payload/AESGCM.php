@@ -75,14 +75,8 @@ final class AESGCM implements ContentEncoding
 
         $salt = random_bytes(16);
 
-        //Agreement key
-        $sharedSecret = Utils::computeAgreementKey($userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
-
-        // Key Info
-        $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;
-
         //IKM
-        $ikm = Utils::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+        $ikm = Utils::computeIKM($userAgentAuthToken, $userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
 
         //PRK
         $prk = hash_hmac('sha256', $ikm, $salt, true);
@@ -111,11 +105,11 @@ final class AESGCM implements ContentEncoding
         $encryptedText = openssl_encrypt($paddedPayload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
 
         // Body to be sent
-        $body = $salt.pack('N*', 4096).pack('C*', mb_strlen($this->serverPublicKey, '8bit')).$this->serverPublicKey;
-        $body .= $encryptedText;
+        $body = $salt.pack('N*', 4096).chr(65).$this->serverPublicKey;
+        $body .= $encryptedText.$tag;
 
-        $bodyB64 = base64_encode($body);
         $bodyLength = mb_strlen($body, '8bit');
+        $bodyB64 = Base64Url::encode($body);
 
         $request
             ->getBody()

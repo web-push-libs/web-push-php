@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\Tests\Unit;
 
 use Assert\InvalidArgumentException;
+use DatetimeImmutable;
 use Minishlink\WebPush\Subscription;
 use PHPUnit\Framework\TestCase;
 use Safe\Exceptions\JsonException;
@@ -50,7 +51,7 @@ final class SubscriptionTest extends TestCase
         static::assertEquals('https://foo.bar', $subscription->getEndpoint());
         static::assertEquals('Public key', $subscription->getKeys()->get('p256dh'));
         static::assertEquals('Authorization Token', $subscription->getKeys()->get('auth'));
-        static::assertEquals(Subscription::CONTENT_ENCODING_AESGCM, $subscription->getContentEncoding());
+        static::assertEquals('aesgcm', $subscription->getContentEncoding());
     }
 
     /**
@@ -58,12 +59,40 @@ final class SubscriptionTest extends TestCase
      */
     public function createSubscriptionFromJson(): void
     {
+        $subscription = Subscription::createFromString('{"endpoint": "https://some.pushservice.com/something-unique","keys": {"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="},"expirationTime":1580253757}');
+
+        static::assertEquals('https://some.pushservice.com/something-unique', $subscription->getEndpoint());
+        static::assertEquals('BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=', $subscription->getKeys()->get('p256dh'));
+        static::assertEquals('FPssNDTKnInHVndSTdbKFw==', $subscription->getKeys()->get('auth'));
+        static::assertEquals('aesgcm', $subscription->getContentEncoding());
+        static::assertEquals(1580253757, $subscription->getExpirationTime());
+        static::assertEquals(DatetimeImmutable::createFromFormat('Y-m-d\TH:i:sP', '2020-01-28T16:22:37-07:00'), $subscription->expiresAt());
+    }
+
+    /**
+     * @test
+     */
+    public function createSubscriptionWithoutExpirationTimeFromJson(): void
+    {
         $subscription = Subscription::createFromString('{"endpoint": "https://some.pushservice.com/something-unique","keys": {"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="}}');
 
         static::assertEquals('https://some.pushservice.com/something-unique', $subscription->getEndpoint());
         static::assertEquals('BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=', $subscription->getKeys()->get('p256dh'));
         static::assertEquals('FPssNDTKnInHVndSTdbKFw==', $subscription->getKeys()->get('auth'));
-        static::assertEquals(Subscription::CONTENT_ENCODING_AESGCM, $subscription->getContentEncoding());
+        static::assertEquals('aesgcm', $subscription->getContentEncoding());
+        static::assertNull($subscription->getExpirationTime());
+        static::assertNull($subscription->expiresAt());
+    }
+
+    /**
+     * @test
+     */
+    public function invalidExpirationTime(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Invalid input');
+
+        Subscription::createFromString('{"endpoint": "https://some.pushservice.com/something-unique","keys": {"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="},"expirationTime":"Hello World"}');
     }
 
     /**
@@ -72,11 +101,11 @@ final class SubscriptionTest extends TestCase
     public function createSubscriptionWithAESGCMENCODINGFluent(): void
     {
         $subscription = Subscription::create('https://foo.bar')
-            ->withAESGCMContentEncoding()
+            ->withContentEncoding('aesgcm')
         ;
 
         static::assertEquals('https://foo.bar', $subscription->getEndpoint());
-        static::assertEquals(Subscription::CONTENT_ENCODING_AESGCM, $subscription->getContentEncoding());
+        static::assertEquals('aesgcm', $subscription->getContentEncoding());
     }
 
     /**
@@ -85,11 +114,11 @@ final class SubscriptionTest extends TestCase
     public function createSubscriptionWithAES128GCMENCODINGFluent(): void
     {
         $subscription = Subscription::create('https://foo.bar')
-            ->withAES128GCMContentEncoding()
+            ->withContentEncoding('aes128gcm')
         ;
 
         static::assertEquals('https://foo.bar', $subscription->getEndpoint());
-        static::assertEquals(Subscription::CONTENT_ENCODING_AES128GCM, $subscription->getContentEncoding());
+        static::assertEquals('aes128gcm', $subscription->getContentEncoding());
     }
 
     /**
@@ -173,6 +202,15 @@ final class SubscriptionTest extends TestCase
                 'input' => json_encode([
                     'endpoint' => 'https://foo.bar',
                     'contentEncoding' => 'FOO',
+                    'keys' => 'foo',
+                ]),
+                'exception' => InvalidArgumentException::class,
+                'message' => 'Invalid input',
+            ],
+            [
+                'input' => json_encode([
+                    'endpoint' => 'https://foo.bar',
+                    'contentEncoding' => 'FOO',
                     'keys' => [
                         12 => 0,
                     ],
@@ -191,6 +229,19 @@ final class SubscriptionTest extends TestCase
                 ]),
                 'exception' => InvalidArgumentException::class,
                 'message' => 'Invalid key value',
+            ],
+            [
+                'input' => json_encode([
+                    'endpoint' => 'https://foo.bar',
+                    'contentEncoding' => 'FOO',
+                    'keys' => [
+                        'authToken' => 'BAR',
+                        'publicKey' => 0,
+                    ],
+                    'expirationTime' => 'Monday',
+                ]),
+                'exception' => InvalidArgumentException::class,
+                'message' => 'Invalid input',
             ],
         ];
     }

@@ -13,9 +13,10 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\VAPID;
 
-use DateTimeInterface;
-
 interface JWSProvider
 {
-    public function computeHeader(DateTimeInterface $expiresAt): Header;
+    /**
+     * @param array<string, mixed> $claims
+     */
+    public function computeHeader(array $claims): Header;
 }

@@ -87,20 +87,10 @@ abstract class Utils
         return $pem;
     }
 
-    public static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
+    public static function computeIKM(string $userAgentAuthToken, string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
     {
-        $serverPrivateKeyPEM = self::privateKeyToPEM($serverPrivateKey, $serverPublicKey);
-        $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
-        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKeyPEM, 256);
-        Assertion::string($result, 'Unable to compute the agreement key');
-
-        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
-    }
-
-    public static function computeIKM(string $sharedSecret, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPublicKey): string
-    {
+        $sharedSecret = self::computeAgreementKey($userAgentPublicKey, $serverPrivateKey, $serverPublicKey);
         $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$serverPublicKey;
-        $prkKey = hash_hmac('sha256', $userAgentAuthToken, $sharedSecret, true);
 
         return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
     }
@@ -112,5 +102,15 @@ abstract class Utils
 
         // Expand
         return mb_substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length, '8bit');
+    }
+
+    private static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
+    {
+        $serverPrivateKeyPEM = self::privateKeyToPEM($serverPrivateKey, $serverPublicKey);
+        $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
+        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKeyPEM, 256);
+        Assertion::string($result, 'Unable to compute the agreement key');
+
+        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
     }
 }

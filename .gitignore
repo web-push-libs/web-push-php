@@ -1,4 +1,7 @@
+/.node-persist
+/build
 /vendor
-composer.lock
+/temp
 /.phpunit.result.cache
+composer.lock
 /infection.log

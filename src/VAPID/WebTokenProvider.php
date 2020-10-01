@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\VAPID;
 
-use DateTimeInterface;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\Signature\Algorithm\ES256;
@@ -30,18 +29,14 @@ final class WebTokenProvider implements JWSProvider
     private JWK $signatureKey;
     private CompactSerializer $serializer;
     private JWSBuilder $jwsBuilder;
-    private string $audience;
-    private string $subject;
     private LoggerInterface $logger;
 
-    public function __construct(string $audience, string $subject, JWK $signatureKey)
+    public function __construct(JWK $signatureKey)
     {
         $this->signatureKey = $signatureKey;
         $algorithmManager = new AlgorithmManager([new ES256()]);
         $this->serializer = new CompactSerializer();
         $this->jwsBuilder = new JWSBuilder($algorithmManager);
-        $this->audience = $audience;
-        $this->subject = $subject;
         $this->logger = new NullLogger();
     }
 
@@ -52,14 +47,10 @@ final class WebTokenProvider implements JWSProvider
         return $this;
     }
 
-    public function computeHeader(DateTimeInterface $expiresAt): Header
+    public function computeHeader(array $claims): Header
     {
         $this->logger->debug('Computing the JWS');
-        $payload = json_encode([
-            'aud' => $this->audience,
-            'sub' => $this->subject,
-            'exp' => $expiresAt->getTimestamp(),
-        ]);
+        $payload = json_encode($claims);
         $jws = $this->jwsBuilder->create()
             ->withPayload($payload)
             ->addSignature($this->signatureKey, ['typ' => 'JWT', 'alg' => 'ES256'])

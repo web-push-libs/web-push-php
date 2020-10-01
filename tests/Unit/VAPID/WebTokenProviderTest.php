@@ -45,10 +45,14 @@ final class WebTokenProviderTest extends TestCase
             )
         ;
 
-        $provider = new WebTokenProvider('audience', 'subject', $key);
+        $provider = new WebTokenProvider($key);
         $header = $provider
             ->setLogger($logger)
-            ->computeHeader($expiresAt)
+            ->computeHeader([
+                'aud' => 'audience',
+                'sub' => 'subject',
+                'exp' => $expiresAt->getTimestamp(),
+            ])
         ;
 
         static::assertStringStartsWith('eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJhdWQiOiJhdWRpZW5jZSIsInN1YiI6InN1YmplY3QiLCJleHAiOjE1ODAyNTM3NTd9.', $header->getToken());

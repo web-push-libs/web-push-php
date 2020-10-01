@@ -41,6 +41,7 @@
     "phpstan/phpstan-phpunit": "^0.12",
     "phpstan/phpstan-strict-rules": "^0.12",
     "phpunit/phpunit": "^9.3",
+    "symfony/cache": "^5.1",
     "symfony/http-client": "^5.1",
     "symfony/var-dumper": "^5.1",
     "thecodingmachine/phpstan-safe-rule": "^1.0",

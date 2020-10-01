@@ -39,7 +39,17 @@ final class VAPIDTest extends TestCase
         $jwsProvider
             ->expects(static::once())
             ->method('computeHeader')
-            ->willReturn(new Header('TOKEN', 'KEY'))
+            ->with()
+            ->willReturnCallback(static function (array $parameters): Header {
+                static::assertArrayHasKey('aud', $parameters);
+                static::assertArrayHasKey('sub', $parameters);
+                static::assertArrayHasKey('exp', $parameters);
+                static::assertEquals('https://foo.fr', $parameters['aud']);
+                static::assertEquals('subject', $parameters['sub']);
+                static::assertIsInt($parameters['exp']);
+
+                return new Header('TOKEN', 'KEY');
+            })
         ;
 
         $logger = self::createMock(LoggerInterface::class);
@@ -60,6 +70,7 @@ final class VAPIDTest extends TestCase
         ;
 
         $extension = new VAPID(
+            'subject',
             $jwsProvider
         );
 
@@ -70,9 +81,20 @@ final class VAPIDTest extends TestCase
             ->with('Authorization', 'vapid t=TOKEN, k=KEY')
             ->willReturnSelf()
         ;
+        $request
+            ->expects(static::once())
+            ->method('withAddedHeader')
+            ->with('Crypto-Key', static::isType('string'))
+            ->willReturnSelf()
+        ;
 
         $notification = self::createMock(Notification::class);
         $subscription = self::createMock(Subscription::class);
+        $subscription
+            ->expects(static::once())
+            ->method('getEndpoint')
+            ->willReturn('https://foo.fr/test')
+        ;
 
         $extension
             ->setLogger($logger)
@@ -106,7 +128,7 @@ final class VAPIDTest extends TestCase
         $cache
             ->expects(static::once())
             ->method('get')
-            ->with('__KEY__')
+            ->with(hash('sha512', '__KEY__-https://foo.fr/test'))
             ->willReturn(new Header('TOKEN__CACHE', 'KEY__CACHE'))
         ;
 
@@ -123,16 +145,29 @@ final class VAPIDTest extends TestCase
             ->with('Authorization', 'vapid t=TOKEN__CACHE, k=KEY__CACHE')
             ->willReturnSelf()
         ;
+        $request
+            ->expects(static::once())
+            ->method('withAddedHeader')
+            ->with('Crypto-Key', static::isType('string'))
+            ->willReturnSelf()
+        ;
 
         $notification = self::createMock(Notification::class);
         $subscription = self::createMock(Subscription::class);
+        $subscription
+            ->expects(static::once())
+            ->method('getEndpoint')
+            ->willReturn('https://foo.fr/test')
+        ;
 
         $extension = new VAPID(
+            'subject',
             $jwsProvider
         );
         $extension
             ->setLogger($logger)
-            ->setCache($cache, 'now +2 hours', '__KEY__')
+            ->setCache($cache, '__KEY__')
+            ->setExpirationTime('now +2 hours')
             ->process($request, $notification, $subscription)
         ;
     }
@@ -149,7 +184,7 @@ final class VAPIDTest extends TestCase
         $cache
             ->expects(static::once())
             ->method('get')
-            ->with('__KEY__')
+            ->with(hash('sha512', '__CACHE_KEY__-https://foo.fr/test'))
             ->willReturn(null)
         ;
 
@@ -160,13 +195,13 @@ final class VAPIDTest extends TestCase
         ;
 
         $extension = new VAPID(
+            'subject',
             $jwsProvider
         );
-        $extension->setCache(
-            $cache,
-            'now +2 hours',
-            '__KEY__'
-        );
+        $extension
+            ->setExpirationTime('now +2 hours')
+            ->setCache($cache, '__CACHE_KEY__')
+        ;
 
         $request = self::createMock(RequestInterface::class);
         $request
@@ -177,6 +212,11 @@ final class VAPIDTest extends TestCase
 
         $notification = self::createMock(Notification::class);
         $subscription = self::createMock(Subscription::class);
+        $subscription
+            ->expects(static::once())
+            ->method('getEndpoint')
+            ->willReturn('https://foo.fr/test')
+        ;
 
         $extension->process($request, $notification, $subscription);
     }
