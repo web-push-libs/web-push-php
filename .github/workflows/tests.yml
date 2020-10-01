@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Install WPTS
         run: |
-          sudo apt-get install libgconf-2-4 chromium-chromedriver
+          sudo apt-get install libgconf-2-4 chromium-chromedriver xvfb
 
       - name: Checkout
         uses: actions/checkout@v1
@@ -27,7 +27,8 @@ jobs:
           composer install --no-progress --no-suggest
           sudo npm install web-push-testing-service -g -unsafe-perm=true --allow-root
 
-      - name: Run headless test
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: web-push-testing-service start test -p 8090 && vendor/bin/phpunit -c phpunit.xml.dist --coverage-text && web-push-testing-service stop test
+      - name: Run tests
+        run: |
+          /usr/bin/xvfb-run --auto-servernum web-push-testing-service start test -p 8090
+          /usr/bin/xvfb-run --auto-servernum vendor/bin/phpunit -c phpunit.xml.dist --coverage-text
+          /usr/bin/xvfb-run --auto-servernum web-push-testing-service stop test
