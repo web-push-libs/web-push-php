@@ -14,34 +14,13 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Assert\Assertion;
-use Base64Url\Base64Url;
 use function chr;
-use InvalidArgumentException;
-use function Safe\hex2bin;
-use function Safe\openssl_pkey_get_private;
 
 abstract class Utils
 {
-    public static function serializePublicKey(string $privateKey, string $passphrase = ''): string
-    {
-        $key = openssl_pkey_get_private($privateKey, $passphrase);
-        $details = openssl_pkey_get_details($key);
-        Assertion::isArray($details, 'It was not possible to parse your key');
-
-        if (!isset($details['ec'])) {
-            throw new InvalidArgumentException('This key is not suitable for ECDSA signature');
-        }
-
-        $hexString = '04';
-        $hexString .= str_pad(bin2hex($details['ec']['x']), 64, '0', STR_PAD_LEFT);
-        $hexString .= str_pad(bin2hex($details['ec']['y']), 64, '0', STR_PAD_LEFT);
-
-        return Base64Url::encode(hex2bin($hexString));
-    }
-
     public static function privateKeyToPEM(string $privateKey, string $publicKey): string
     {
-        $d = unpack('H*', str_pad($privateKey, 32, "\0", STR_PAD_LEFT))[1];
+        $d = unpack('H*', str_pad($privateKey, 32, chr(0), STR_PAD_LEFT))[1];
 
         $der = pack(
             'H*',

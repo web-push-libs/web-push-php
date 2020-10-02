@@ -59,4 +59,21 @@ j37v41HeYofDMNfMPd97te8iohTWIAOkZA==
 PEM
 , $pem);
     }
+
+    /**
+     * @test
+     * @see https://tools.ietf.org/html/rfc8291#section-5
+     */
+    public function computeIKM(): void
+    {
+        $senderPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $senderPrivateKey = Base64Url::decode('yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw');
+        $receiverPublicKey = Base64Url::decode('BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4');
+        $authSecret = Base64Url::decode('BTBZMqHH6r4Tts7J_aSIgg');
+
+        $expectedIKM = Base64Url::decode('S4lYMb_L0FxCeq0WhDx813KgSYqU26kOyzWUdsXYyrg');
+
+        $ikm = Utils::computeIKM($authSecret, $receiverPublicKey, $senderPrivateKey, $senderPublicKey);
+        static::assertEquals($expectedIKM, $ikm);
+    }
 }
