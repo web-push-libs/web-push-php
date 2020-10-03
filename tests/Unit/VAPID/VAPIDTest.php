@@ -77,14 +77,8 @@ final class VAPIDTest extends TestCase
         $request = self::createMock(RequestInterface::class);
         $request
             ->expects(static::once())
-            ->method('withHeader')
-            ->with('Authorization', 'vapid t=TOKEN, k=KEY')
-            ->willReturnSelf()
-        ;
-        $request
-            ->expects(static::once())
             ->method('withAddedHeader')
-            ->with('Crypto-Key', static::isType('string'))
+            ->with('Authorization', 'vapid t=TOKEN, k=KEY')
             ->willReturnSelf()
         ;
 
@@ -141,14 +135,11 @@ final class VAPIDTest extends TestCase
         $request = self::createMock(RequestInterface::class);
         $request
             ->expects(static::once())
-            ->method('withHeader')
-            ->with('Authorization', 'vapid t=TOKEN__CACHE, k=KEY__CACHE')
-            ->willReturnSelf()
-        ;
-        $request
-            ->expects(static::once())
             ->method('withAddedHeader')
-            ->with('Crypto-Key', static::isType('string'))
+            ->withConsecutive(
+                ['Authorization', 'vapid t=TOKEN__CACHE, k=KEY__CACHE'],
+                //['Crypto-Key', static::isType('string')],
+            )
             ->willReturnSelf()
         ;
 

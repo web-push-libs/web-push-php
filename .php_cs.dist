@@ -13,7 +13,6 @@ file that was distributed with this source code.';
 $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__.'/src')
     ->in(__DIR__.'/tests')
-    ->in(__DIR__.'/example')
 ;
 
 return PhpCsFixer\Config::create()

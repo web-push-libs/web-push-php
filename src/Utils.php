@@ -66,10 +66,9 @@ abstract class Utils
         return $pem;
     }
 
-    public static function computeIKM(string $userAgentAuthToken, string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
+    public static function computeIKM(string $keyInfo, string $userAgentAuthToken, string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
     {
         $sharedSecret = self::computeAgreementKey($userAgentPublicKey, $serverPrivateKey, $serverPublicKey);
-        $keyInfo = 'WebPush: info'.chr(0).$userAgentPublicKey.$serverPublicKey;
 
         return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
     }

@@ -40,7 +40,7 @@ final class AES128GCMTest extends TestCase
      */
     public function decryptPayloadCorrectly(): void
     {
-        $body = 'DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN';
+        $body = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN');
         $userAgentPublicKey = 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4';
         $serverPrivateKey = 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw';
         $serverPublicKey = 'BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8';
@@ -168,6 +168,10 @@ final class AES128GCMTest extends TestCase
             ->method('getContents')
             ->willReturn(self::$body)
         ;
+        dump($userAgentPublicKey);
+        dump($userAgentAuthToken);
+        dump($serverPrivateKey);
+        dump($serverPublicKey);
         $decryptedPayload = $this->decryptRequest(
             $request,
             Base64Url::decode($userAgentPublicKey),
@@ -197,11 +201,11 @@ final class AES128GCMTest extends TestCase
         $requestBody = $request->getBody();
         $requestBody->rewind();
 
-        $body = $requestBody->getContents();
-        $ciphertext = Base64Url::decode($body);
+        $ciphertext = $requestBody->getContents();
 
         // IKM
-        $ikm = Utils::computeIKM($authSecret, $senderPublicKey, $receiverPrivateKey, $receiverPublicKey);
+        $keyInfo = 'WebPush: info'.chr(0).$senderPublicKey.$receiverPublicKey;
+        $ikm = Utils::computeIKM($keyInfo, $authSecret, $senderPublicKey, $receiverPrivateKey, $receiverPublicKey);
 
         // Salt
         $salt = mb_substr($ciphertext, 0, 16, '8bit');

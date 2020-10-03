@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Minishlink\Tests\Unit;
 
+use function chr;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Utils;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +63,7 @@ PEM
 
     /**
      * @test
+     *
      * @see https://tools.ietf.org/html/rfc8291#section-5
      */
     public function computeIKM(): void
@@ -73,7 +75,8 @@ PEM
 
         $expectedIKM = Base64Url::decode('S4lYMb_L0FxCeq0WhDx813KgSYqU26kOyzWUdsXYyrg');
 
-        $ikm = Utils::computeIKM($authSecret, $receiverPublicKey, $senderPrivateKey, $senderPublicKey);
+        $keyInfo = 'WebPush: info'.chr(0).$receiverPublicKey.$senderPublicKey;
+        $ikm = Utils::computeIKM($keyInfo, $authSecret, $receiverPublicKey, $senderPrivateKey, $senderPublicKey);
         static::assertEquals($expectedIKM, $ikm);
     }
 }

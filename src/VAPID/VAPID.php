@@ -92,8 +92,9 @@ class VAPID implements Extension
         }
 
         return $request
-            ->withHeader('Authorization', sprintf('vapid t=%s, k=%s', $header->getToken(), $header->getKey()))
-            ->withAddedHeader('Crypto-Key', sprintf('p256ecdsa=%s', $header->getKey()))
+            ->withAddedHeader('Authorization', sprintf('vapid t=%s, k=%s', $header->getToken(), $header->getKey()))
+            //->withAddedHeader('Authorization', sprintf('WebPush %s', $header->getToken()))
+            //->withAddedHeader('Crypto-Key', sprintf('p256ecdsa=%s', $header->getKey()))
         ;
     }
 

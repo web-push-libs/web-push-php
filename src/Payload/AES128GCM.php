@@ -13,45 +13,13 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\Payload;
 
-use Assert\Assertion;
 use function chr;
-use Minishlink\WebPush\Base64Url;
-use Minishlink\WebPush\Subscription;
-use Minishlink\WebPush\Utils;
 use Psr\Http\Message\RequestInterface;
-use function Safe\openssl_encrypt;
-use function Safe\sprintf;
 
-final class AES128GCM implements ContentEncoding
+final class AES128GCM extends AbstractAESGCM implements ContentEncoding
 {
     private const ENCODING = 'aes128gcm';
-    private const PADDING_NONE = 0;
-    private const PADDING_MAX = 4078;
-    private const PADDING_RECOMMENDED = 3052;
-
-    private string $serverPublicKey;
-    private string $serverPrivateKey;
-    private int $padding = self::PADDING_RECOMMENDED;
-
-    public function __construct(string $serverPrivateKey, string $serverPublicKey)
-    {
-        $this->serverPublicKey = Base64Url::decode($serverPublicKey);
-        $this->serverPrivateKey = Base64Url::decode($serverPrivateKey);
-    }
-
-    public function noPadding(): self
-    {
-        $this->padding = self::PADDING_NONE;
-
-        return $this;
-    }
-
-    public function recommendedPadding(): self
-    {
-        $this->padding = self::PADDING_RECOMMENDED;
-
-        return $this;
-    }
+    private const PADDING_MAX = 3993; // as per RFC8291: 4096 -tag(16) -salt(16) -rs(4) -idlen(1) -keyid(65) -AEAD_AES_128_GCM expension(16) and 1 byte in case of
 
     public function maxPadding(): self
     {
@@ -65,62 +33,31 @@ final class AES128GCM implements ContentEncoding
         return self::ENCODING;
     }
 
-    public function encode(string $payload, RequestInterface $request, Subscription $subscription): RequestInterface
+    protected function getKeyInfo(string $userAgentPublicKey): string
     {
-        $keys = $subscription->getKeys();
-        Assertion::true($keys->has('p256dh'), 'The user-agent public key is missing');
-        $userAgentPublicKey = Base64Url::decode($keys->get('p256dh'));
+        return 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;
+    }
 
-        Assertion::true($keys->has('auth'), 'The user-agent authentication token is missing');
-        $userAgentAuthToken = Base64Url::decode($keys->get('auth'));
+    protected function getContext(string $userAgentPublicKey): string
+    {
+        return '';
+    }
 
-        $salt = random_bytes(16);
+    protected function addPadding(string $payload): string
+    {
+        return str_pad($payload.chr(2), $this->padding, chr(0), STR_PAD_RIGHT);
+    }
 
-        $ikm = Utils::computeIKM($userAgentAuthToken, $userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
+    protected function prepareRequest(RequestInterface $request, string $salt): RequestInterface
+    {
+        return $request;
+    }
 
-        //PRK
-        $prk = hash_hmac('sha256', $ikm, $salt, true);
-
-        // Context
-        $context = '';
-
-        // Derive the Content Encryption Key
-        $contentEncryptionKeyInfo = $this->createInfo('aes128gcm', $context);
-        $contentEncryptionKey = mb_substr(hash_hmac('sha256', $contentEncryptionKeyInfo.chr(1), $prk, true), 0, 16, '8bit');
-
-        // Derive the Nonce
-        $nonceInfo = $this->createInfo('nonce', $context, );
-        $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
-
-        // Padding
-        $paddedPayload = str_pad($payload.chr(2), $this->padding, chr(0), STR_PAD_RIGHT);
-
-        // Encryption
-        $tag = '';
-        $encryptedText = openssl_encrypt($paddedPayload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
-
-        // Body to be sent
+    protected function prepareBody(string $encryptedText, string $tag, string $salt): string
+    {
         $body = $salt.pack('N*', 4096).pack('C*', mb_strlen($this->serverPublicKey, '8bit')).$this->serverPublicKey;
         $body .= $encryptedText.$tag;
 
-        $bodyB64 = Base64Url::encode($body);
-        $bodyLength = mb_strlen($body, '8bit');
-
-        $request->getBody()->write($bodyB64);
-
-        return $request
-            ->withAddedHeader('Crypto-Key', sprintf('dh=%s', Base64Url::encode($this->serverPublicKey)))
-            ->withHeader('Content-Length', (string) $bodyLength)
-        ;
-    }
-
-    private function createInfo(string $type, string $context): string
-    {
-        $info = 'Content-Encoding: ';
-        $info .= $type;
-        $info .= chr(0);
-        $info .= $context;
-
-        return $info;
+        return $body;
     }
 }
