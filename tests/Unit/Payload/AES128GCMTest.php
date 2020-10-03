@@ -148,7 +148,7 @@ final class AES128GCMTest extends TestCase
         ;
 
         $encoder = new AES128GCM();
-        $encoder->$padding();
+        $encoder->{$padding}();
         static::assertEquals('aes128gcm', $encoder->name());
 
         $encoder->encode($payload, $request, $subscription);
