@@ -21,10 +21,7 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-suggest
 
       - name: PHPStan
-        run: vendor/bin/phpstan analyse
+        run: composer test:typing
 
       - name: PHP-CS-FIXER
-        run: |
-          wget https://cs.symfony.com/download/php-cs-fixer-v2.phar -O php-cs-fixer
-          chmod a+x php-cs-fixer
-          ./php-cs-fixer fix --dry-run --stop-on-violation --using-cache=no
+        run: composer test:syntax

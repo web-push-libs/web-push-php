@@ -17,25 +17,22 @@ use Assert\Assertion;
 use Minishlink\WebPush\Extension;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Safe\DateTimeImmutable;
 use function Safe\parse_url;
 use function Safe\sprintf;
-use Symfony\Contracts\Cache\CacheInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 
 class VAPID implements Extension
 {
-    private const DEFAULT_CACHE_KEY = 'WEB_PUSH_DEFAULT_CACHE_KEY';
-
     private JWSProvider $jwsProvider;
-    private ?CacheInterface $cache = null;
-    private ?string $cacheKey = self::DEFAULT_CACHE_KEY;
-    private string $expirationTime = 'now +1h';
+    private ?CacheItemPoolInterface $cache = null;
+    private string $tokenExpirationTime = 'now +1h';
     private LoggerInterface $logger;
     private string $subject;
+    private string $cacheExpirationTime = 'now +30min';
 
     public function __construct(string $subject, JWSProvider $jwsProvider)
     {
@@ -51,19 +48,17 @@ class VAPID implements Extension
         return $this;
     }
 
-    public function setExpirationTime(string $expirationTime = 'now +1h'): self
+    public function setTokenExpirationTime(string $tokenExpirationTime = 'now +1h'): self
     {
-        $this->expirationTime = $expirationTime;
+        $this->tokenExpirationTime = $tokenExpirationTime;
 
         return $this;
     }
 
-    public function setCache(CacheInterface $cache, ?string $cacheKey = null): self
+    public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now +30min'): self
     {
         $this->cache = $cache;
-        if (null !== $cacheKey) {
-            $this->cacheKey = $cacheKey;
-        }
+        $this->cacheExpirationTime = $cacheExpirationTime;
 
         return $this;
     }
@@ -72,9 +67,9 @@ class VAPID implements Extension
     {
         $this->logger->debug('Processing with VAPID header');
         $endpoint = $subscription->getEndpoint();
-        $expiresAt = new DateTimeImmutable($this->expirationTime);
+        $expiresAt = new DateTimeImmutable($this->tokenExpirationTime);
         $parsedEndpoint = parse_url($endpoint);
-        $origin = $parsedEndpoint['scheme'].'://'.$parsedEndpoint['host'];
+        $origin = $parsedEndpoint['scheme'].'://'.$parsedEndpoint['host'].(isset($parsedEndpoint['port']) ? ':'.$parsedEndpoint['port'] : '');
         $claims = [
             'aud' => $origin,
             'sub' => $this->subject,
@@ -82,7 +77,7 @@ class VAPID implements Extension
         ];
         if (null !== $this->cache) {
             $this->logger->debug('Caching feature is available');
-            $header = $this->getHeaderFromCache($endpoint, $claims);
+            $header = $this->getHeaderFromCache($origin, $claims);
             $this->logger->debug('Header from cache', ['header' => $header]);
             Assertion::isInstanceOf($header, Header::class, 'Unable to generate the VAPID header');
         } else {
@@ -93,23 +88,26 @@ class VAPID implements Extension
 
         return $request
             ->withAddedHeader('Authorization', sprintf('vapid t=%s, k=%s', $header->getToken(), $header->getKey()))
-            //->withAddedHeader('Authorization', sprintf('WebPush %s', $header->getToken()))
-            //->withAddedHeader('Crypto-Key', sprintf('p256ecdsa=%s', $header->getKey()))
         ;
     }
 
-    private function getHeaderFromCache(string $endpoint, array $claims): ?Header
+    private function getHeaderFromCache(string $origin, array $claims): ?Header
     {
         $jwsProvider = $this->jwsProvider;
-        $expirationTime = $this->expirationTime;
+        $computedCacheKey = hash('sha512', $origin);
 
-        $computedCacheKey = hash('sha512', sprintf('%s-%s', $this->cacheKey, $endpoint));
+        $item = $this->cache->getItem($computedCacheKey);
+        if ($item->isHit()) {
+            return $item->get();
+        }
 
-        return $this->cache->get($computedCacheKey, static function (ItemInterface $item) use ($claims, $jwsProvider,$expirationTime): Header {
-            $expiresAt = new DateTimeImmutable($expirationTime);
-            $item->expiresAt($expiresAt);
+        $token = $jwsProvider->computeHeader($claims);
+        $item
+            ->set($token)
+            ->expiresAt(new DateTimeImmutable($this->cacheExpirationTime))
+        ;
+        $this->cache->save($item);
 
-            return $jwsProvider->computeHeader($claims);
-        });
+        return $token;
     }
 }

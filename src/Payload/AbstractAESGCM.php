@@ -18,23 +18,32 @@ use function chr;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Utils;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
+use Safe\DateTimeImmutable;
 use function Safe\openssl_encrypt;
+use function Safe\openssl_pkey_new;
 use function Safe\sprintf;
 
 abstract class AbstractAESGCM implements ContentEncoding
 {
+    public const WEB_PUSH_PAYLOAD_ENCRYPTION = 'WEB_PUSH_PAYLOAD_ENCRYPTION';
     protected const PADDING_NONE = 0;
     protected const PADDING_RECOMMENDED = 3052;
 
-    protected string $serverPublicKey;
-    protected string $serverPrivateKey;
     protected int $padding = self::PADDING_RECOMMENDED;
 
-    public function __construct(string $serverPrivateKey, string $serverPublicKey)
+    private ?CacheItemPoolInterface $cache = null;
+    private string $cacheKey = self::WEB_PUSH_PAYLOAD_ENCRYPTION;
+    private string $cacheExpirationTime = 'now + 30min';
+
+    public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now + 30min'): self
     {
-        $this->serverPublicKey = Base64Url::decode($serverPublicKey);
-        $this->serverPrivateKey = Base64Url::decode($serverPrivateKey);
+        $this->cache = $cache;
+        $this->cacheExpirationTime = $cacheExpirationTime;
+        $this->getServerKeyFromCache(); //Force the creation of the key if not already set
+
+        return $this;
     }
 
     public function noPadding(): self
@@ -64,15 +73,17 @@ abstract class AbstractAESGCM implements ContentEncoding
 
         $salt = random_bytes(16);
 
+        $serverKey = $this->getServerKey();
+
         //IKM
-        $keyInfo = $this->getKeyInfo($userAgentPublicKey);
-        $ikm = Utils::computeIKM($keyInfo, $userAgentAuthToken, $userAgentPublicKey, $this->serverPrivateKey, $this->serverPublicKey);
+        $keyInfo = $this->getKeyInfo($userAgentPublicKey, $serverKey);
+        $ikm = Utils::computeIKM($keyInfo, $userAgentAuthToken, $userAgentPublicKey, $serverKey->getPrivateKey(), $serverKey->getPublicKey());
 
         //PRK
         $prk = hash_hmac('sha256', $ikm, $salt, true);
 
         // Context
-        $context = $this->getContext($userAgentPublicKey);
+        $context = $this->getContext($userAgentPublicKey, $serverKey);
 
         // Derive the Content Encryption Key
         $contentEncryptionKeyInfo = $this->createInfo($this->name(), $context);
@@ -90,7 +101,7 @@ abstract class AbstractAESGCM implements ContentEncoding
         $encryptedText = openssl_encrypt($paddedPayload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
 
         // Body to be sent
-        $body = $this->prepareBody($encryptedText, $tag, $salt);
+        $body = $this->prepareBody($encryptedText, $serverKey, $tag, $salt);
         $request->getBody()->write($body);
 
         $bodyLength = mb_strlen($body, '8bit');
@@ -99,7 +110,7 @@ abstract class AbstractAESGCM implements ContentEncoding
         $request = $this->prepareRequest($request, $salt);
 
         return $request
-            ->withAddedHeader('Crypto-Key', sprintf('dh=%s', Base64Url::encode($this->serverPublicKey)))
+            ->withAddedHeader('Crypto-Key', sprintf('dh=%s', Base64Url::encode($serverKey->getPublicKey())))
             ->withHeader('Content-Length', (string) $bodyLength)
             ;
     }
@@ -114,13 +125,59 @@ abstract class AbstractAESGCM implements ContentEncoding
         return $info;
     }
 
-    abstract protected function getKeyInfo(string $userAgentPublicKey): string;
+    abstract protected function getKeyInfo(string $userAgentPublicKey, ServerKey $serverKey): string;
 
-    abstract protected function getContext(string $userAgentPublicKey): string;
+    abstract protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string;
 
     abstract protected function addPadding(string $payload): string;
 
     abstract protected function prepareRequest(RequestInterface $request, string $salt): RequestInterface;
 
-    abstract protected function prepareBody(string $encryptedText, string $tag, string $salt): string;
+    abstract protected function prepareBody(string $encryptedText, ServerKey $serverKey, string $tag, string $salt): string;
+
+    private function getServerKey(): ServerKey
+    {
+        if (null !== $this->cache) {
+            return $this->getServerKeyFromCache();
+        }
+
+        return $this->generateServerKey();
+    }
+
+    private function getServerKeyFromCache(): ServerKey
+    {
+        $item = $this->cache->getItem($this->cacheKey);
+        if ($item->isHit()) {
+            return $item->get();
+        }
+
+        $serverKey = $this->generateServerKey();
+        $item
+            ->set($serverKey)
+            ->expiresAt(new DateTimeImmutable($this->cacheExpirationTime))
+        ;
+        $this->cache->save($item);
+
+        return $serverKey;
+    }
+
+    private function generateServerKey(): ServerKey
+    {
+        $keyResource = openssl_pkey_new([
+            'curve_name' => 'prime256v1',
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+        ]);
+
+        $details = openssl_pkey_get_details($keyResource);
+        openssl_pkey_free($keyResource);
+
+        Assertion::isArray($details, 'Unable to get the key details');
+
+        $publicKey = chr(4);
+        $publicKey .= str_pad($details['ec']['x'], 32, chr(0), STR_PAD_LEFT);
+        $publicKey .= str_pad($details['ec']['y'], 32, chr(0), STR_PAD_LEFT);
+        $privatekey = $details['ec']['d'];
+
+        return new ServerKey($publicKey, $privatekey);
+    }
 }

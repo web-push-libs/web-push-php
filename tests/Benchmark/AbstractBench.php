@@ -27,8 +27,6 @@ use Minishlink\WebPush\VAPID\JWSProvider;
 use Minishlink\WebPush\VAPID\VAPID;
 use Minishlink\WebPush\WebPush;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use PhpBench\Benchmark\Metadata\Annotations\Revs;
-use PhpBench\Benchmark\Metadata\Annotations\Subject;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
@@ -53,19 +51,21 @@ abstract class AbstractBench
             ->setCache(new FilesystemAdapter())
         ;
 
-        $aes128gcm = new AES128GCM(
-            'vplfkITvu0cwHqzK9Kj-DYStbCH_9AhGx9LqMyaeI6w',
-            'BMBlr6YznhYMX3NgcWIDRxZXs0sh7tCv7_YCsWcww0ZCv9WGg-tRCXfMEHTiBPCksSqeve1twlbmVAZFv7GSuj0'
-        );
-        $aesgcm = new AESGCM(
-            'vplfkITvu0cwHqzK9Kj-DYStbCH_9AhGx9LqMyaeI6w',
-            'BMBlr6YznhYMX3NgcWIDRxZXs0sh7tCv7_YCsWcww0ZCv9WGg-tRCXfMEHTiBPCksSqeve1twlbmVAZFv7GSuj0'
-        );
-
         $payloadExtension = new PayloadExtension();
         $payloadExtension
-            ->addContentEncoding($aesgcm)
+            ->addContentEncoding(new AES128GCM())
+            ->addContentEncoding(new AESGCM())
+        ;
+
+        $aes128gcm = new AES128GCM();
+        $aes128gcm->setCache(new FilesystemAdapter());
+        $aesgcm = new AESGCM();
+        $aesgcm->setCache(new FilesystemAdapter());
+
+        $payloadExtensionWithCache = new PayloadExtension();
+        $payloadExtensionWithCache
             ->addContentEncoding($aes128gcm)
+            ->addContentEncoding($aesgcm)
         ;
 
         $extensionManager = new ExtensionManager();
@@ -83,7 +83,7 @@ abstract class AbstractBench
             ->add(new TopicExtension())
             ->add(new UrgencyExtension())
             ->add($vapidExtensionWithCache)
-            ->add($payloadExtension)
+            ->add($payloadExtensionWithCache)
         ;
 
         $this->webPush = new WebPush($client, $psr17Factory, $extensionManager);

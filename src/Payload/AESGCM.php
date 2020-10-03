@@ -34,12 +34,12 @@ final class AESGCM extends AbstractAESGCM implements ContentEncoding
         return self::ENCODING;
     }
 
-    protected function getKeyInfo(string $userAgentPublicKey): string
+    protected function getKeyInfo(string $userAgentPublicKey, ServerKey $serverKey): string
     {
         return 'Content-Encoding: auth'.chr(0);
     }
 
-    protected function getContext(string $userAgentPublicKey): string
+    protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string
     {
         $context = 'P-256';
         $context .= chr(0);
@@ -48,7 +48,7 @@ final class AESGCM extends AbstractAESGCM implements ContentEncoding
         $context .= $userAgentPublicKey;
         $context .= chr(0);
         $context .= chr(65);
-        $context .= $this->serverPublicKey;
+        $context .= $serverKey->getPublicKey();
 
         return $context;
     }
@@ -68,7 +68,7 @@ final class AESGCM extends AbstractAESGCM implements ContentEncoding
         ;
     }
 
-    protected function prepareBody(string $encryptedText, string $tag, string $salt): string
+    protected function prepareBody(string $encryptedText, ServerKey $serverKey, string $tag, string $salt): string
     {
         return $encryptedText.$tag;
     }

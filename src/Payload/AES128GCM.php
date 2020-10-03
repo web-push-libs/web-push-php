@@ -33,12 +33,12 @@ final class AES128GCM extends AbstractAESGCM implements ContentEncoding
         return self::ENCODING;
     }
 
-    protected function getKeyInfo(string $userAgentPublicKey): string
+    protected function getKeyInfo(string $userAgentPublicKey, ServerKey $serverKey): string
     {
-        return 'WebPush: info'.chr(0).$userAgentPublicKey.$this->serverPublicKey;
+        return 'WebPush: info'.chr(0).$userAgentPublicKey.$serverKey->getPublicKey();
     }
 
-    protected function getContext(string $userAgentPublicKey): string
+    protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string
     {
         return '';
     }
@@ -53,9 +53,9 @@ final class AES128GCM extends AbstractAESGCM implements ContentEncoding
         return $request;
     }
 
-    protected function prepareBody(string $encryptedText, string $tag, string $salt): string
+    protected function prepareBody(string $encryptedText, ServerKey $serverKey, string $tag, string $salt): string
     {
-        $body = $salt.pack('N*', 4096).pack('C*', mb_strlen($this->serverPublicKey, '8bit')).$this->serverPublicKey;
+        $body = $salt.pack('N*', 4096).pack('C*', mb_strlen($serverKey->getPublicKey(), '8bit')).$serverKey->getPublicKey();
         $body .= $encryptedText.$tag;
 
         return $body;

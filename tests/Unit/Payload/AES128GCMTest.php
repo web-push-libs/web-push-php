@@ -25,6 +25,7 @@ use function ord;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
+use function Safe\preg_match;
 
 /**
  * @internal
@@ -41,10 +42,9 @@ final class AES128GCMTest extends TestCase
     public function decryptPayloadCorrectly(): void
     {
         $body = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN');
-        $userAgentPublicKey = 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4';
-        $serverPrivateKey = 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw';
-        $serverPublicKey = 'BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8';
-        $userAgentAuthToken = 'BTBZMqHH6r4Tts7J_aSIgg';
+        $userAgentPrivateKey = Base64Url::decode('q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94');
+        $userAgentPublicKey = Base64Url::decode('BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4');
+        $userAgentAuthToken = Base64Url::decode('BTBZMqHH6r4Tts7J_aSIgg');
         $expectedPayload = 'When I grow up, I want to be a watermelon';
 
         $stream = self::createMock(StreamInterface::class);
@@ -65,14 +65,7 @@ final class AES128GCMTest extends TestCase
             ->willReturn($stream)
         ;
 
-        $payload = $this->decryptRequest(
-            $request,
-            Base64Url::decode($userAgentPublicKey),
-            Base64Url::decode($userAgentAuthToken),
-            Base64Url::decode($serverPrivateKey),
-            Base64Url::decode($serverPublicKey)
-        );
-
+        $payload = $this->decryptRequest($request, $userAgentAuthToken, $userAgentPublicKey, $userAgentPrivateKey, true);
         static::assertEquals($expectedPayload, $payload);
     }
 
@@ -82,7 +75,7 @@ final class AES128GCMTest extends TestCase
      *
      * @see https://tests.peter.sh/push-encryption-verifier/
      */
-    public function encryptPayload(string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey, string $userAgentAuthToken, string $payload): void
+    public function encryptPayload(string $userAgentPrivateKey, string $userAgentPublicKey, string $userAgentAuthToken, string $payload, string $padding): void
     {
         self::$body = null;
         $stream = self::createMock(StreamInterface::class);
@@ -154,7 +147,8 @@ final class AES128GCMTest extends TestCase
             ->willReturn($keys)
         ;
 
-        $encoder = new AES128GCM($serverPrivateKey, $serverPublicKey);
+        $encoder = new AES128GCM();
+        $encoder->$padding();
         static::assertEquals('aes128gcm', $encoder->name());
 
         $encoder->encode($payload, $request, $subscription);
@@ -168,16 +162,12 @@ final class AES128GCMTest extends TestCase
             ->method('getContents')
             ->willReturn(self::$body)
         ;
-        dump($userAgentPublicKey);
-        dump($userAgentAuthToken);
-        dump($serverPrivateKey);
-        dump($serverPublicKey);
         $decryptedPayload = $this->decryptRequest(
             $request,
-            Base64Url::decode($userAgentPublicKey),
             Base64Url::decode($userAgentAuthToken),
-            Base64Url::decode($serverPrivateKey),
-            Base64Url::decode($serverPublicKey)
+            Base64Url::decode($userAgentPublicKey),
+            Base64Url::decode($userAgentPrivateKey),
+            true
         );
 
         static::assertEquals($payload, $decryptedPayload);
@@ -187,25 +177,35 @@ final class AES128GCMTest extends TestCase
     {
         return [
             [
+                'uaPrivateKey' => 'q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94',
                 'uaPublicKey' => 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
-                'sPrivateKey' => 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw',
-                'sPublicKey' => 'BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8',
                 'uaAuthSecret' => 'BTBZMqHH6r4Tts7J_aSIgg',
                 'payload' => 'When I grow up, I want to be a watermelon',
+                'padding' => 'noPadding',
+            ],
+            [
+                'uaPrivateKey' => 'q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94',
+                'uaPublicKey' => 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
+                'uaAuthSecret' => 'BTBZMqHH6r4Tts7J_aSIgg',
+                'payload' => 'When I grow up, I want to be a watermelon',
+                'padding' => 'recommendedPadding',
+            ],
+            [
+                'uaPrivateKey' => 'q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94',
+                'uaPublicKey' => 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
+                'uaAuthSecret' => 'BTBZMqHH6r4Tts7J_aSIgg',
+                'payload' => 'When I grow up, I want to be a watermelon',
+                'padding' => 'maxPadding',
             ],
         ];
     }
 
-    private function decryptRequest(RequestInterface $request, string $senderPublicKey, string $authSecret, string $receiverPrivateKey, string $receiverPublicKey): string
+    private function decryptRequest(RequestInterface $request, string $authSecret, string $receiverPublicKey, string $receiverPrivateKey, bool $inverted = false): string
     {
         $requestBody = $request->getBody();
         $requestBody->rewind();
 
         $ciphertext = $requestBody->getContents();
-
-        // IKM
-        $keyInfo = 'WebPush: info'.chr(0).$senderPublicKey.$receiverPublicKey;
-        $ikm = Utils::computeIKM($keyInfo, $authSecret, $senderPublicKey, $receiverPrivateKey, $receiverPublicKey);
 
         // Salt
         $salt = mb_substr($ciphertext, 0, 16, '8bit');
@@ -219,7 +219,11 @@ final class AES128GCMTest extends TestCase
         $idlen = ord(mb_substr($ciphertext, 20, 1, '8bit'));
 
         //keyid
-        //$keyid = mb_substr($ciphertext, 21, $idlen, '8bit');
+        $keyid = mb_substr($ciphertext, 21, $idlen, '8bit');
+
+        // IKM
+        $keyInfo = 'WebPush: info'.chr(0).($inverted ? $receiverPublicKey.$keyid : $keyid.$receiverPublicKey);
+        $ikm = Utils::computeIKM($keyInfo, $authSecret, $keyid, $receiverPrivateKey, $receiverPublicKey);
 
         // We remove the header
         $ciphertext = mb_substr($ciphertext, 16 + 4 + 1 + $idlen, null, '8bit');
@@ -237,9 +241,10 @@ final class AES128GCMTest extends TestCase
         $T = mb_substr($ciphertext, -16, null, '8bit');
 
         $rawData = openssl_decrypt($C, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $T);
+        static::assertIsString($rawData);
 
         $matches = [];
-        $r = \Safe\preg_match('/^(.*)(\x02\x00*)$/', $rawData, $matches);
+        $r = preg_match('/^(.*)(\x02\x00*)$/', $rawData, $matches);
         if (1 !== $r || 3 !== count($matches)) {
             throw new InvalidArgumentException('Invalid data');
         }

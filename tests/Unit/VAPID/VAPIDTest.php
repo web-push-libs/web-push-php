@@ -14,16 +14,17 @@ declare(strict_types=1);
 namespace Minishlink\Tests\Unit\VAPID;
 
 use function array_key_exists;
-use InvalidArgumentException;
+use DateTimeInterface;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\VAPID\Header;
 use Minishlink\WebPush\VAPID\JWSProvider;
 use Minishlink\WebPush\VAPID\VAPID;
 use PHPUnit\Framework\TestCase;
+use Psr\Cache\CacheItemInterface;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\Cache\CacheInterface;
 
 /**
  * @internal
@@ -118,12 +119,27 @@ final class VAPIDTest extends TestCase
             )
         ;
 
-        $cache = self::createMock(CacheInterface::class);
-        $cache
+        $cacheItem = self::createMock(CacheItemInterface::class);
+        $cacheItem
+            ->expects(static::once())
+            ->method('isHit')
+            ->willReturn(true)
+        ;
+        $cacheItem
             ->expects(static::once())
             ->method('get')
-            ->with(hash('sha512', '__KEY__-https://foo.fr/test'))
             ->willReturn(new Header('TOKEN__CACHE', 'KEY__CACHE'))
+        ;
+        $cache = self::createMock(CacheItemPoolInterface::class);
+        $cache
+            ->expects(static::once())
+            ->method('getItem')
+            ->with(hash('sha512', 'https://foo.fr'))
+            ->willReturn($cacheItem)
+        ;
+        $cache
+            ->expects(static::never())
+            ->method('save')
         ;
 
         $jwsProvider = self::createMock(JWSProvider::class);
@@ -157,8 +173,8 @@ final class VAPIDTest extends TestCase
         );
         $extension
             ->setLogger($logger)
-            ->setCache($cache, '__KEY__')
-            ->setExpirationTime('now +2 hours')
+            ->setCache($cache, 'now +30min', '__KEY__')
+            ->setTokenExpirationTime('now +2 hours')
             ->process($request, $notification, $subscription)
         ;
     }
@@ -166,23 +182,42 @@ final class VAPIDTest extends TestCase
     /**
      * @test
      */
-    public function vapidWithMissingCacheHeaderCannotBeAdded(): void
+    public function vapidWithMissingCacheHeaderCanBeGenerated(): void
     {
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('Unable to generate the VAPID header');
-
-        $cache = self::createMock(CacheInterface::class);
+        $cacheItem = self::createMock(CacheItemInterface::class);
+        $cacheItem
+            ->expects(static::once())
+            ->method('isHit')
+            ->willReturn(false)
+        ;
+        $cacheItem
+            ->expects(static::once())
+            ->method('set')
+            ->with(static::isInstanceOf(Header::class))
+            ->willReturnSelf()
+        ;
+        $cacheItem
+            ->expects(static::once())
+            ->method('expiresAt')
+            ->with(static::isInstanceOf(DateTimeInterface::class))
+            ->willReturnSelf()
+        ;
+        $cache = self::createMock(CacheItemPoolInterface::class);
         $cache
             ->expects(static::once())
-            ->method('get')
-            ->with(hash('sha512', '__CACHE_KEY__-https://foo.fr/test'))
-            ->willReturn(null)
+            ->method('getItem')
+            ->with(hash('sha512', 'https://foo.fr:8080'))
+            ->willReturn($cacheItem)
+        ;
+        $cache
+            ->expects(static::once())
+            ->method('save')
         ;
 
         $jwsProvider = self::createMock(JWSProvider::class);
         $jwsProvider
-            ->expects(static::never())
-            ->method(static::anything())
+            ->expects(static::once())
+            ->method('computeHeader')
         ;
 
         $extension = new VAPID(
@@ -190,14 +225,15 @@ final class VAPIDTest extends TestCase
             $jwsProvider
         );
         $extension
-            ->setExpirationTime('now +2 hours')
-            ->setCache($cache, '__CACHE_KEY__')
+            ->setTokenExpirationTime('now +2 hours')
+            ->setCache($cache, 'now +30min')
         ;
 
         $request = self::createMock(RequestInterface::class);
         $request
-            ->expects(static::never())
-            ->method(static::anything())
+            ->expects(static::once())
+            ->method('withAddedHeader')
+            ->with('Authorization', static::isType('string'))
             ->willReturnSelf()
         ;
 
@@ -206,7 +242,7 @@ final class VAPIDTest extends TestCase
         $subscription
             ->expects(static::once())
             ->method('getEndpoint')
-            ->willReturn('https://foo.fr/test')
+            ->willReturn('https://foo.fr:8080/test')
         ;
 
         $extension->process($request, $notification, $subscription);

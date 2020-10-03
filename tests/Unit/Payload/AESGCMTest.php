@@ -56,28 +56,19 @@ final class AESGCMTest extends TestCase
 
         // IKM
         $keyInfo = 'Content-Encoding: auth'.chr(0);
-        dump('KEYi='.$keyInfo);
         $ikm = Utils::computeIKM($keyInfo, $authSecret, $senderPublicKey, $receiverPrivateKey, $receiverPublicKey);
-        dump('IKM='.Base64Url::encode($ikm));
 
         // We compute the PRK
         $prk = hash_hmac('sha256', $ikm, $salt, true);
-        dump('PRK='.Base64Url::encode($prk));
 
         $cekInfo = 'Content-Encoding: aesgcm'.chr(0).$context;
-        dump('CEKi='.$cekInfo);
         $cek = mb_substr(hash_hmac('sha256', $cekInfo.chr(1), $prk, true), 0, 16, '8bit');
-        dump('CEK='.Base64Url::encode($cek));
 
         $nonceInfo = 'Content-Encoding: nonce'.chr(0).$context;
-        dump('NONCEi='.$nonceInfo);
         $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
-        dump('NONCE='.Base64Url::encode($nonce));
 
         $C = mb_substr($ciphertext, 0, -16, '8bit');
         $T = mb_substr($ciphertext, -16, null, '8bit');
-        dump('CIPHER='.Base64Url::encode($C));
-        dump('TAG='.Base64Url::encode($T));
 
         $rawData = openssl_decrypt($C, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $T);
         $paddingLength = unpack('n*', mb_substr($rawData, 0, 2, '8bit'))[1];

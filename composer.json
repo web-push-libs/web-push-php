@@ -15,21 +15,24 @@
   "scripts": {
     "test:unit": "./vendor/bin/phpunit --color",
     "test:typing": "./vendor/bin/phpstan analyse",
-    "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no"
+    "test:syntax": "./vendor/bin/php-cs-fixer fix --dry-run --stop-on-violation --using-cache=no",
+    "test:benchmark": "./vendor/bin/phpbench run -l dots --report aggregate"
   },
   "require": {
     "php": ">=7.4",
     "ext-json": "*",
     "beberlei/assert": "^3.2",
+    "psr/cache": "^1.0",
     "psr/event-dispatcher": "^1.0",
     "psr/http-client": "^1.0",
     "psr/http-factory": "^1.0",
     "psr/http-message": "^1.0",
     "psr/log": "^1.1",
-    "symfony/cache-contracts": "^2.2",
+    "symfony/var-dumper": "^5.1",
     "thecodingmachine/safe": "^1.1"
   },
   "require-dev": {
+    "friendsofphp/php-cs-fixer": "^2.16",
     "lcobucci/jwt": "^3.3",
     "monolog/monolog": "^2.1",
     "nyholm/psr7": "^1.3",
@@ -43,7 +46,6 @@
     "phpunit/phpunit": "^9.3",
     "symfony/cache": "^5.1",
     "symfony/http-client": "^5.1",
-    "symfony/var-dumper": "^5.1",
     "thecodingmachine/phpstan-safe-rule": "^1.0",
     "web-token/jwt-signature-algorithm-ecdsa": "^2.0"
   },
