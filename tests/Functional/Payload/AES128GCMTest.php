@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Minishlink\Tests\Unit\Payload;
+namespace Minishlink\Tests\Functional\Payload;
 
 use function chr;
 use function count;
@@ -25,6 +25,7 @@ use function ord;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
+use function Safe\openssl_decrypt;
 use function Safe\preg_match;
 
 /**
@@ -148,7 +149,19 @@ final class AES128GCMTest extends TestCase
         ;
 
         $encoder = new AES128GCM();
-        $encoder->{$padding}();
+        switch ($padding) {
+            case 'noPadding':
+                $encoder->noPadding();
+                break;
+            case 'recommendedPadding':
+                $encoder->recommendedPadding();
+                break;
+            case 'maxPadding':
+                $encoder->maxPadding();
+                break;
+            default:
+                break;
+        }
         static::assertEquals('aes128gcm', $encoder->name());
 
         $encoder->encode($payload, $request, $subscription);
@@ -241,7 +254,6 @@ final class AES128GCMTest extends TestCase
         $T = mb_substr($ciphertext, -16, null, '8bit');
 
         $rawData = openssl_decrypt($C, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $T);
-        static::assertIsString($rawData);
 
         $matches = [];
         $r = preg_match('/^(.*)(\x02\x00*)$/', $rawData, $matches);

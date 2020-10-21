@@ -28,6 +28,7 @@ final class SubscriptionTest extends TestCase
     /**
      * @test
      * @dataProvider dataInvalidSubscription
+     * @psalm-param class-string<\Throwable> $exception
      */
     public function invalidInputCannotBeLoaded(string $input, string $exception, string $message): void
     {

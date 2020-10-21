@@ -36,7 +36,8 @@ final class StatusReportTest extends TestCase
         $report = new StatusReportSuccess(
             $subscription,
             $notification,
-            'https://foo.bar'
+            'https://foo.bar',
+            ['https://link.1']
         );
 
         static::assertEquals($subscription, $report->getSubscription());

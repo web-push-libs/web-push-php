@@ -11,12 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Minishlink\Tests\Unit\Payload;
+namespace Minishlink\Tests\Functional\Payload;
 
 use function chr;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Utils;
 use PHPUnit\Framework\TestCase;
+use function Safe\hex2bin;
+use function Safe\openssl_decrypt;
+use function Safe\unpack;
 
 /**
  * @internal

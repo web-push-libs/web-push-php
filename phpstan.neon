@@ -2,6 +2,7 @@ parameters:
     level: 7
     paths:
         - src
+        - tests
     checkMissingIterableValueType: false
     ignoreErrors:
         - '#Parameter .* of function openssl_pkey_derive expects resource\, string given\.#'

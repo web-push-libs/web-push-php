@@ -61,12 +61,13 @@ class WebPush
         $this->logger->debug('Response received', ['response' => $response]);
 
         $statusCode = $response->getStatusCode();
-        if (201 === $statusCode) {
+        if (201 === $statusCode || 202 === $statusCode) {
             $location = $response->getHeaderLine('location');
             $statusReport = new StatusReportSuccess(
                 $subscription,
                 $notification,
-                $location
+                $location,
+                $response->getHeader('Link')
             );
         } else {
             $statusReport = new StatusReportFailure(

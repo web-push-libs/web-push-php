@@ -24,7 +24,7 @@ This specification is a working draft at the time of writing (2020-09)
         * Required: 
             * `openssl`
             * `mbstring`
-           * a JWT Provider. This library provides implementations for `web-token` and `lcobucci/jwt`
+           * a JWT Provider. This library provides implementations for [`web-token`](https://web-token.spomky-labs.com) and [`lcobucci/jwt`](https://github.com/lcobucci/jwt)
         * Optional:
             * a PSR-6 (Caching Interface) implementation (*highly recommended*)
     * When using Payload extensions (notifications with a payload):
@@ -44,6 +44,7 @@ Use [composer](https://getcomposer.org/) to download and install the library and
 `composer require minishlink/web-push`
 
 ## Usage
+
 ```php
 <?php
 
@@ -53,9 +54,11 @@ use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\WebPush;
 
 //PSR-18 HTTP client
+/** @var Psr\Http\Client\ClientInterface $client */
 $client = '…';
 
 //PSR-17 request factory
+/** @var Psr\Http\Message\RequestFactoryInterface $requestFactory */
 $requestFactory = '…';
 
 // Extension Manager is detailed later
@@ -83,6 +86,25 @@ $statusReport = $webPush->send($notification, $subscription);
 
 //The status report is either a Success or a Failure one.
 ```
+
+## The Subscription
+
+The subscription is created on client side when the end-user allows your application to send push messages.
+You can simply send the object you receive using `JSON.stringify`.
+
+A subscription object will look like:
+
+```json
+{
+    "endpoint":"https://updates.push.services.mozilla.com/wpush/v2/AAAAAAAA[…]AAAAAAAAA",
+    "keys":{
+        "auth":"XXXXXXXXXXXXXX",
+        "p256dh":"YYYYYYYY[…]YYYYYYYYYYYYY"
+    }
+}
+```
+
+On server side, you can directly use the dedicated method `Subscription::createFromString` as showed in the example above.
 
 ## Extensions
 
@@ -117,7 +139,7 @@ $notification = Notification::create()
 #### Topic
 
 A push message that has been stored by the push service can be replaced with new content.
-If the user agent is offline during the time that the push messages are sent,
+If the user agent is offline during the time the push messages are sent,
 updating a push message avoids the situation where outdated or redundant messages are sent to the user agent.
 
 Only push messages that have been assigned a topic can be replaced.
@@ -140,8 +162,8 @@ $notification = Notification::create()
 
 #### Urgency
 
-For a device that is battery-powered, it is often critical that it remains dormant for extended periods.
-Radio communication in particular consumes significant power and limits the length of time that the device can operate.
+For a device that is battery-powered, it is often critical it remains dormant for extended periods.
+Radio communication in particular consumes significant power and limits the length of time the device can operate.
 
 To avoid consuming resources to receive trivial messages,
 it is helpful if an application server can communicate the urgency of a message and if the user agent can request
@@ -251,7 +273,7 @@ The payload may be a string, or a JSON object. The structure of the later is [de
 
 The payload is encrypted on server side and decrypted by the browser.
 To do so, you shall add Content Encoding services.
-The specification define two encodings that are very similar: `aesgcm` and `s128gcm`.
+The specification defines two encodings that are very similar: `aesgcm` and `s128gcm`.
 Please use both of them.
 
 ```php
@@ -284,6 +306,104 @@ $extensionManager->add($payloadExtension);
 $notification = Notification::create()
     ->withPayload('Hello World!')
 ;
+```
+
+#### API Messages
+
+You may have noticed that the specification [defines a structure for the payload](https://notifications.spec.whatwg.org/#notifications).
+This structure contains properties that the client should be understood and render an appropriate way.
+
+The library provides a `Minishlink\WebPush\Message` class with convenient methods t ease the creation of a message. 
+
+```php
+<?php
+
+use Minishlink\WebPush\Action;
+use Minishlink\WebPush\Message;
+use Minishlink\WebPush\Notification;
+
+$message = Message::create('Hello World!')
+    ->mute() // Silent
+    ->unmute() // Not silent (default)
+
+
+    ->auto() //Direction = auto
+    ->ltr() //Direction = left to right
+    ->rtl() //Direction = right to left
+
+    ->addAction(new Action('alert', 'TITLE', 'https://…'))
+
+    ->interactionRequired()
+    ->noInteraction()
+
+    ->renotify()
+    ->doNotRenotify()
+
+    ->withIcon('https://…')
+    ->withImage('https://…')
+    ->withData(['foo' => 'BAR']) // Arbitrary data
+    ->withBadge('badge1')
+    ->withLang('fr-FR')
+    ->withTimestamp(time())
+    ->withTag('foo')
+
+    ->vibrate(300, 100, 400)
+;
+
+$notification = Notification::create()
+    ->withPayload((string) $message)
+;
+```
+
+### Asynchronous Response
+
+Your application may prefer asynchronous responses to request confirmation from the
+push service when a push message is delivered and then acknowledged by the user agent.
+
+The push service MUST support delivery confirmations to use this feature.
+
+```php
+<?php
+
+use Minishlink\WebPush\ExtensionManager;
+use Minishlink\WebPush\Notification;
+use Minishlink\WebPush\PreferAsyncExtension;
+
+$cache = '…'; // PSR-6 service
+
+$extension = new PreferAsyncExtension();
+
+$extensionManager = new ExtensionManager();
+$extensionManager->add($extension);
+
+
+$notification = Notification::create()
+    ->async() // Prefer async response
+    ->sync() // Prefer sync response (default)
+;
+```
+
+## WebPush Service and States Reports
+
+As you can see in the first example, a StatusReport object is returned.
+It can be of two types:
+
+* `Minishlink\WebPush\StatusReportSuccess`: the notification has correctly been sent to the subscriber.
+* `Minishlink\WebPush\StatusReportFailure`: an error occurred.
+
+
+In some cases, it could be interesting to dispatch the status repo
+```php
+<?php
+use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\Notification;
+use Minishlink\WebPush\WebPush;
+
+$subscription = Subscription::createFromString('{"endpoint":"…"}');
+$notification = Notification::create();
+
+/** @var WebPush $webPush */
+$statusReport = $webPush->send($notification, $subscription);
 ```
 
 ## Contributing

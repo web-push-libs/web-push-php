@@ -50,6 +50,12 @@ class WebPushTest extends TestCase
             ->with('location')
             ->willReturn('https://BAR-FOO.IO/0123456789')
         ;
+        $response
+            ->expects(static::once())
+            ->method('getHeader')
+            ->with('Link')
+            ->willReturn(['https://BAR-FOO.IO/THIS-IS-ASYNC'])
+        ;
 
         $request = self::createMock(RequestInterface::class);
         $request

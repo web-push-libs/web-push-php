@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Minishlink\Tests\Unit\VAPID;
+namespace Minishlink\Tests\Functional\VAPID;
 
 use function count;
 use Jose\Component\Core\JWK;

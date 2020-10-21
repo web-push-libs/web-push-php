@@ -20,6 +20,8 @@ use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Utils;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Safe\DateTimeImmutable;
 use function Safe\openssl_encrypt;
 use function Safe\openssl_pkey_new;
@@ -34,8 +36,21 @@ abstract class AbstractAESGCM implements ContentEncoding
     protected int $padding = self::PADDING_RECOMMENDED;
 
     private ?CacheItemPoolInterface $cache = null;
+    private LoggerInterface $logger;
     private string $cacheKey = self::WEB_PUSH_PAYLOAD_ENCRYPTION;
     private string $cacheExpirationTime = 'now + 30min';
+
+    public function __construct()
+    {
+        $this->logger = new NullLogger();
+    }
+
+    public function setLogger(LoggerInterface $logger): self
+    {
+        $this->logger = $logger;
+
+        return $this;
+    }
 
     public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now + 30min'): self
     {
@@ -64,23 +79,29 @@ abstract class AbstractAESGCM implements ContentEncoding
 
     public function encode(string $payload, RequestInterface $request, Subscription $subscription): RequestInterface
     {
+        $this->logger->debug(sprintf('Trying to encode the following payload: %s', $payload));
         $keys = $subscription->getKeys();
         Assertion::true($keys->has('p256dh'), 'The user-agent public key is missing');
         $userAgentPublicKey = Base64Url::decode($keys->get('p256dh'));
+        $this->logger->debug(sprintf('User-agent public key: %s', Base64Url::encode($userAgentPublicKey)));
 
         Assertion::true($keys->has('auth'), 'The user-agent authentication token is missing');
         $userAgentAuthToken = Base64Url::decode($keys->get('auth'));
+        $this->logger->debug(sprintf('User-agent auth token: %s', Base64Url::encode($userAgentAuthToken)));
 
         $salt = random_bytes(16);
+        $this->logger->debug(sprintf('Salt: %s', Base64Url::encode($salt)));
 
         $serverKey = $this->getServerKey();
 
         //IKM
         $keyInfo = $this->getKeyInfo($userAgentPublicKey, $serverKey);
         $ikm = Utils::computeIKM($keyInfo, $userAgentAuthToken, $userAgentPublicKey, $serverKey->getPrivateKey(), $serverKey->getPublicKey());
+        $this->logger->debug(sprintf('IKM: %s', Base64Url::encode($ikm)));
 
         //PRK
         $prk = hash_hmac('sha256', $ikm, $salt, true);
+        $this->logger->debug(sprintf('PRK: %s', Base64Url::encode($prk)));
 
         // Context
         $context = $this->getContext($userAgentPublicKey, $serverKey);
@@ -88,17 +109,22 @@ abstract class AbstractAESGCM implements ContentEncoding
         // Derive the Content Encryption Key
         $contentEncryptionKeyInfo = $this->createInfo($this->name(), $context);
         $contentEncryptionKey = mb_substr(hash_hmac('sha256', $contentEncryptionKeyInfo.chr(1), $prk, true), 0, 16, '8bit');
+        $this->logger->debug(sprintf('CEK: %s', Base64Url::encode($contentEncryptionKey)));
 
         // Derive the Nonce
         $nonceInfo = $this->createInfo('nonce', $context, );
         $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
+        $this->logger->debug(sprintf('NONCE: %s', Base64Url::encode($nonce)));
 
         // Padding
         $paddedPayload = $this->addPadding($payload);
+        $this->logger->debug(sprintf('Payload with padding: %s', $paddedPayload));
 
         // Encryption
         $tag = '';
         $encryptedText = openssl_encrypt($paddedPayload, 'aes-128-gcm', $contentEncryptionKey, OPENSSL_RAW_DATA, $nonce, $tag);
+        $this->logger->debug(sprintf('Encrypted payload: %s', Base64Url::encode($encryptedText)));
+        $this->logger->debug(sprintf('Tag: %s', Base64Url::encode($tag)));
 
         // Body to be sent
         $body = $this->prepareBody($encryptedText, $serverKey, $tag, $salt);
@@ -138,8 +164,11 @@ abstract class AbstractAESGCM implements ContentEncoding
     private function getServerKey(): ServerKey
     {
         if (null !== $this->cache) {
+            $this->logger->debug('Getting key from the cache');
+
             return $this->getServerKeyFromCache();
         }
+        $this->logger->debug('Generating new key');
 
         return $this->generateServerKey();
     }
@@ -148,21 +177,32 @@ abstract class AbstractAESGCM implements ContentEncoding
     {
         $item = $this->cache->getItem($this->cacheKey);
         if ($item->isHit()) {
+            /** @var ServerKey $key */
+            $key = $item->get();
+            $this->logger->debug(sprintf(
+                'The key is available from the cache. %s, %s',
+                Base64Url::encode($key->getPublicKey()),
+                Base64Url::encode($key->getPrivateKey())
+            ), ['key' => $key]);
+
             return $item->get();
         }
 
+        $this->logger->debug('No key from the cache');
         $serverKey = $this->generateServerKey();
         $item
             ->set($serverKey)
             ->expiresAt(new DateTimeImmutable($this->cacheExpirationTime))
         ;
         $this->cache->save($item);
+        $this->logger->debug('Key saved');
 
         return $serverKey;
     }
 
     private function generateServerKey(): ServerKey
     {
+        $this->logger->debug('Generating new key pair');
         $keyResource = openssl_pkey_new([
             'curve_name' => 'prime256v1',
             'private_key_type' => OPENSSL_KEYTYPE_EC,
@@ -177,7 +217,14 @@ abstract class AbstractAESGCM implements ContentEncoding
         $publicKey .= str_pad($details['ec']['x'], 32, chr(0), STR_PAD_LEFT);
         $publicKey .= str_pad($details['ec']['y'], 32, chr(0), STR_PAD_LEFT);
         $privatekey = $details['ec']['d'];
+        $key = new ServerKey($publicKey, $privatekey);
 
-        return new ServerKey($publicKey, $privatekey);
+        $this->logger->debug(sprintf(
+            'The key has been created. %s, %s',
+            Base64Url::encode($key->getPublicKey()),
+            Base64Url::encode($key->getPrivateKey())
+        ), ['key' => $key]);
+
+        return $key;
     }
 }

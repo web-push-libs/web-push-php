@@ -15,6 +15,7 @@ namespace Minishlink\WebPush\Payload;
 
 use function chr;
 use Psr\Http\Message\RequestInterface;
+use function Safe\pack;
 
 final class AES128GCM extends AbstractAESGCM implements ContentEncoding
 {

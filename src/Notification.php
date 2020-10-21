@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use function array_key_exists;
 use Assert\Assertion;
 
 class Notification
@@ -26,6 +27,8 @@ class Notification
     private int $ttl = 0;
     private string $urgency = self::URGENCY_NORMAL;
     private ?string $topic = null;
+    private bool $respondAsync = false;
+    private array $metadata = [];
 
     public static function create(): self
     {
@@ -114,5 +117,57 @@ class Notification
     public function getTTL(): int
     {
         return $this->ttl;
+    }
+
+    public function sync(): self
+    {
+        $this->respondAsync = false;
+
+        return $this;
+    }
+
+    public function async(): self
+    {
+        $this->respondAsync = true;
+
+        return $this;
+    }
+
+    public function isAsync(): bool
+    {
+        return $this->respondAsync;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getMetadata(): array
+    {
+        return $this->metadata;
+    }
+
+    /**
+     * @param mixed $data
+     */
+    public function add(string $key, $data): self
+    {
+        $this->metadata[$key] = $data;
+
+        return $this;
+    }
+
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->metadata);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function get(string $key)
+    {
+        Assertion::true($this->has($key), 'Missing metadata');
+
+        return $this->metadata[$key];
     }
 }

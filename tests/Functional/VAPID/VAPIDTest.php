@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Minishlink\Tests\Unit\VAPID;
+namespace Minishlink\Tests\Functional\VAPID;
 
 use function array_key_exists;
 use DateTimeInterface;
@@ -173,7 +173,7 @@ final class VAPIDTest extends TestCase
         );
         $extension
             ->setLogger($logger)
-            ->setCache($cache, 'now +30min', '__KEY__')
+            ->setCache($cache, 'now +30min')
             ->setTokenExpirationTime('now +2 hours')
             ->process($request, $notification, $subscription)
         ;

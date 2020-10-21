@@ -15,6 +15,8 @@ namespace Minishlink\WebPush;
 
 use Assert\Assertion;
 use function chr;
+use function Safe\pack;
+use function Safe\unpack;
 
 abstract class Utils
 {
