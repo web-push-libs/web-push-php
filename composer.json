@@ -33,6 +33,7 @@
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.16",
+    "infection/infection": "^0.18.2",
     "lcobucci/jwt": "^3.3",
     "monolog/monolog": "^2.1",
     "nyholm/psr7": "^1.3",
