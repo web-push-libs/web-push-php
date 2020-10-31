@@ -107,7 +107,7 @@ On server side, you can directly use the dedicated method `Subscription::createF
 
 ## Extensions
 
-As some core concepts are still not approved or mature enough at the time of writing (October 2020),
+As some core concepts are still not approved or mature enough at the time of writing,
 extensions have been introduced to allow smooth integration over the evolution of the specifications. 
 
 **Please note that some extensions are mandatory**.
@@ -268,7 +268,7 @@ $extensionManager->add($vapidExtension);
 ### Payload
 
 Sending notifications is nice, but you may need to send a payload to customize messages.
-The payload may be a string, or a JSON object. The structure of the later is [described on this page](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification).
+The payload may be a string, or a JSON object. The structure of the later is described in the next section.
 
 The payload is encrypted on server side and decrypted by the browser.
 To do so, you shall add Content Encoding services.
@@ -312,7 +312,7 @@ $notification = Notification::create()
 You may have noticed that the specification [defines a structure for the payload](https://notifications.spec.whatwg.org/#notifications).
 This structure contains properties that the client should be understood and render an appropriate way.
 
-The library provides a `Minishlink\WebPush\Message` class with convenient methods t ease the creation of a message. 
+The library provides a `Minishlink\WebPush\Message` class with convenient methods to ease the creation of a message. 
 
 ```php
 <?php
@@ -391,7 +391,8 @@ It can be of two types:
 * `Minishlink\WebPush\StatusReportFailure`: an error occurred.
 
 
-In some cases, it could be interesting to dispatch the status repo
+In some cases, it could be interesting to dispatch the status report.
+
 ```php
 <?php
 use Minishlink\WebPush\Subscription;
