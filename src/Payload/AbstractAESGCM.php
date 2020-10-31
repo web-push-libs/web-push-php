@@ -56,7 +56,6 @@ abstract class AbstractAESGCM implements ContentEncoding
     {
         $this->cache = $cache;
         $this->cacheExpirationTime = $cacheExpirationTime;
-        $this->getServerKeyFromCache(); //Force the creation of the key if not already set
 
         return $this;
     }
@@ -79,7 +78,7 @@ abstract class AbstractAESGCM implements ContentEncoding
 
     public function encode(string $payload, RequestInterface $request, Subscription $subscription): RequestInterface
     {
-        $this->logger->debug(sprintf('Trying to encode the following payload: %s', $payload));
+        $this->logger->debug('Trying to encode the following payload.');
         $keys = $subscription->getKeys();
         Assertion::true($keys->has('p256dh'), 'The user-agent public key is missing');
         $userAgentPublicKey = Base64Url::decode($keys->get('p256dh'));
@@ -112,13 +111,13 @@ abstract class AbstractAESGCM implements ContentEncoding
         $this->logger->debug(sprintf('CEK: %s', Base64Url::encode($contentEncryptionKey)));
 
         // Derive the Nonce
-        $nonceInfo = $this->createInfo('nonce', $context, );
+        $nonceInfo = $this->createInfo('nonce', $context);
         $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
         $this->logger->debug(sprintf('NONCE: %s', Base64Url::encode($nonce)));
 
         // Padding
         $paddedPayload = $this->addPadding($payload);
-        $this->logger->debug(sprintf('Payload with padding: %s', $paddedPayload));
+        $this->logger->debug('Payload with padding', ['padded_payload' => $paddedPayload]);
 
         // Encryption
         $tag = '';
@@ -141,16 +140,6 @@ abstract class AbstractAESGCM implements ContentEncoding
             ;
     }
 
-    protected function createInfo(string $type, string $context): string
-    {
-        $info = 'Content-Encoding: ';
-        $info .= $type;
-        $info .= chr(0);
-        $info .= $context;
-
-        return $info;
-    }
-
     abstract protected function getKeyInfo(string $userAgentPublicKey, ServerKey $serverKey): string;
 
     abstract protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string;
@@ -161,36 +150,38 @@ abstract class AbstractAESGCM implements ContentEncoding
 
     abstract protected function prepareBody(string $encryptedText, ServerKey $serverKey, string $tag, string $salt): string;
 
+    private function createInfo(string $type, string $context): string
+    {
+        $info = 'Content-Encoding: ';
+        $info .= $type;
+        $info .= chr(0);
+        $info .= $context;
+
+        return $info;
+    }
+
     private function getServerKey(): ServerKey
     {
-        if (null !== $this->cache) {
-            $this->logger->debug('Getting key from the cache');
-
-            return $this->getServerKeyFromCache();
+        if (null === $this->cache) {
+            return $this->generateServerKey();
         }
-        $this->logger->debug('Generating new key');
+        $this->logger->debug('Getting key from the cache');
 
-        return $this->generateServerKey();
+        return $this->getServerKeyFromCache();
     }
 
     private function getServerKeyFromCache(): ServerKey
     {
         $item = $this->cache->getItem($this->cacheKey);
         if ($item->isHit()) {
-            /** @var ServerKey $key */
-            $key = $item->get();
-            $this->logger->debug(sprintf(
-                'The key is available from the cache. %s, %s',
-                Base64Url::encode($key->getPublicKey()),
-                Base64Url::encode($key->getPrivateKey())
-            ), ['key' => $key]);
+            $this->logger->debug('The key is available from the cache.');
 
             return $item->get();
         }
 
         $this->logger->debug('No key from the cache');
         $serverKey = $this->generateServerKey();
-        $item
+        $item = $item
             ->set($serverKey)
             ->expiresAt(new DateTimeImmutable($this->cacheExpirationTime))
         ;
@@ -216,14 +207,10 @@ abstract class AbstractAESGCM implements ContentEncoding
         $publicKey = chr(4);
         $publicKey .= str_pad($details['ec']['x'], 32, chr(0), STR_PAD_LEFT);
         $publicKey .= str_pad($details['ec']['y'], 32, chr(0), STR_PAD_LEFT);
-        $privatekey = $details['ec']['d'];
-        $key = new ServerKey($publicKey, $privatekey);
+        $privateKey = $details['ec']['d'];
+        $key = new ServerKey($publicKey, $privateKey);
 
-        $this->logger->debug(sprintf(
-            'The key has been created. %s, %s',
-            Base64Url::encode($key->getPublicKey()),
-            Base64Url::encode($key->getPrivateKey())
-        ), ['key' => $key]);
+        $this->logger->debug('The key has been created.');
 
         return $key;
     }

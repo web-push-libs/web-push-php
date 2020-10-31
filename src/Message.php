@@ -13,8 +13,11 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use function count;
+use function is_array;
 use JsonSerializable;
 use function Safe\json_encode;
+use function Safe\ksort;
 
 /**
  * @see https://notifications.spec.whatwg.org/#notifications
@@ -114,12 +117,12 @@ class Message implements JsonSerializable
         return $this->renotify;
     }
 
-    public function getRequireInteraction(): ?bool
+    public function isInteractionRequired(): ?bool
     {
         return $this->requireInteraction;
     }
 
-    public function getSilent(): ?bool
+    public function isSilent(): ?bool
     {
         return $this->silent;
     }
@@ -228,7 +231,7 @@ class Message implements JsonSerializable
 
     public function noInteraction(): self
     {
-        $this->requireInteraction = true;
+        $this->requireInteraction = false;
 
         return $this;
     }
@@ -270,8 +273,15 @@ class Message implements JsonSerializable
 
     public function jsonSerialize(): array
     {
-        return array_filter(get_object_vars($this), static function ($v): bool {
+        $r = array_filter(get_object_vars($this), static function ($v): bool {
+            if (is_array($v) && 0 === count($v)) {
+                return false;
+            }
+
             return null !== $v;
         });
+        ksort($r);
+
+        return $r;
     }
 }

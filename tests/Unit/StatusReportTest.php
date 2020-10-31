@@ -43,6 +43,7 @@ final class StatusReportTest extends TestCase
         static::assertEquals($subscription, $report->getSubscription());
         static::assertEquals($notification, $report->getNotification());
         static::assertEquals('https://foo.bar', $report->getLocation());
+        static::assertEquals(['https://link.1'], $report->getLinks());
         static::assertEquals(true, $report->isSuccess());
     }
 

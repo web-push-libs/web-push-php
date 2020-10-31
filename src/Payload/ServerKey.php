@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\Payload;
 
+use Assert\Assertion;
+
 class ServerKey
 {
     private string $publicKey;
@@ -20,6 +22,8 @@ class ServerKey
 
     public function __construct(string $publicKey, string $privateKey)
     {
+        Assertion::length($publicKey, 65, 'Invalid public key length', null, '8bit');
+        Assertion::length($privateKey, 32, 'Invalid private key length', null, '8bit');
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
     }

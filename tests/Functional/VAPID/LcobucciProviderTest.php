@@ -34,7 +34,6 @@ final class LcobucciProviderTest extends TestCase
 
         $logger = self::createMock(LoggerInterface::class);
         $logger
-            ->expects(static::exactly(2))
             ->method('debug')
             ->withConsecutive(
                 ['Computing the JWS'],

@@ -53,7 +53,7 @@ class PayloadExtension implements Extension
     {
         $this->logger->debug('Processing with payload');
         $payload = $notification->getPayload();
-        if (null === $payload) {
+        if (null === $payload || '' === $payload) {
             $this->logger->debug('No payload');
 
             return $request
@@ -70,10 +70,6 @@ class PayloadExtension implements Extension
             ->withHeader('Content-Type', 'application/octet-stream')
             ->withHeader('Content-Encoding', $contentEncoding)
         ;
-
-        if ('' === $payload) {
-            return $request->withHeader('Content-Length', '0');
-        }
 
         return $encoder->encode($payload, $request, $subscription);
     }

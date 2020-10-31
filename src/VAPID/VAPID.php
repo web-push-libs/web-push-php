@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\VAPID;
 
-use Assert\Assertion;
 use Minishlink\WebPush\Extension;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
@@ -79,7 +78,6 @@ class VAPID implements Extension
             $this->logger->debug('Caching feature is available');
             $header = $this->getHeaderFromCache($origin, $claims);
             $this->logger->debug('Header from cache', ['header' => $header]);
-            Assertion::isInstanceOf($header, Header::class, 'Unable to generate the VAPID header');
         } else {
             $this->logger->debug('Caching feature is not available');
             $header = $this->jwsProvider->computeHeader($claims);
@@ -91,7 +89,7 @@ class VAPID implements Extension
         ;
     }
 
-    private function getHeaderFromCache(string $origin, array $claims): ?Header
+    private function getHeaderFromCache(string $origin, array $claims): Header
     {
         $jwsProvider = $this->jwsProvider;
         $computedCacheKey = hash('sha512', $origin);
@@ -102,7 +100,7 @@ class VAPID implements Extension
         }
 
         $token = $jwsProvider->computeHeader($claims);
-        $item
+        $item = $item
             ->set($token)
             ->expiresAt(new DateTimeImmutable($this->cacheExpirationTime))
         ;

@@ -36,12 +36,14 @@ final class NotificationTest extends TestCase
             ->withTTL(0)
             ->withPayload('payload')
             ->withTopic('topic')
+            ->sync()
         ;
 
         static::assertEquals(Notification::URGENCY_HIGH, $subscription->getUrgency());
         static::assertEquals(0, $subscription->getTTL());
         static::assertEquals('payload', $subscription->getPayload());
         static::assertEquals('topic', $subscription->getTopic());
+        static::assertFalse($subscription->isAsync());
     }
 
     /**
@@ -57,6 +59,28 @@ final class NotificationTest extends TestCase
         static::assertEquals(3600, $subscription->getTTL());
         static::assertEquals(null, $subscription->getPayload());
         static::assertEquals(null, $subscription->getTopic());
+    }
+
+    /**
+     * @test
+     */
+    public function createAsyncNotification(): void
+    {
+        $subscription = Notification::create()
+            ->async()
+        ;
+
+        static::assertTrue($subscription->isAsync());
+    }
+
+    /**
+     * @test
+     */
+    public function defaultNotificationIsSync(): void
+    {
+        $subscription = Notification::create();
+
+        static::assertFalse($subscription->isAsync());
     }
 
     /**
@@ -109,6 +133,33 @@ final class NotificationTest extends TestCase
         Notification::create()
             ->withTTL(-1)
         ;
+    }
+
+    /**
+     * @test
+     */
+    public function createNotificationWithMetadata(): void
+    {
+        $notification = Notification::create()
+            ->add('foo', 'BAR')
+        ;
+
+        static::assertFalse($notification->has('nope'));
+        static::assertTrue($notification->has('foo'));
+        static::assertEquals('BAR', $notification->get('foo'));
+        static::assertEquals(['foo' => 'BAR'], $notification->getMetadata());
+    }
+
+    /**
+     * @test
+     */
+    public function missingMetadata(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Missing metadata');
+        $notification = Notification::create();
+
+        $notification->get('fff');
     }
 
     public function dataUrgencies(): array

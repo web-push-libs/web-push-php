@@ -18,7 +18,7 @@ use Minishlink\WebPush\Base64Url;
 use Psr\Http\Message\RequestInterface;
 use function Safe\pack;
 
-final class AESGCM extends AbstractAESGCM implements ContentEncoding
+final class AESGCM extends AbstractAESGCM
 {
     private const ENCODING = 'aesgcm';
     private const PADDING_MAX = 4078;
