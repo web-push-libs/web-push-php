@@ -46,10 +46,10 @@ final class AESGCM extends AbstractAESGCM
             'P-256',
             "\0",
             "\0",
-            "\65",
+            'A', // chr(65)
             $userAgentPublicKey,
             "\0",
-            "\65",
+            'A', // chr(65)
             $serverKey->getPublicKey()
         );
     }
