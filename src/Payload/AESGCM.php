@@ -42,14 +42,10 @@ final class AESGCM extends AbstractAESGCM
 
     protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string
     {
-        return sprintf('%s%s%s%s%s%s%s%s',
-            'P-256',
-            "\0",
-            "\0",
-            'A', // chr(65)
+        return sprintf('%s%s%s%s',
+            "P-256\0\0A",
             $userAgentPublicKey,
-            "\0",
-            'A', // chr(65)
+            "\0A",
             $serverKey->getPublicKey()
         );
     }
