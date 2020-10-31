@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\Payload;
 
-use function chr;
 use Psr\Http\Message\RequestInterface;
 use function Safe\pack;
 
@@ -36,7 +35,7 @@ final class AES128GCM extends AbstractAESGCM
 
     protected function getKeyInfo(string $userAgentPublicKey, ServerKey $serverKey): string
     {
-        return 'WebPush: info'.chr(0).$userAgentPublicKey.$serverKey->getPublicKey();
+        return 'WebPush: info'."\0".$userAgentPublicKey.$serverKey->getPublicKey();
     }
 
     protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string
@@ -46,7 +45,7 @@ final class AES128GCM extends AbstractAESGCM
 
     protected function addPadding(string $payload): string
     {
-        return str_pad($payload.chr(2), $this->padding, chr(0), STR_PAD_RIGHT);
+        return str_pad($payload."\2", $this->padding, "\0", STR_PAD_RIGHT);
     }
 
     protected function prepareRequest(RequestInterface $request, string $salt): RequestInterface

@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Minishlink\WebPush\Payload;
 
 use Assert\Assertion;
-use function chr;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Utils;
@@ -32,6 +31,7 @@ abstract class AbstractAESGCM implements ContentEncoding
     public const WEB_PUSH_PAYLOAD_ENCRYPTION = 'WEB_PUSH_PAYLOAD_ENCRYPTION';
     protected const PADDING_NONE = 0;
     protected const PADDING_RECOMMENDED = 3052;
+    private const SIZE = 32;
 
     protected int $padding = self::PADDING_RECOMMENDED;
 
@@ -107,12 +107,12 @@ abstract class AbstractAESGCM implements ContentEncoding
 
         // Derive the Content Encryption Key
         $contentEncryptionKeyInfo = $this->createInfo($this->name(), $context);
-        $contentEncryptionKey = mb_substr(hash_hmac('sha256', $contentEncryptionKeyInfo.chr(1), $prk, true), 0, 16, '8bit');
+        $contentEncryptionKey = mb_substr(hash_hmac('sha256', $contentEncryptionKeyInfo."\1", $prk, true), 0, 16, '8bit');
         $this->logger->debug(sprintf('CEK: %s', Base64Url::encode($contentEncryptionKey)));
 
         // Derive the Nonce
         $nonceInfo = $this->createInfo('nonce', $context);
-        $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
+        $nonce = mb_substr(hash_hmac('sha256', $nonceInfo."\1", $prk, true), 0, 12, '8bit');
         $this->logger->debug(sprintf('NONCE: %s', Base64Url::encode($nonce)));
 
         // Padding
@@ -154,7 +154,7 @@ abstract class AbstractAESGCM implements ContentEncoding
     {
         $info = 'Content-Encoding: ';
         $info .= $type;
-        $info .= chr(0);
+        $info .= "\0";
         $info .= $context;
 
         return $info;
@@ -204,10 +204,10 @@ abstract class AbstractAESGCM implements ContentEncoding
 
         Assertion::isArray($details, 'Unable to get the key details');
 
-        $publicKey = chr(4);
-        $publicKey .= str_pad($details['ec']['x'], 32, chr(0), STR_PAD_LEFT);
-        $publicKey .= str_pad($details['ec']['y'], 32, chr(0), STR_PAD_LEFT);
-        $privateKey = $details['ec']['d'];
+        $publicKey = "\4";
+        $publicKey .= str_pad($details['ec']['x'], self::SIZE, "\0", STR_PAD_LEFT);
+        $publicKey .= str_pad($details['ec']['y'], self::SIZE, "\0", STR_PAD_LEFT);
+        $privateKey = str_pad($details['ec']['d'], self::SIZE, "\0", STR_PAD_LEFT);
         $key = new ServerKey($publicKey, $privateKey);
 
         $this->logger->debug('The key has been created.');

@@ -14,15 +14,17 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Assert\Assertion;
-use function chr;
 use function Safe\pack;
 use function Safe\unpack;
 
 abstract class Utils
 {
+    private const PART_SIZE = 32;
+    private const HASH_SIZE = 256;
+
     public static function privateKeyToPEM(string $privateKey, string $publicKey): string
     {
-        $d = unpack('H*', str_pad($privateKey, 32, chr(0), STR_PAD_LEFT))[1];
+        $d = unpack('H*', str_pad($privateKey, self::PART_SIZE, "\0", STR_PAD_LEFT))[1];
 
         $der = pack(
             'H*',
@@ -72,25 +74,25 @@ abstract class Utils
     {
         $sharedSecret = self::computeAgreementKey($userAgentPublicKey, $serverPrivateKey, $serverPublicKey);
 
-        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, 32);
+        return self::hkdf($userAgentAuthToken, $sharedSecret, $keyInfo, self::PART_SIZE);
     }
 
-    public static function hkdf(string $salt, string $ikm, string $info, int $length): string
+    private static function hkdf(string $salt, string $ikm, string $info, int $length): string
     {
         // Extract
         $prk = hash_hmac('sha256', $ikm, $salt, true);
 
         // Expand
-        return mb_substr(hash_hmac('sha256', $info.chr(1), $prk, true), 0, $length, '8bit');
+        return mb_substr(hash_hmac('sha256', $info."\1", $prk, true), 0, $length, '8bit');
     }
 
     private static function computeAgreementKey(string $userAgentPublicKey, string $serverPrivateKey, string $serverPublicKey): string
     {
         $serverPrivateKeyPEM = self::privateKeyToPEM($serverPrivateKey, $serverPublicKey);
         $userAgentPublicKeyPEM = self::publicKeyToPEM($userAgentPublicKey);
-        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKeyPEM, 256);
+        $result = openssl_pkey_derive($userAgentPublicKeyPEM, $serverPrivateKeyPEM, self::HASH_SIZE);
         Assertion::string($result, 'Unable to compute the agreement key');
 
-        return str_pad($result, 32, chr(0), STR_PAD_LEFT);
+        return str_pad($result, self::PART_SIZE, "\0", STR_PAD_LEFT);
     }
 }

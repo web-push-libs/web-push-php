@@ -17,13 +17,16 @@ use Assert\Assertion;
 
 class ServerKey
 {
+    private const PUBLIC_KEY_SIZE = 65;
+    private const PRIVATE_KEY_SIZE = 32;
+
     private string $publicKey;
     private string $privateKey;
 
     public function __construct(string $publicKey, string $privateKey)
     {
-        Assertion::length($publicKey, 65, 'Invalid public key length', null, '8bit');
-        Assertion::length($privateKey, 32, 'Invalid private key length', null, '8bit');
+        Assertion::length($publicKey, self::PUBLIC_KEY_SIZE, 'Invalid public key length', null, '8bit');
+        Assertion::length($privateKey, self::PRIVATE_KEY_SIZE, 'Invalid private key length', null, '8bit');
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
     }

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\Tests\Unit;
 
 use function chr;
+use InvalidArgumentException;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Utils;
 use PHPUnit\Framework\TestCase;
@@ -63,6 +64,26 @@ PEM
 
     /**
      * @test
+     */
+    public function privateKeyToPEMAdjusted(): void
+    {
+        $privateKey = '';
+        $publicKey = str_pad('', 65, chr(0));
+        $pem = Utils::privateKeyToPEM($privateKey, $publicKey);
+
+        static::assertEquals(<<<'PEM'
+-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoAoGCCqGSM49
+AwEHoUQDQgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+-----END EC PRIVATE KEY-----
+
+PEM
+, $pem);
+    }
+
+    /**
+     * @test
      *
      * @see https://tools.ietf.org/html/rfc8291#section-5
      */
@@ -78,5 +99,22 @@ PEM
         $keyInfo = 'WebPush: info'.chr(0).$receiverPublicKey.$senderPublicKey;
         $ikm = Utils::computeIKM($keyInfo, $authSecret, $receiverPublicKey, $senderPrivateKey, $senderPublicKey);
         static::assertEquals($expectedIKM, $ikm);
+    }
+
+    /**
+     * @test
+     */
+    public function unableToComputeIKM(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Unable to compute the agreement key');
+
+        $senderPublicKey = '';
+        $senderPrivateKey = str_pad('', 65, chr(0));
+        $receiverPublicKey = Base64Url::decode('BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4');
+        $authSecret = Base64Url::decode('BTBZMqHH6r4Tts7J_aSIgg');
+
+        $keyInfo = 'WebPush: info'.chr(0).$receiverPublicKey.$senderPublicKey;
+        Utils::computeIKM($keyInfo, $authSecret, $receiverPublicKey, $senderPrivateKey, $senderPublicKey);
     }
 }

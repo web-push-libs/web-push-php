@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\Payload;
 
-use function chr;
 use Minishlink\WebPush\Base64Url;
 use Psr\Http\Message\RequestInterface;
 use function Safe\pack;
+use function Safe\sprintf;
 
 final class AESGCM extends AbstractAESGCM
 {
@@ -37,21 +37,21 @@ final class AESGCM extends AbstractAESGCM
 
     protected function getKeyInfo(string $userAgentPublicKey, ServerKey $serverKey): string
     {
-        return 'Content-Encoding: auth'.chr(0);
+        return "Content-Encoding: auth\0";
     }
 
     protected function getContext(string $userAgentPublicKey, ServerKey $serverKey): string
     {
-        $context = 'P-256';
-        $context .= chr(0);
-        $context .= chr(0);
-        $context .= chr(65);
-        $context .= $userAgentPublicKey;
-        $context .= chr(0);
-        $context .= chr(65);
-        $context .= $serverKey->getPublicKey();
-
-        return $context;
+        return sprintf('%s%s%s%s%s%s%s%s',
+            'P-256',
+            "\0",
+            "\0",
+            "\65",
+            $userAgentPublicKey,
+            "\0",
+            "\65",
+            $serverKey->getPublicKey()
+        );
     }
 
     protected function addPadding(string $payload): string
@@ -59,7 +59,7 @@ final class AESGCM extends AbstractAESGCM
         $payloadLength = mb_strlen($payload, '8bit');
         $paddingLength = $this->padding - $payloadLength;
 
-        return pack('n*', $paddingLength).str_pad($payload, $this->padding, chr(0), STR_PAD_LEFT);
+        return pack('n*', $paddingLength).str_pad($payload, $this->padding, "\0", STR_PAD_LEFT);
     }
 
     protected function prepareRequest(RequestInterface $request, string $salt): RequestInterface
