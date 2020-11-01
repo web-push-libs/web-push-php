@@ -43,6 +43,28 @@ final class AES128GCMTest extends TestCase
 
     /**
      * @test
+     */
+    public function paddingLengthToHigh(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Invalid padding size');
+
+        AES128GCM::create()->customPadding(3994);
+    }
+
+    /**
+     * @test
+     */
+    public function paddingLengthToLow(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Invalid padding size');
+
+        AES128GCM::create()->customPadding(-1);
+    }
+
+    /**
+     * @test
      *
      * @see https://tests.peter.sh/push-encryption-verifier/
      */
@@ -154,10 +176,7 @@ final class AES128GCMTest extends TestCase
             ->willReturn($keys)
         ;
 
-        $encoder = AES128GCM::create()
-            ->setCache($cache)
-            ->setLogger($logger)
-        ;
+        $encoder = AES128GCM::create();
 
         switch ($padding) {
             case 'noPadding':
@@ -169,9 +188,16 @@ final class AES128GCMTest extends TestCase
             case 'maxPadding':
                 $encoder->maxPadding();
                 break;
+            case 'customPadding':
+                $encoder->customPadding(1024);
+                break;
             default:
                 break;
         }
+        $encoder
+            ->setCache($cache)
+            ->setLogger($logger)
+        ;
         static::assertEquals('aes128gcm', $encoder->name());
 
         $encoder->encode($payload, $request, $subscription);
@@ -341,6 +367,15 @@ final class AES128GCMTest extends TestCase
                 $uaAuthSecret,
                 $payload,
                 'maxPadding',
+                $withoutLogger,
+                $withoutCache,
+            ],
+            [
+                $uaPrivateKey,
+                $uaPublicKey,
+                $uaAuthSecret,
+                $payload,
+                'customPadding',
                 $withoutLogger,
                 $withoutCache,
             ],

@@ -324,9 +324,13 @@ You can change the padding size if needed using one of the three options:
 * No padding (not recommended)
 * Recommended padding (default)
 * Maximum padding
+* Custom padding
 
 With the maximum padding, the encrypted payload will always have a size of 4096 bytes.
 This may increase the computation time, that’s why this padding is not enabled, but highly recommended.
+
+**Be careful with the custom padding!**. You can set the padding length of your choice, but the maximum size depends on the encoding.
+It is 4078 and 3993 for `AESGCM` and `AES128GCM` respectively.
 
 ```php
 <?php
@@ -338,12 +342,14 @@ $aes128gcm = AES128GCM::create()
     ->noPadding()          // No padding
     ->recommendedPadding() // Recommended padding
     ->maxPadding()         // Maximum padding
+    ->customPadding(1024)  // Custom padding of 1024 bytes
 ;
 
 $aesgcm = AESGCM::create()
     ->noPadding()          // No padding
     ->recommendedPadding() // Recommended padding
     ->maxPadding()         // Maximum padding
+    ->customPadding(1024)  // Custom padding of 1024 bytes
 ;
 ``` 
 

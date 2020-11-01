@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\Payload;
 
+use Assert\Assertion;
 use Minishlink\WebPush\Base64Url;
 use Psr\Http\Message\RequestInterface;
 use function Safe\pack;
@@ -26,6 +27,14 @@ final class AESGCM extends AbstractAESGCM
     public static function create(): self
     {
         return new self();
+    }
+
+    public function customPadding(int $padding): self
+    {
+        Assertion::range($padding, 0, self::PADDING_MAX, 'Invalid padding size');
+        $this->padding = $padding;
+
+        return $this;
     }
 
     public function maxPadding(): self

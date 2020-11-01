@@ -43,6 +43,28 @@ final class AESGCMTest extends TestCase
 
     /**
      * @test
+     */
+    public function paddingLengthToHigh(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Invalid padding size');
+
+        AESGCM::create()->customPadding(4079);
+    }
+
+    /**
+     * @test
+     */
+    public function paddingLengthToLow(): void
+    {
+        static::expectException(InvalidArgumentException::class);
+        static::expectExceptionMessage('Invalid padding size');
+
+        AESGCM::create()->customPadding(-1);
+    }
+
+    /**
+     * @test
      * @dataProvider dataEncryptPayload
      *
      * @see https://tests.peter.sh/push-encryption-verifier/
@@ -138,10 +160,7 @@ final class AESGCMTest extends TestCase
             ->willReturn($keys)
         ;
 
-        $encoder = AESGCM::create()
-            ->setCache($cache)
-            ->setLogger($logger)
-        ;
+        $encoder = AESGCM::create();
 
         switch ($padding) {
             case 'noPadding':
@@ -153,9 +172,18 @@ final class AESGCMTest extends TestCase
             case 'maxPadding':
                 $encoder->maxPadding();
                 break;
+            case 'customPadding':
+                $encoder->customPadding(1024);
+                break;
             default:
                 break;
         }
+
+        $encoder
+            ->setCache($cache)
+            ->setLogger($logger)
+        ;
+
         static::assertEquals('aesgcm', $encoder->name());
 
         $encoder->encode($payload, $request, $subscription);
@@ -325,6 +353,15 @@ final class AESGCMTest extends TestCase
                 $uaAuthSecret,
                 $payload,
                 'maxPadding',
+                $withoutLogger,
+                $withoutCache,
+            ],
+            [
+                $uaPrivateKey,
+                $uaPublicKey,
+                $uaAuthSecret,
+                $payload,
+                'customPadding',
                 $withoutLogger,
                 $withoutCache,
             ],
