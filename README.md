@@ -293,11 +293,11 @@ use Minishlink\WebPush\Payload\AESGCM;
 $cache = '…'; // PSR-6 service
 
 $aes128gcm = AES128GCM::create()
-    ->setCache($cache); // Optional, but highly recommended
+    ->setCache($cache) // Optional, but highly recommended
 ;
 
 $aesgcm = AESGCM::create()
-    ->setCache($cache); // Optional, but highly recommended
+    ->setCache($cache) // Optional, but highly recommended
 ;
 
 $payloadExtension = PayloadExtension::create()
@@ -313,6 +313,39 @@ $notification = Notification::create()
     ->withPayload('Hello World!')
 ;
 ```
+
+#### Padding
+
+By default, both `AESGCM` and `AES128GCM` content encodings use the recommended padding.
+This feature is used to prevent attacks (Size and Timing) that could reveal the notification payload.
+
+You can change the padding size if needed using one of the three options:
+
+* No padding (not recommended)
+* Recommended padding (default)
+* Maximum padding
+
+With the maximum padding, the encrypted payload will always have a size of 4096 bytes.
+This may increase the computation time, that’s why this padding is not enabled, but highly recommended.
+
+```php
+<?php
+
+use Minishlink\WebPush\Payload\AES128GCM;
+use Minishlink\WebPush\Payload\AESGCM;
+
+$aes128gcm = AES128GCM::create()
+    ->noPadding()          // No padding
+    ->recommendedPadding() // Recommended padding
+    ->maxPadding()         // Maximum padding
+;
+
+$aesgcm = AESGCM::create()
+    ->noPadding()          // No padding
+    ->recommendedPadding() // Recommended padding
+    ->maxPadding()         // Maximum padding
+;
+``` 
 
 #### API Messages
 
