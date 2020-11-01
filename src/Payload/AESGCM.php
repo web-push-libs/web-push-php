@@ -31,7 +31,7 @@ final class AESGCM extends AbstractAESGCM
 
     public function customPadding(int $padding): self
     {
-        Assertion::range($padding, 0, self::PADDING_MAX, 'Invalid padding size');
+        Assertion::range($padding, self::PADDING_NONE, self::PADDING_MAX, 'Invalid padding size');
         $this->padding = $padding;
 
         return $this;
