@@ -23,6 +23,11 @@ final class AESGCM extends AbstractAESGCM
     private const ENCODING = 'aesgcm';
     private const PADDING_MAX = 4078;
 
+    public static function create(): self
+    {
+        return new self();
+    }
+
     public function maxPadding(): self
     {
         $this->padding = self::PADDING_MAX;
@@ -54,6 +59,9 @@ final class AESGCM extends AbstractAESGCM
     {
         $payloadLength = mb_strlen($payload, '8bit');
         $paddingLength = $this->padding - $payloadLength;
+        if ($paddingLength < 0) {
+            $paddingLength = 0;
+        }
 
         return pack('n*', $paddingLength).str_pad($payload, $this->padding, "\0", STR_PAD_LEFT);
     }

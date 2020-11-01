@@ -23,6 +23,6 @@ class LcobucciBench extends AbstractBench
         $publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
         $privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
 
-        return new LcobucciProvider($publicKey, $privateKey);
+        return LcobucciProvider::create($publicKey, $privateKey);
     }
 }

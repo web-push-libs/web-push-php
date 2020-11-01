@@ -62,8 +62,7 @@ final class TopicExtensionTest extends TestCase
         ;
         $subscription = self::createMock(Subscription::class);
 
-        $extension = new TopicExtension();
-        $extension
+        TopicExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;

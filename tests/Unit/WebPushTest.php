@@ -136,7 +136,7 @@ class WebPushTest extends TestCase
             ->with(static::isInstanceOf(StatusReportSuccess::class))
         ;
 
-        $webPush = new WebPush($client, $requestFactory, $extensionManager);
+        $webPush = WebPush::create($client, $requestFactory, $extensionManager);
         $report = $webPush
             ->setLogger($logger)
             ->setEventDispatcher($eventDispatcher)
@@ -252,7 +252,7 @@ class WebPushTest extends TestCase
             ->with(static::isInstanceOf(StatusReportSuccess::class))
         ;
 
-        $webPush = new WebPush($client, $requestFactory, $extensionManager);
+        $webPush = WebPush::create($client, $requestFactory, $extensionManager);
         $report = $webPush
             ->setLogger($logger)
             ->setEventDispatcher($eventDispatcher)
@@ -361,7 +361,7 @@ class WebPushTest extends TestCase
             ->with(static::isInstanceOf(StatusReportFailure::class))
         ;
 
-        $webPush = new WebPush($client, $requestFactory, $extensionManager);
+        $webPush = WebPush::create($client, $requestFactory, $extensionManager);
         $report = $webPush
             ->setLogger($logger)
             ->setEventDispatcher($eventDispatcher)

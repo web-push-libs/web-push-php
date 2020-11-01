@@ -40,6 +40,11 @@ class VAPID implements Extension
         $this->logger = new NullLogger();
     }
 
+    public static function create(string $subject, JWSProvider $jwsProvider): self
+    {
+        return new self($subject, $jwsProvider);
+    }
+
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;

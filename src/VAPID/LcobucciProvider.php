@@ -38,6 +38,11 @@ final class LcobucciProvider implements JWSProvider
         $this->logger = new NullLogger();
     }
 
+    public static function create(string $publicKey, string $privateKey): self
+    {
+        return new self($publicKey, $privateKey);
+    }
+
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;

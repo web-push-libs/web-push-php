@@ -61,8 +61,7 @@ final class TTLExtensionTest extends TestCase
         ;
         $subscription = self::createMock(Subscription::class);
 
-        $extension = new TTLExtension();
-        $extension
+        TTLExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;

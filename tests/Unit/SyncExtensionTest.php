@@ -53,8 +53,7 @@ final class SyncExtensionTest extends TestCase
         ;
         $subscription = self::createMock(Subscription::class);
 
-        $extension = new PreferAsyncExtension();
-        $extension
+        $extension = PreferAsyncExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;
@@ -87,8 +86,7 @@ final class SyncExtensionTest extends TestCase
         ;
         $subscription = self::createMock(Subscription::class);
 
-        $extension = new PreferAsyncExtension();
-        $extension
+        PreferAsyncExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;

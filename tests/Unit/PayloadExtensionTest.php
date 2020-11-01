@@ -58,8 +58,7 @@ final class PayloadExtensionTest extends TestCase
         ;
         $subscription = self::createMock(Subscription::class);
 
-        $extension = new PayloadExtension();
-        $extension
+        PayloadExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;
@@ -121,8 +120,7 @@ final class PayloadExtensionTest extends TestCase
             ->willReturnArgument(1)
         ;
 
-        $extension = new PayloadExtension();
-        $extension
+        PayloadExtension::create()
             ->setLogger($logger)
             ->addContentEncoding($contentEncoding)
             ->process($request, $notification, $subscription)
@@ -171,8 +169,7 @@ final class PayloadExtensionTest extends TestCase
             ->method(static::anything())
         ;
 
-        $extension = new PayloadExtension();
-        $extension
+        PayloadExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;

@@ -45,49 +45,48 @@ abstract class AbstractBench
         $psr17Factory = new Psr17Factory();
 
         $jwsProvider = $this->jwtProvider();
-        $vapidExtension = new VAPID('mailto:foo@bar.com', $jwsProvider);
-        $vapidExtensionWithCache = new VAPID('mailto:foo@bar.com', $jwsProvider);
-        $vapidExtensionWithCache
+        $vapidExtension = VAPID::create('mailto:foo@bar.com', $jwsProvider);
+        $vapidExtensionWithCache = VAPID::create('mailto:foo@bar.com', $jwsProvider)
             ->setCache(new FilesystemAdapter())
         ;
 
-        $payloadExtension = new PayloadExtension();
-        $payloadExtension
-            ->addContentEncoding(new AES128GCM())
-            ->addContentEncoding(new AESGCM())
+        $payloadExtension = PayloadExtension::create()
+            ->addContentEncoding(AES128GCM::create()->maxPadding())
+            ->addContentEncoding(AESGCM::create()->maxPadding())
         ;
 
-        $aes128gcm = new AES128GCM();
-        $aes128gcm->setCache(new FilesystemAdapter());
-        $aesgcm = new AESGCM();
-        $aesgcm->setCache(new FilesystemAdapter());
+        $aes128gcm = AES128GCM::create()
+            ->setCache(new FilesystemAdapter())
+            ->maxPadding()
+        ;
+        $aesgcm = AESGCM::create()
+            ->setCache(new FilesystemAdapter())
+            ->maxPadding()
+        ;
 
-        $payloadExtensionWithCache = new PayloadExtension();
-        $payloadExtensionWithCache
+        $payloadExtensionWithCache = PayloadExtension::create()
             ->addContentEncoding($aes128gcm)
             ->addContentEncoding($aesgcm)
         ;
 
-        $extensionManager = new ExtensionManager();
-        $extensionManager
-            ->add(new TTLExtension())
-            ->add(new TopicExtension())
-            ->add(new UrgencyExtension())
+        $extensionManager = ExtensionManager::create()
+            ->add(TTLExtension::create())
+            ->add(TopicExtension::create())
+            ->add(UrgencyExtension::create())
             ->add($vapidExtension)
             ->add($payloadExtension)
         ;
 
-        $extensionManagerWithCache = new ExtensionManager();
-        $extensionManagerWithCache
-            ->add(new TTLExtension())
-            ->add(new TopicExtension())
-            ->add(new UrgencyExtension())
+        $extensionManagerWithCache = ExtensionManager::create()
+            ->add(TTLExtension::create())
+            ->add(TopicExtension::create())
+            ->add(UrgencyExtension::create())
             ->add($vapidExtensionWithCache)
             ->add($payloadExtensionWithCache)
         ;
 
-        $this->webPush = new WebPush($client, $psr17Factory, $extensionManager);
-        $this->webPushWithCache = new WebPush($client, $psr17Factory, $extensionManagerWithCache);
+        $this->webPush = WebPush::create($client, $psr17Factory, $extensionManager);
+        $this->webPushWithCache = WebPush::create($client, $psr17Factory, $extensionManagerWithCache);
 
         $this->subscription = Subscription::createFromString('{"endpoint":"https://updates.push.services.mozilla.com/wpush/v2/gAAAAABfcsdu1p9BdbYIByt9F76MHcSiuix-ZIiICzAkU9z_p0gnolYLMOi71rqss5pMOZuYJVZLa7rRN58uOgfdsux7k51Ph6KJRFEkf1LqTRMv2d8OhQaL2TR36WUR2d5twzYVwcQJAnTLrhVrWqKVo8ekAonuwyFHDUGzD8oUWpFTK9y2F68","keys":{"auth":"wSfP1pfACMwFesCEfJx4-w","p256dh":"BIlDpD05YLrVPXfANOKOCNSlTvjpb5vdFo-1e0jNcbGlFrP49LyOjYyIIAZIVCDAHEcX-135b859bdsse-PgosU"},"contentEncoding":"aes128gcm"}');
     }

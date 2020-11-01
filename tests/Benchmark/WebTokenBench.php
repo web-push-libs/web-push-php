@@ -23,6 +23,6 @@ class WebTokenBench extends AbstractBench
     {
         $vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
 
-        return new WebTokenProvider($vapidKey);
+        return WebTokenProvider::create($vapidKey);
     }
 }

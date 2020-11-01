@@ -36,6 +36,11 @@ class WebPush
         $this->eventDispatcher = new NullEventDispatcher();
     }
 
+    public static function create(ClientInterface $client, RequestFactoryInterface $requestFactory, ExtensionManager $extensionManager): self
+    {
+        return new self($client, $requestFactory, $extensionManager);
+    }
+
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;

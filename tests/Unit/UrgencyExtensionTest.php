@@ -54,8 +54,7 @@ final class UrgencyExtensionTest extends TestCase
         ;
         $subscription = self::createMock(Subscription::class);
 
-        $extension = new UrgencyExtension();
-        $extension
+        UrgencyExtension::create()
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;

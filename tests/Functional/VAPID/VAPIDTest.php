@@ -70,11 +70,6 @@ final class VAPIDTest extends TestCase
             )
         ;
 
-        $extension = new VAPID(
-            'subject',
-            $jwsProvider
-        );
-
         $request = self::createMock(RequestInterface::class);
         $request
             ->expects(static::once())
@@ -91,7 +86,7 @@ final class VAPIDTest extends TestCase
             ->willReturn('https://foo.fr/test')
         ;
 
-        $extension
+        VAPID::create('subject', $jwsProvider)
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;
@@ -167,11 +162,7 @@ final class VAPIDTest extends TestCase
             ->willReturn('https://foo.fr/test')
         ;
 
-        $extension = new VAPID(
-            'subject',
-            $jwsProvider
-        );
-        $extension
+        VAPID::create('subject', $jwsProvider)
             ->setLogger($logger)
             ->setCache($cache, 'now +30min')
             ->setTokenExpirationTime('now +2 hours')
@@ -220,15 +211,6 @@ final class VAPIDTest extends TestCase
             ->method('computeHeader')
         ;
 
-        $extension = new VAPID(
-            'subject',
-            $jwsProvider
-        );
-        $extension
-            ->setTokenExpirationTime('now +2 hours')
-            ->setCache($cache, 'now +30min')
-        ;
-
         $request = self::createMock(RequestInterface::class);
         $request
             ->expects(static::once())
@@ -245,6 +227,10 @@ final class VAPIDTest extends TestCase
             ->willReturn('https://foo.fr:8080/test')
         ;
 
-        $extension->process($request, $notification, $subscription);
+        VAPID::create('subject', $jwsProvider)
+            ->setTokenExpirationTime('now +2 hours')
+            ->setCache($cache, 'now +30min')
+            ->process($request, $notification, $subscription)
+        ;
     }
 }

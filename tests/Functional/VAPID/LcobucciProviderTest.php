@@ -44,8 +44,7 @@ final class LcobucciProviderTest extends TestCase
             )
         ;
 
-        $provider = new LcobucciProvider($publicKey, $privateKey);
-        $header = $provider
+        $header = LcobucciProvider::create($publicKey, $privateKey)
             ->setLogger($logger)
             ->computeHeader([
                 'aud' => 'audience',

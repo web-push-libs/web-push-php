@@ -61,7 +61,7 @@ $client = '…';
 $requestFactory = '…';
 
 // Extension Manager is detailed later
-$extensionManager = new ExtensionManager();
+$extensionManager = ExtensionManager::create();
 
 // The WebPush service
 $webPush = new WebPush(
@@ -69,6 +69,9 @@ $webPush = new WebPush(
     $requestFactory,  //PSR-17 request factory
     $extensionManager //Will be explained later
 );
+/* You can also use the following method
+$webPush = WebPush::create($client, $requestFactory, $extensionManager);
+*/
 
 
 // In this example, we consider you already received a subscription object
@@ -127,8 +130,9 @@ use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\TTLExtension;
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add(new TTLExtension());
+$extensionManager = ExtensionManager::create()
+    ->add(TTLExtension::create())
+;
 
 $notification = Notification::create()
     ->withTTL(3600)
@@ -151,8 +155,9 @@ use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\TopicExtension;
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add(new TopicExtension());
+$extensionManager = ExtensionManager::create()
+    ->add(TopicExtension::create());
+;
 
 $notification = Notification::create()
     ->withTopic('user-account-updated')
@@ -182,8 +187,9 @@ use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\UrgencyExtension;
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add(new UrgencyExtension());
+$extensionManager = ExtensionManager::create()
+    ->add(UrgencyExtension::create());
+;
 
 $notification = Notification::create()
     ->veryLow()
@@ -226,21 +232,21 @@ use Minishlink\WebPush\VAPID\LcobucciProvider;
 
 // With Web-Token
 $vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
-$jwsProvider = new WebTokenProvider($vapidKey);
+$jwsProvider = WebTokenProvider::create($vapidKey);
 
 // With Lcobucci
 $publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
 $privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
-$jwsProvider = new LcobucciProvider($publicKey, $privateKey);
+$jwsProvider = LcobucciProvider::create($publicKey, $privateKey);
 
 
-$vapidExtension = new VAPID('http://example.com', $jwsProvider); // You can use an URL or an e-mail address (mailto:…)
-$vapidExtension
+$vapidExtension = VAPID::create('http://example.com', $jwsProvider) // You can use an URL or an e-mail address (mailto:…)
     ->setTokenExpirationTime('now +12h') // Optional. By default the token is valid for 1 hour.
 ;
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add($vapidExtension);
+$extensionManager = ExtensionManager::create()
+    ->add($vapidExtension)
+;
 ```
 
 This extension provides a caching feature that will allow the JWS to be reused and avoid JWS computation for each request.
@@ -253,16 +259,16 @@ use Minishlink\WebPush\VAPID\VAPID;
 
 $cache = '…'; // PSR-6 service
 
-$vapidExtension = new VAPID('http://example.com', $jwsProvider);
-$vapidExtension
+$vapidExtension = VAPID::create('http://example.com', $jwsProvider)
     ->setCache(
         $cache,    // PSR-6 caching service
         'now +10h' // Cache lifetime. Shall be lower than the token expiration time!
     )
 ;
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add($vapidExtension);
+$extensionManager = ExtensionManager::create()
+    ->add($vapidExtension);
+;
 ```
 
 ### Payload
@@ -286,21 +292,22 @@ use Minishlink\WebPush\Payload\AESGCM;
 
 $cache = '…'; // PSR-6 service
 
-$aes128gcm = new AES128GCM();
-$aes128gcm->setCache($cache); // Optional, but highly recommended
+$aes128gcm = AES128GCM::create()
+    ->setCache($cache); // Optional, but highly recommended
+;
 
-$aesgcm = new AESGCM();
-$aesgcm->setCache($cache); // Optional, but highly recommended
+$aesgcm = AESGCM::create()
+    ->setCache($cache); // Optional, but highly recommended
+;
 
-
-$payloadExtension = new PayloadExtension();
-$payloadExtension
+$payloadExtension = PayloadExtension::create()
     ->addContentEncoding($aes128gcm)
     ->addContentEncoding($aesgcm)
 ;
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add($payloadExtension);
+$extensionManager = ExtensionManager::create()
+    ->add($payloadExtension);
+;
 
 $notification = Notification::create()
     ->withPayload('Hello World!')
@@ -330,7 +337,7 @@ $message = Message::create('Hello World!')
     ->ltr() //Direction = left to right
     ->rtl() //Direction = right to left
 
-    ->addAction(new Action('alert', 'TITLE', 'https://…'))
+    ->addAction(Action::create('alert', 'TITLE'))
 
     ->interactionRequired()
     ->noInteraction()
@@ -370,11 +377,11 @@ use Minishlink\WebPush\PreferAsyncExtension;
 
 $cache = '…'; // PSR-6 service
 
-$extension = new PreferAsyncExtension();
+$extension = PreferAsyncExtension::create();
 
-$extensionManager = new ExtensionManager();
-$extensionManager->add($extension);
-
+$extensionManager = ExtensionManager::create()
+    ->add($extension);
+;
 
 $notification = Notification::create()
     ->async() // Prefer async response
@@ -391,19 +398,41 @@ It can be of two types:
 * `Minishlink\WebPush\StatusReportFailure`: an error occurred.
 
 
-In some cases, it could be interesting to dispatch the status report.
+In some cases, it could be interesting to dispatch the status report through an event dispatcher.
+The `WebPush` class has a convenient method to dispatch reports using a PSR-14 (Event Dispatcher) implementation. 
 
 ```php
 <?php
+use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\WebPush;
+use Psr\EventDispatcher\EventDispatcherInterface;
+
+//PSR-18 HTTP client
+/** @var Psr\Http\Client\ClientInterface $client */
+$client = '…';
+
+//PSR-17 request factory
+/** @var Psr\Http\Message\RequestFactoryInterface $requestFactory */
+$requestFactory = '…';
+
+//PSR-14 event dispatcher
+/** @var EventDispatcherInterface $eventDispatcher */
+$eventDispatcher = '…';
+
+// Extension Manager
+$extensionManager = ExtensionManager::create();
 
 $subscription = Subscription::createFromString('{"endpoint":"…"}');
 $notification = Notification::create();
 
-/** @var WebPush $webPush */
-$statusReport = $webPush->send($notification, $subscription);
+WebPush::create($client, $requestFactory, $extensionManager)
+    ->setEventDispatcher($eventDispatcher)
+    ->send($notification, $subscription)
+;
+
+// The status report is now dispatched (it is still returned if you need it).
 ```
 
 ## Contributing

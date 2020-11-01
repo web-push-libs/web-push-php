@@ -45,8 +45,7 @@ final class WebTokenProviderTest extends TestCase
             )
         ;
 
-        $provider = new WebTokenProvider($key);
-        $header = $provider
+        $header = WebTokenProvider::create($key)
             ->setLogger($logger)
             ->computeHeader([
                 'aud' => 'audience',

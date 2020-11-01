@@ -21,6 +21,11 @@ final class AES128GCM extends AbstractAESGCM
     private const ENCODING = 'aes128gcm';
     private const PADDING_MAX = 3993; // as per RFC8291: 4096 -tag(16) -salt(16) -rs(4) -idlen(1) -keyid(65) -AEAD_AES_128_GCM expension(16) and 1 byte in case of
 
+    public static function create(): self
+    {
+        return new self();
+    }
+
     public function maxPadding(): self
     {
         $this->padding = self::PADDING_MAX;

@@ -40,6 +40,11 @@ final class WebTokenProvider implements JWSProvider
         $this->logger = new NullLogger();
     }
 
+    public static function create(JWK $signatureKey): self
+    {
+        return new self($signatureKey);
+    }
+
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;

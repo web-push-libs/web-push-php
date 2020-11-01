@@ -61,8 +61,7 @@ final class ExtensionManagerTest extends TestCase
         $notification = self::createMock(Notification::class);
         $subscription = self::createMock(Subscription::class);
 
-        $manager = new ExtensionManager();
-        $manager
+        $manager = ExtensionManager::create()
             ->setLogger($logger)
             ->add($extension1)
             ->add($extension2)

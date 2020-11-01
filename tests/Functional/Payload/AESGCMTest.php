@@ -14,16 +14,14 @@ declare(strict_types=1);
 namespace Minishlink\Tests\Functional\Payload;
 
 use function chr;
-use function count;
 use DateTimeInterface;
 use InvalidArgumentException;
 use Minishlink\WebPush\Base64Url;
 use Minishlink\WebPush\Keys;
-use Minishlink\WebPush\Payload\AES128GCM;
+use Minishlink\WebPush\Payload\AESGCM;
 use Minishlink\WebPush\Payload\ServerKey;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Utils;
-use function ord;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -31,50 +29,17 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 use function Safe\openssl_decrypt;
-use function Safe\preg_match;
+use function Safe\sprintf;
 use function Safe\unpack;
 
 /**
  * @internal
  */
-final class AES128GCMTest extends TestCase
+final class AESGCMTest extends TestCase
 {
     private static ?string $body = null;
-
-    /**
-     * @test
-     *
-     * @see https://tests.peter.sh/push-encryption-verifier/
-     */
-    public function decryptPayloadCorrectly(): void
-    {
-        $body = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A_yl95bQpu6cVPTpK4Mqgkf1CXztLVBSt2Ks3oZwbuwXPXLWyouBWLVWGNWQexSgSxsj_Qulcy4a-fN');
-        $userAgentPrivateKey = Base64Url::decode('q1dXpw3UpT5VOmu_cf_v6ih07Aems3njxI-JWgLcM94');
-        $userAgentPublicKey = Base64Url::decode('BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcx aOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4');
-        $userAgentAuthToken = Base64Url::decode('BTBZMqHH6r4Tts7J_aSIgg');
-        $expectedPayload = 'When I grow up, I want to be a watermelon';
-
-        $stream = self::createMock(StreamInterface::class);
-        $stream
-            ->expects(static::once())
-            ->method('rewind')
-        ;
-        $stream
-            ->expects(static::once())
-            ->method('getContents')
-            ->willReturn($body)
-        ;
-
-        $request = self::createMock(RequestInterface::class);
-        $request
-            ->expects(static::once())
-            ->method('getBody')
-            ->willReturn($stream)
-        ;
-
-        $payload = $this->decryptRequest($request, $userAgentAuthToken, $userAgentPublicKey, $userAgentPrivateKey, true);
-        static::assertEquals($expectedPayload, $payload);
-    }
+    private static ?string $salt = null;
+    private static ?string $cryptoKey = null;
 
     /**
      * @test
@@ -102,9 +67,19 @@ final class AES128GCMTest extends TestCase
             ->willReturn($stream)
         ;
         $request
-            ->expects(static::exactly(1))
+            ->expects(static::exactly(2))
             ->method('withHeader')
             ->withConsecutive(
+                ['Encryption', static::callback(static function (string $data): bool {
+                    $pos = mb_strpos($data, 'salt=', 0, '8bit');
+                    if (0 !== $pos) {
+                        return false;
+                    }
+                    $salt = Base64Url::decode(mb_substr($data, 5, null));
+                    self::$salt = $salt;
+
+                    return 16 === mb_strlen($salt, '8bit');
+                })],
                 ['Content-Length', static::isType('string')],
             )
             ->willReturnSelf()
@@ -113,7 +88,16 @@ final class AES128GCMTest extends TestCase
             ->expects(static::exactly(1))
             ->method('withAddedHeader')
             ->withConsecutive(
-                ['Crypto-Key'],
+                ['Crypto-Key', static::callback(static function (string $data): bool {
+                    $pos = mb_strpos($data, 'dh=', 0, '8bit');
+                    if (0 !== $pos) {
+                        return false;
+                    }
+                    $cryptoKey = Base64Url::decode(mb_substr($data, 3, null));
+                    self::$cryptoKey = $cryptoKey;
+
+                    return 65 === mb_strlen($cryptoKey, '8bit');
+                })],
             )
             ->willReturnSelf()
         ;
@@ -154,7 +138,7 @@ final class AES128GCMTest extends TestCase
             ->willReturn($keys)
         ;
 
-        $encoder = AES128GCM::create()
+        $encoder = AESGCM::create()
             ->setCache($cache)
             ->setLogger($logger)
         ;
@@ -172,7 +156,7 @@ final class AES128GCMTest extends TestCase
             default:
                 break;
         }
-        static::assertEquals('aes128gcm', $encoder->name());
+        static::assertEquals('aesgcm', $encoder->name());
 
         $encoder->encode($payload, $request, $subscription);
 
@@ -269,10 +253,10 @@ final class AES128GCMTest extends TestCase
             ->willReturn($keys)
         ;
 
-        $encoder = AES128GCM::create();
+        $encoder = AESGCM::create();
 
-        static::assertEquals('aes128gcm', $encoder->name());
-        $payload = str_pad('', 3994, '0');
+        static::assertEquals('aesgcm', $encoder->name());
+        $payload = str_pad('', 4079, '0');
 
         $encoder->encode($payload, $request, $subscription);
 
@@ -321,7 +305,7 @@ final class AES128GCMTest extends TestCase
                 $uaPrivateKey,
                 $uaPublicKey,
                 $uaAuthSecret,
-                str_pad('', 3993, '1'),
+                str_pad('', 4078, '1'),
                 'noPadding',
                 $withoutLogger,
                 $withoutCache,
@@ -381,49 +365,39 @@ final class AES128GCMTest extends TestCase
 
         $ciphertext = $requestBody->getContents();
 
-        // Salt
-        $salt = mb_substr($ciphertext, 0, 16, '8bit');
-        static::assertEquals(mb_strlen($salt, '8bit'), 16);
+        $salt = self::$salt;
+        $keyid = self::$cryptoKey;
+        self::$salt = null;
+        self::$cryptoKey = null;
 
-        // Record size
-        $rs = mb_substr($ciphertext, 16, 4, '8bit');
-        $rs = unpack('N', $rs)[1];
-        static::assertEquals(4096, $rs);
-
-        // idlen
-        $idlen = ord(mb_substr($ciphertext, 20, 1, '8bit'));
-
-        //keyid
-        $keyid = mb_substr($ciphertext, 21, $idlen, '8bit');
+        $context = sprintf('%s%s%s%s',
+            "P-256\0\0A",
+            $inverted ? $receiverPublicKey : $keyid,
+            "\0A",
+            $inverted ? $keyid : $receiverPublicKey
+        );
 
         // IKM
-        $keyInfo = 'WebPush: info'.chr(0).($inverted ? $receiverPublicKey.$keyid : $keyid.$receiverPublicKey);
+        $keyInfo = 'Content-Encoding: auth'.chr(0);
         $ikm = Utils::computeIKM($keyInfo, $authSecret, $keyid, $receiverPrivateKey, $receiverPublicKey);
-
-        // We remove the header
-        $ciphertext = mb_substr($ciphertext, 16 + 4 + 1 + $idlen, null, '8bit');
 
         // We compute the PRK
         $prk = hash_hmac('sha256', $ikm, $salt, true);
 
-        $cekInfo = 'Content-Encoding: aes128gcm'.chr(0);
+        $cekInfo = 'Content-Encoding: aesgcm'.chr(0).$context;
         $cek = mb_substr(hash_hmac('sha256', $cekInfo.chr(1), $prk, true), 0, 16, '8bit');
 
-        $nonceInfo = 'Content-Encoding: nonce'.chr(0);
+        $nonceInfo = 'Content-Encoding: nonce'.chr(0).$context;
         $nonce = mb_substr(hash_hmac('sha256', $nonceInfo.chr(1), $prk, true), 0, 12, '8bit');
 
         $C = mb_substr($ciphertext, 0, -16, '8bit');
         $T = mb_substr($ciphertext, -16, null, '8bit');
 
         $rawData = openssl_decrypt($C, 'aes-128-gcm', $cek, OPENSSL_RAW_DATA, $nonce, $T);
+        $padding = mb_substr($rawData, 0, 2, '8bit');
+        $paddingLength = unpack('n', $padding)[1];
 
-        $matches = [];
-        $r = preg_match('/^(.*)(\x02\x00*)$/', $rawData, $matches);
-        if (1 !== $r || 3 !== count($matches)) {
-            throw new InvalidArgumentException('Invalid data');
-        }
-
-        return $matches[1];
+        return mb_substr($rawData, 2 + $paddingLength, null, '8bit');
     }
 
     private function getMissingCache(): CacheItemPoolInterface

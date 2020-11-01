@@ -26,6 +26,11 @@ class TTLExtension implements Extension
         $this->logger = new NullLogger();
     }
 
+    public static function create(): self
+    {
+        return new self();
+    }
+
     public function setLogger(LoggerInterface $logger): self
     {
         $this->logger = $logger;
