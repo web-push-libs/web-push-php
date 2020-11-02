@@ -129,7 +129,6 @@ $aes128gcm->maxPadding();
 $payloadExtension = new PayloadExtension();
 $payloadExtension->addContentEncoding($aesgcm);
 $payloadExtension->addContentEncoding($aes128gcm);
-;
 ```
 
 ## The Subscription
