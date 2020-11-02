@@ -548,9 +548,14 @@ use Psr\Log\LoggerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Cache\CacheItemPoolInterface;
 
 //PSR-3 Logger
 /** @var LoggerInterface $logger */
+$logger = '…';
+
+//PSR-6 Cache
+/** @var CacheItemPoolInterface $cache */
 $logger = '…';
 
 //PSR-14 Event Dispatcher
@@ -572,22 +577,27 @@ $serverPrivateKey = 'C40jLFSa5UWxstkFvdwzT3eHONE2FIJSEsVIncSCAqU';
 //Payload Extension
 $payloadExtension = PayloadExtension::create()
     ->setLogger($logger)
-    ->addContentEncoding(AESGCM::create()->setLogger($logger)->maxPadding())
-    ->addContentEncoding(AES128GCM::create()->setLogger($logger)->maxPadding())
+    ->addContentEncoding(AESGCM::create()->setCache($cache)->setLogger($logger)->maxPadding())
+    ->addContentEncoding(AES128GCM::create()->setCache($cache)->setLogger($logger)->maxPadding())
 ;
 
 //-> With web-token framework
 $vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
-$jwsProvider = new WebTokenProvider($vapidKey);
+$jwsProvider = WebTokenProvider::create($vapidKey)
+    ->setLogger($logger)
+;
 //-> with web-token framework
 $publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
 $privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
-$jwsProvider = LcobucciProvider::create($publicKey, $privateKey);
+$jwsProvider = LcobucciProvider::create($publicKey, $privateKey)
+    ->setLogger($logger)
+;
 
 //VAPID Extension
 $vapidExtension = VAPIDExtension::create('http://localhost:8000', $jwsProvider)
     ->setTokenExpirationTime('now +2 hours')
     ->setLogger($logger)
+    ->setCache($cache)
 ;
 
 //Extension manager
