@@ -278,7 +278,7 @@ The payload may be a string, or a JSON object. The structure of the later is des
 
 The payload is encrypted on server side and decrypted by the browser.
 To do so, you shall add Content Encoding services.
-The specification defines two encodings that are very similar: `aesgcm` and `s128gcm`.
+The specification defines two encodings that are very similar: `aesgcm` and `aes128gcm`.
 Please use both of them.
 
 ```php
