@@ -24,7 +24,7 @@ use Minishlink\WebPush\TopicExtension;
 use Minishlink\WebPush\TTLExtension;
 use Minishlink\WebPush\UrgencyExtension;
 use Minishlink\WebPush\VAPID\JWSProvider;
-use Minishlink\WebPush\VAPID\VAPID;
+use Minishlink\WebPush\VAPID\VAPIDExtension;
 use Minishlink\WebPush\WebPush;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
@@ -45,8 +45,8 @@ abstract class AbstractBench
         $psr17Factory = new Psr17Factory();
 
         $jwsProvider = $this->jwtProvider();
-        $vapidExtension = VAPID::create('mailto:foo@bar.com', $jwsProvider);
-        $vapidExtensionWithCache = VAPID::create('mailto:foo@bar.com', $jwsProvider)
+        $vapidExtension = VAPIDExtension::create('mailto:foo@bar.com', $jwsProvider);
+        $vapidExtensionWithCache = VAPIDExtension::create('mailto:foo@bar.com', $jwsProvider)
             ->setCache(new FilesystemAdapter())
         ;
 

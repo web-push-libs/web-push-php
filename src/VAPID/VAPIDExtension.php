@@ -24,7 +24,7 @@ use Safe\DateTimeImmutable;
 use function Safe\parse_url;
 use function Safe\sprintf;
 
-class VAPID implements Extension
+class VAPIDExtension implements Extension
 {
     private JWSProvider $jwsProvider;
     private ?CacheItemPoolInterface $cache = null;

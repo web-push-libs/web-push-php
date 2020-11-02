@@ -19,7 +19,7 @@ use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\VAPID\Header;
 use Minishlink\WebPush\VAPID\JWSProvider;
-use Minishlink\WebPush\VAPID\VAPID;
+use Minishlink\WebPush\VAPID\VAPIDExtension;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -86,7 +86,7 @@ final class VAPIDTest extends TestCase
             ->willReturn('https://foo.fr/test')
         ;
 
-        VAPID::create('subject', $jwsProvider)
+        VAPIDExtension::create('subject', $jwsProvider)
             ->setLogger($logger)
             ->process($request, $notification, $subscription)
         ;
@@ -162,7 +162,7 @@ final class VAPIDTest extends TestCase
             ->willReturn('https://foo.fr/test')
         ;
 
-        VAPID::create('subject', $jwsProvider)
+        VAPIDExtension::create('subject', $jwsProvider)
             ->setLogger($logger)
             ->setCache($cache, 'now +30min')
             ->setTokenExpirationTime('now +2 hours')
@@ -227,7 +227,7 @@ final class VAPIDTest extends TestCase
             ->willReturn('https://foo.fr:8080/test')
         ;
 
-        VAPID::create('subject', $jwsProvider)
+        VAPIDExtension::create('subject', $jwsProvider)
             ->setTokenExpirationTime('now +2 hours')
             ->setCache($cache, 'now +30min')
             ->process($request, $notification, $subscription)
