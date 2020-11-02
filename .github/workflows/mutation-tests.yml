@@ -20,5 +20,8 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
+      - name: Fetch Git base reference
+        run: git fetch --depth=1 origin $GITHUB_BASE_REF
+
       - name: Infection
-        run: ./vendor/bin/infection -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95
+        run: ./vendor/bin/infection --logger-github --git-diff-filter=AM -s --threads=$(nproc) --min-msi=95 --min-covered-msi=95

@@ -67,10 +67,7 @@ final class AESGCM extends AbstractAESGCM
     protected function addPadding(string $payload): string
     {
         $payloadLength = mb_strlen($payload, '8bit');
-        $paddingLength = $this->padding - $payloadLength;
-        if ($paddingLength < 0) {
-            $paddingLength = 0;
-        }
+        $paddingLength = max(self::PADDING_NONE, $this->padding - $payloadLength);
 
         return pack('n*', $paddingLength).str_pad($payload, $this->padding, "\0", STR_PAD_LEFT);
     }
