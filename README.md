@@ -17,6 +17,8 @@ This specification is a working draft at the time of writing (2020-11).
     * A PSR-17 (HTTP Message Factory) implementation
     * A PSR-18 (HTTP Client) implementation
     * `json`
+* Optional:
+    * A PSR-14 (Event Dispatcher) implementation
 
 * Depending on the extensions you use
     * When using VAPID extension (*highly recommended*):
@@ -43,6 +45,8 @@ Use [composer](https://getcomposer.org/) to download and install the library and
 `composer require minishlink/web-push`
 
 ## Usage
+
+*Note: a complete example is available at the end of this page*
 
 ```php
 <?php
@@ -122,6 +126,8 @@ extensions have been introduced to allow smooth integration over the evolution o
 With this extension, a value in seconds is added to the notification.
 It suggests how long a push message is retained by the push service.
 A value of 0 (zero) indicates the notification is delivered immediately.
+
+**This extension is mandatory**
 
 ```php
 <?php
@@ -226,7 +232,7 @@ The library provides implementations for the following third party libraries. Fe
 
 use Jose\Component\Core\JWK;
 use Minishlink\WebPush\ExtensionManager;
-use Minishlink\WebPush\VAPID\VAPID;
+use Minishlink\WebPush\VAPID\VAPIDExtension;
 use Minishlink\WebPush\VAPID\WebTokenProvider;
 use Minishlink\WebPush\VAPID\LcobucciProvider;
 
@@ -240,7 +246,7 @@ $privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
 $jwsProvider = LcobucciProvider::create($publicKey, $privateKey);
 
 
-$vapidExtension = VAPID::create('http://example.com', $jwsProvider) // You can use an URL or an e-mail address (mailto:…)
+$vapidExtension = VAPIDExtension::create('http://example.com', $jwsProvider) // You can use an URL or an e-mail address (mailto:…)
     ->setTokenExpirationTime('now +12h') // Optional. By default the token is valid for 1 hour.
 ;
 
@@ -255,11 +261,11 @@ This extension provides a caching feature that will allow the JWS to be reused a
 <?php
 
 use Minishlink\WebPush\ExtensionManager;
-use Minishlink\WebPush\VAPID\VAPID;
+use Minishlink\WebPush\VAPID\VAPIDExtension;
 
 $cache = '…'; // PSR-6 service
 
-$vapidExtension = VAPID::create('http://example.com', $jwsProvider)
+$vapidExtension = VAPIDExtension::create('http://example.com', $jwsProvider)
     ->setCache(
         $cache,    // PSR-6 caching service
         'now +10h' // Cache lifetime. Shall be lower than the token expiration time!
@@ -472,6 +478,128 @@ WebPush::create($client, $requestFactory, $extensionManager)
 ;
 
 // The status report is now dispatched (it is still returned if you need it).
+```
+
+## Complete Example
+
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Jose\Component\Core\JWK;
+use Minishlink\WebPush\Action;
+use Minishlink\WebPush\ExtensionManager;
+use Minishlink\WebPush\Message;
+use Minishlink\WebPush\Notification;
+use Minishlink\WebPush\Payload\AES128GCM;
+use Minishlink\WebPush\Payload\AESGCM;
+use Minishlink\WebPush\Payload\PayloadExtension;
+use Minishlink\WebPush\PreferAsyncExtension;
+use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\TopicExtension;
+use Minishlink\WebPush\TTLExtension;
+use Minishlink\WebPush\UrgencyExtension;
+use Minishlink\WebPush\VAPID\LcobucciProvider;
+use Minishlink\WebPush\VAPID\VAPIDExtension;
+use Minishlink\WebPush\VAPID\WebTokenProvider;
+use Minishlink\WebPush\WebPush;
+
+use Psr\Log\LoggerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+
+//PSR-3 Logger
+/** @var LoggerInterface $logger */
+$logger = '…';
+
+//PSR-14 Event Dispatcher
+/** @var EventDispatcherInterface $eventDispatcher */
+$eventDispatcher = '…';
+
+//PSR-17 request factory
+/** @var RequestFactoryInterface $requestFactory */
+$requestFactory = '…';
+
+//PSR-18 HTTP client
+/** @var ClientInterface $client */
+$client = '…';
+
+
+$serverPublicKey = 'BB4W1qfBi7MF_Lnrc6i2oL-glAuKF4kevy9T0k2vyKV4qvuBrN3T6o9-7-NR3mKHwzDXzD3fe7XvIqIU1iADpGQ';
+$serverPrivateKey = 'C40jLFSa5UWxstkFvdwzT3eHONE2FIJSEsVIncSCAqU';
+
+//Payload Extension
+$payloadExtension = PayloadExtension::create()
+    ->setLogger($logger)
+    ->addContentEncoding(AESGCM::create()->setLogger($logger)->maxPadding())
+    ->addContentEncoding(AES128GCM::create()->setLogger($logger)->maxPadding())
+;
+
+//-> With web-token framework
+$vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
+$jwsProvider = new WebTokenProvider($vapidKey);
+//-> with web-token framework
+$publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
+$privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
+$jwsProvider = LcobucciProvider::create($publicKey, $privateKey);
+
+//VAPID Extension
+$vapidExtension = VAPIDExtension::create('http://localhost:8000', $jwsProvider)
+    ->setTokenExpirationTime('now +2 hours')
+    ->setLogger($logger)
+;
+
+//Extension manager
+$extensionManager = ExtensionManager::create()
+    ->setLogger($logger)
+    ->add(TTLExtension::create()->setLogger($logger))
+    ->add(TopicExtension::create()->setLogger($logger))
+    ->add(UrgencyExtension::create()->setLogger($logger))
+    ->add(PreferAsyncExtension::create()->setLogger($logger))
+    ->add($vapidExtension)
+    ->add($payloadExtension)
+;
+
+// Our message (payload + parameters)
+$message = Message::create('Hello World!')
+    ->auto() //Direction = auto
+    ->unmute()
+    ->vibrate(300, 100, 400)
+    ->renotify()
+    ->interactionRequired()
+
+    ->withImage('https://example.com/hello_world.jpg')
+    ->withData(['foo' => 'BAR'])
+    ->withLang('en-GB')
+    ->withBadge('BaDgE')
+    ->withTimestamp(time())
+    ->withTag('foo')
+
+    ->addAction(Action::create('alert', 'CLICK!')->withIcon('https://example.com/click.ico'))
+    ->addAction(Action::create('cancel', 'CANCEL')->withIcon('https://example.com/cancel.ico'))
+;
+
+// Notification
+$notification = Notification::create()
+    ->withTTL(0)
+    ->withTopic('test')
+    ->high()
+    ->async()
+    ->withPayload((string) $message)
+;
+
+// Subscription
+$subscription = Subscription::createFromString('Fetch the subscription form your storage');
+
+// Notification is sent to the subscription
+WebPush::create($client, $requestFactory, $extensionManager)
+    ->setLogger($logger)
+    ->setEventDispatcher($eventDispatcher)
+    ->send($notification, $subscription)
+;
 ```
 
 ## Contributing
