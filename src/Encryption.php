@@ -95,7 +95,7 @@ class Encryption
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => Base64Url::encode($localPrivateKeyObject->getSecret()->toBytes()),
+                'd' => Base64Url::encode($localPrivateKeyObject->getSecret()->toBytes(false)),
                 'x' => Base64Url::encode($localPublicKeyObject[0]),
                 'y' => Base64Url::encode($localPublicKeyObject[1]),
             ]);
@@ -280,9 +280,9 @@ class Encryption
                 new JWK([
                     'kty' => 'EC',
                     'crv' => 'P-256',
-                    'x' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getX()->toBytes())),
-                    'y' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getY()->toBytes())),
-                    'd' => Base64Url::encode(self::addNullPadding($privateKey->getSecret()->toBytes())),
+                    'x' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getX()->toBytes(false))),
+                    'y' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getY()->toBytes(false))),
+                    'd' => Base64Url::encode(self::addNullPadding($privateKey->getSecret()->toBytes(false))),
                 ])
             ];
         }
