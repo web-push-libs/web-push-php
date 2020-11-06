@@ -42,6 +42,9 @@ class UrgencyExtension implements Extension
     {
         $urgency = $notification->getUrgency();
         $this->logger->debug('Processing with the Urgency extension', ['Urgency' => $urgency]);
+        if ('' === $urgency) {
+            return $request;
+        }
 
         return $request
             ->withHeader('Urgency', $urgency)

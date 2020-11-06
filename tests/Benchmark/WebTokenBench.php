@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\Tests\Benchmark;
 
-use Jose\Component\Core\JWK;
 use Minishlink\WebPush\VAPID\JWSProvider;
 use Minishlink\WebPush\VAPID\WebTokenProvider;
 
@@ -21,8 +20,9 @@ class WebTokenBench extends AbstractBench
 {
     protected function jwtProvider(): JWSProvider
     {
-        $vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
+        $publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
+        $privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
 
-        return WebTokenProvider::create($vapidKey);
+        return WebTokenProvider::create($publicKey, $privateKey);
     }
 }

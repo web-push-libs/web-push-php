@@ -52,14 +52,14 @@ class VAPIDExtension implements Extension
         return $this;
     }
 
-    public function setTokenExpirationTime(string $tokenExpirationTime = 'now +1h'): self
+    public function setTokenExpirationTime(string $tokenExpirationTime): self
     {
         $this->tokenExpirationTime = $tokenExpirationTime;
 
         return $this;
     }
 
-    public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now +30min'): self
+    public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now +1h'): self
     {
         $this->cache = $cache;
         $this->cacheExpirationTime = $cacheExpirationTime;

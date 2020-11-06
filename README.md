@@ -268,19 +268,18 @@ The library provides implementations for the following third party libraries. Fe
 ```php
 <?php
 
-use Jose\Component\Core\JWK;
 use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\VAPID\VAPIDExtension;
 use Minishlink\WebPush\VAPID\WebTokenProvider;
 use Minishlink\WebPush\VAPID\LcobucciProvider;
 
-// With Web-Token
-$vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
-$jwsProvider = WebTokenProvider::create($vapidKey);
-
-// With Lcobucci
 $publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
 $privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
+
+// With Web-Token
+$jwsProvider = WebTokenProvider::create($publicKey, $privateKey);
+
+// With Lcobucci
 $jwsProvider = LcobucciProvider::create($publicKey, $privateKey);
 
 
@@ -526,7 +525,6 @@ WebPush::create($client, $requestFactory, $extensionManager)
 
 declare(strict_types=1);
 
-use Jose\Component\Core\JWK;
 use Minishlink\WebPush\Action;
 use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Message;
@@ -570,9 +568,8 @@ $requestFactory = '…';
 /** @var ClientInterface $client */
 $client = '…';
 
-
-$serverPublicKey = 'BB4W1qfBi7MF_Lnrc6i2oL-glAuKF4kevy9T0k2vyKV4qvuBrN3T6o9-7-NR3mKHwzDXzD3fe7XvIqIU1iADpGQ';
-$serverPrivateKey = 'C40jLFSa5UWxstkFvdwzT3eHONE2FIJSEsVIncSCAqU';
+$publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
+$privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
 
 //Payload Extension
 $payloadExtension = PayloadExtension::create()
@@ -582,13 +579,10 @@ $payloadExtension = PayloadExtension::create()
 ;
 
 //-> With web-token framework
-$vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
-$jwsProvider = WebTokenProvider::create($vapidKey)
+$jwsProvider = WebTokenProvider::create($publicKey, $privateKey)
     ->setLogger($logger)
 ;
 //-> with web-token framework
-$publicKey = 'BNFEvAnv7SfVGz42xFvdcu-z-W_3FVm_yRSGbEVtxVRRXqCBYJtvngQ8ZN-9bzzamxLjpbw7vuHcHTT2H98LwLM';
-$privateKey = 'TcP5-SlbNbThgntDB7TQHXLslhaxav8Qqdd_Ar7VuNo';
 $jwsProvider = LcobucciProvider::create($publicKey, $privateKey)
     ->setLogger($logger)
 ;

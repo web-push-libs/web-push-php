@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 require_once __DIR__.'/vendor/autoload.php';
 
-use Jose\Component\Core\JWK;
 use Minishlink\WebPush\Action;
 use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Message;
@@ -61,9 +60,7 @@ $payloadExtension = PayloadExtension::create()
     ->addContentEncoding(AES128GCM::create()->setCache($cache)->noPadding())
 ;
 
-
-$vapidKey = JWK::createFromJson('{"kty":"EC","crv":"P-256","d":"fiDSHFnef96_AX-BI5m6Ew2uiW-CIqoKtKnrIAeDRMI","x":"Xea1H6hwYhGqE4vBHcW8knbx9sNZsnXHwgikrpWyLQI","y":"Kl7gDKfzYe_TFJWHxDNDU1nhBB2nzx9OTlGcF4G7Z2w"}');
-$jwsProvider = WebTokenProvider::create($vapidKey)
+$jwsProvider = WebTokenProvider::create($serverPublicKey, $serverPrivateKey)
     ->setLogger($log)
 ;
 $vapidExtension = VAPIDExtension::create('http://localhost:8000', $jwsProvider)
