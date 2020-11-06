@@ -28,7 +28,7 @@ class VAPIDExtension implements Extension
 {
     private JWSProvider $jwsProvider;
     private ?CacheItemPoolInterface $cache = null;
-    private string $tokenExpirationTime = 'now +1h';
+    private string $tokenExpirationTime = 'now +1hour';
     private LoggerInterface $logger;
     private string $subject;
     private string $cacheExpirationTime = 'now +30min';
@@ -59,7 +59,7 @@ class VAPIDExtension implements Extension
         return $this;
     }
 
-    public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now +1h'): self
+    public function setCache(CacheItemPoolInterface $cache, string $cacheExpirationTime = 'now +30min'): self
     {
         $this->cache = $cache;
         $this->cacheExpirationTime = $cacheExpirationTime;

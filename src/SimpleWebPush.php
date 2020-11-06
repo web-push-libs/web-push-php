@@ -14,50 +14,37 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Assert\Assertion;
+use InvalidArgumentException;
+use Jose\Component\Signature\Algorithm\ES256;
+use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 use Minishlink\WebPush\Payload\AES128GCM;
 use Minishlink\WebPush\Payload\AESGCM;
 use Minishlink\WebPush\Payload\PayloadExtension;
+use Minishlink\WebPush\VAPID\JWSProvider;
+use Minishlink\WebPush\VAPID\LcobucciProvider;
 use Minishlink\WebPush\VAPID\VAPIDExtension;
 use Minishlink\WebPush\VAPID\WebTokenProvider;
-use Psr\Cache\CacheItemPoolInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
-use Psr\Log\LoggerInterface;
 
-class SimpleWebPush
+class SimpleWebPush implements WebPushService
 {
     private WebPush $service;
-    private AES128GCM $aes128gcm;
-    private AESGCM $aesgcm;
     private ExtensionManager $extensionManager;
-    private PayloadExtension $payloadExtension;
-    private TTLExtension $ttlExtension;
-    private TopicExtension $topicExtension;
-    private UrgencyExtension $urgencyExtension;
-    private PreferAsyncExtension $preferAsyncExtension;
-    private ?VAPIDExtension $vapidExtension = null;
-    private ?WebTokenProvider $jwsProvider = null;
+    private bool $vapidEnabled = false;
 
     public function __construct(ClientInterface $client, RequestFactoryInterface $requestFactory)
     {
-        $this->aes128gcm = AES128GCM::create();
-        $this->aesgcm = AESGCM::create();
-        $this->payloadExtension = PayloadExtension::create()
-            ->addContentEncoding($this->aesgcm)
-            ->addContentEncoding($this->aes128gcm)
+        $payloadExtension = PayloadExtension::create()
+            ->addContentEncoding(AESGCM::create())
+            ->addContentEncoding(AES128GCM::create())
         ;
-        $this->ttlExtension = TTLExtension::create();
-        $this->topicExtension = TopicExtension::create();
-        $this->urgencyExtension = UrgencyExtension::create();
-        $this->preferAsyncExtension = PreferAsyncExtension::create();
-
         $this->extensionManager = ExtensionManager::create()
-            ->add($this->ttlExtension)
-            ->add($this->topicExtension)
-            ->add($this->urgencyExtension)
-            ->add($this->preferAsyncExtension)
-            ->add($this->payloadExtension)
+            ->add(TTLExtension::create())
+            ->add(TopicExtension::create())
+            ->add(UrgencyExtension::create())
+            ->add(PreferAsyncExtension::create())
+            ->add($payloadExtension)
         ;
         $this->service = WebPush::create($client, $requestFactory, $this->extensionManager);
     }
@@ -69,49 +56,12 @@ class SimpleWebPush
 
     public function enableVapid(string $subject, string $publicKey, string $privateKey): self
     {
-        $this->jwsProvider = WebTokenProvider::create($publicKey, $privateKey);
-        Assertion::null($this->vapidExtension, 'VAPID has already been enabled');
-        $this->vapidExtension = VAPIDExtension::create($subject, $this->jwsProvider);
-        $this->extensionManager->add($this->vapidExtension);
-
-        return $this;
-    }
-
-    public function setLogger(LoggerInterface $logger): self
-    {
-        $this->service->setLogger($logger);
-        $this->aes128gcm->setLogger($logger);
-        $this->aesgcm->setLogger($logger);
-        $this->extensionManager->setLogger($logger);
-        $this->payloadExtension->setLogger($logger);
-        $this->ttlExtension->setLogger($logger);
-        $this->topicExtension->setLogger($logger);
-        $this->urgencyExtension->setLogger($logger);
-        $this->preferAsyncExtension->setLogger($logger);
-        if (null !== $this->vapidExtension) {
-            $this->vapidExtension->setLogger($logger);
-        }
-        if (null !== $this->jwsProvider) {
-            $this->jwsProvider->setLogger($logger);
-        }
-
-        return $this;
-    }
-
-    public function setCache(CacheItemPoolInterface $cache): self
-    {
-        $this->aes128gcm->setCache($cache);
-        $this->aesgcm->setCache($cache);
-        if (null !== $this->vapidExtension) {
-            $this->vapidExtension->setCache($cache);
-        }
-
-        return $this;
-    }
-
-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): self
-    {
-        $this->service->setEventDispatcher($eventDispatcher);
+        $jwsProvider = $this->getJwsProvider($publicKey, $privateKey);
+        Assertion::false($this->vapidEnabled, 'VAPID has already been enabled');
+        $this->extensionManager->add(
+            VAPIDExtension::create($subject, $jwsProvider)
+        );
+        $this->vapidEnabled = true;
 
         return $this;
     }
@@ -119,5 +69,17 @@ class SimpleWebPush
     public function send(Notification $notification, Subscription $subscription): StatusReport
     {
         return $this->service->send($notification, $subscription);
+    }
+
+    private function getJwsProvider(string $publicKey, string $privateKey): JWSProvider
+    {
+        switch (true) {
+            case class_exists(ES256::class):
+                return WebTokenProvider::create($publicKey, $privateKey);
+            case class_exists(Sha256::class):
+                return LcobucciProvider::create($publicKey, $privateKey);
+            default:
+                throw new InvalidArgumentException('Please install "web-token/jwt-signature-algorithm-ecdsa" or "lcobucci/jwt" to use this feature');
+        }
     }
 }

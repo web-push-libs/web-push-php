@@ -16,8 +16,7 @@ namespace Minishlink\Tests\Unit;
 use function array_key_exists;
 use Minishlink\WebPush\ExtensionManager;
 use Minishlink\WebPush\Notification;
-use Minishlink\WebPush\StatusReportFailure;
-use Minishlink\WebPush\StatusReportSuccess;
+use Minishlink\WebPush\StatusReport;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
 use PHPUnit\Framework\TestCase;
@@ -44,18 +43,6 @@ class WebPushTest extends TestCase
             ->method('getStatusCode')
             ->willReturn(201)
         ;
-        $response
-            ->expects(static::once())
-            ->method('getHeaderLine')
-            ->with('location')
-            ->willReturn('https://BAR-FOO.IO/0123456789')
-        ;
-        $response
-            ->expects(static::once())
-            ->method('getHeader')
-            ->with('Link')
-            ->willReturn(['https://BAR-FOO.IO/THIS-IS-ASYNC'])
-        ;
 
         $request = self::createMock(RequestInterface::class);
         $request
@@ -133,7 +120,7 @@ class WebPushTest extends TestCase
         $eventDispatcher
             ->expects(static::once())
             ->method('dispatch')
-            ->with(static::isInstanceOf(StatusReportSuccess::class))
+            ->with(static::isInstanceOf(StatusReport::class))
         ;
 
         $webPush = WebPush::create($client, $requestFactory, $extensionManager);
@@ -143,7 +130,6 @@ class WebPushTest extends TestCase
             ->send($notification, $subscription)
         ;
 
-        static::assertInstanceOf(StatusReportSuccess::class, $report);
         static::assertTrue($report->isSuccess());
         static::assertSame($notification, $report->getNotification());
         static::assertSame($subscription, $report->getSubscription());
@@ -160,18 +146,6 @@ class WebPushTest extends TestCase
             ->method('getStatusCode')
             ->willReturn(202)
         ;
-        $response
-            ->expects(static::once())
-            ->method('getHeaderLine')
-            ->with('location')
-            ->willReturn('https://BAR-FOO.IO/0123456789')
-        ;
-        $response
-            ->expects(static::once())
-            ->method('getHeader')
-            ->with('Link')
-            ->willReturn(['https://BAR-FOO.IO/THIS-IS-ASYNC'])
-        ;
 
         $request = self::createMock(RequestInterface::class);
         $request
@@ -249,7 +223,7 @@ class WebPushTest extends TestCase
         $eventDispatcher
             ->expects(static::once())
             ->method('dispatch')
-            ->with(static::isInstanceOf(StatusReportSuccess::class))
+            ->with(static::isInstanceOf(StatusReport::class))
         ;
 
         $webPush = WebPush::create($client, $requestFactory, $extensionManager);
@@ -259,7 +233,6 @@ class WebPushTest extends TestCase
             ->send($notification, $subscription)
         ;
 
-        static::assertInstanceOf(StatusReportSuccess::class, $report);
         static::assertTrue($report->isSuccess());
         static::assertSame($notification, $report->getNotification());
         static::assertSame($subscription, $report->getSubscription());
@@ -276,11 +249,6 @@ class WebPushTest extends TestCase
             ->method('getStatusCode')
             ->willReturn(409)
         ;
-        $response
-            ->expects(static::once())
-            ->method('getReasonPhrase')
-            ->willReturn('Too Many Requests')
-        ;
 
         $request = self::createMock(RequestInterface::class);
         $request
@@ -358,7 +326,7 @@ class WebPushTest extends TestCase
         $eventDispatcher
             ->expects(static::once())
             ->method('dispatch')
-            ->with(static::isInstanceOf(StatusReportFailure::class))
+            ->with(static::isInstanceOf(StatusReport::class))
         ;
 
         $webPush = WebPush::create($client, $requestFactory, $extensionManager);
@@ -368,10 +336,7 @@ class WebPushTest extends TestCase
             ->send($notification, $subscription)
         ;
 
-        static::assertInstanceOf(StatusReportFailure::class, $report);
         static::assertFalse($report->isSuccess());
-        static::assertSame('Too Many Requests', $report->getReason());
-        static::assertSame(409, $report->getCode());
         static::assertSame($notification, $report->getNotification());
         static::assertSame($subscription, $report->getSubscription());
     }

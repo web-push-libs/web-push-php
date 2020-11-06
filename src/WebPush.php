@@ -19,7 +19,7 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class WebPush
+class WebPush implements WebPushService
 {
     private ClientInterface $client;
     private LoggerInterface $logger;
@@ -65,25 +65,12 @@ class WebPush
         $response = $this->client->sendRequest($request);
         $this->logger->debug('Response received', ['response' => $response]);
 
-        $statusCode = $response->getStatusCode();
-        if (201 === $statusCode || 202 === $statusCode) {
-            $location = $response->getHeaderLine('location');
-            $statusReport = new StatusReportSuccess(
-                $subscription,
-                $notification,
-                $location,
-                $response->getHeader('Link')
-            );
-        } else {
-            $statusReport = new StatusReportFailure(
-                $subscription,
-                $notification,
-                $statusCode,
-                $response->getReasonPhrase(),
-                $request,
-                $response
-            );
-        }
+        $statusReport = new StatusReport(
+            $subscription,
+            $notification,
+            $request,
+            $response
+        );
 
         $this->eventDispatcher->dispatch($statusReport);
 

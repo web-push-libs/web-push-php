@@ -13,17 +13,22 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+
 class StatusReport
 {
     private Subscription $subscription;
     private Notification $notification;
-    private bool $success;
+    private RequestInterface $request;
+    private ResponseInterface $response;
 
-    public function __construct(Subscription $subscription, Notification $notification, bool $success)
+    public function __construct(Subscription $subscription, Notification $notification, RequestInterface $request, ResponseInterface $response)
     {
         $this->subscription = $subscription;
         $this->notification = $notification;
-        $this->success = $success;
+        $this->request = $request;
+        $this->response = $response;
     }
 
     public function getSubscription(): Subscription
@@ -36,8 +41,33 @@ class StatusReport
         return $this->notification;
     }
 
+    public function getRequest(): RequestInterface
+    {
+        return $this->request;
+    }
+
+    public function getResponse(): ResponseInterface
+    {
+        return $this->response;
+    }
+
     public function isSuccess(): bool
     {
-        return $this->success;
+        $code = $this->response->getStatusCode();
+
+        return $code >= 200 && $code < 300;
+    }
+
+    public function getLocation(): string
+    {
+        return $this->response->getHeaderLine('location');
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getLinks(): array
+    {
+        return $this->response->getHeader('link');
     }
 }

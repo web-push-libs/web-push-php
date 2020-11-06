@@ -14,8 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\Tests\Unit;
 
 use Minishlink\WebPush\Notification;
-use Minishlink\WebPush\StatusReportFailure;
-use Minishlink\WebPush\StatusReportSuccess;
+use Minishlink\WebPush\StatusReport;
 use Minishlink\WebPush\Subscription;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -28,49 +27,60 @@ final class StatusReportTest extends TestCase
 {
     /**
      * @test
+     * @dataProvider dataReport
      */
-    public function successReport(): void
-    {
-        $subscription = self::createMock(Subscription::class);
-        $notification = self::createMock(Notification::class);
-        $report = new StatusReportSuccess(
-            $subscription,
-            $notification,
-            'https://foo.bar',
-            ['https://link.1']
-        );
-
-        static::assertEquals($subscription, $report->getSubscription());
-        static::assertEquals($notification, $report->getNotification());
-        static::assertEquals('https://foo.bar', $report->getLocation());
-        static::assertEquals(['https://link.1'], $report->getLinks());
-        static::assertEquals(true, $report->isSuccess());
-    }
-
-    /**
-     * @test
-     */
-    public function failureReport(): void
+    public function report(int $statusCode, bool $isSuccess): void
     {
         $subscription = self::createMock(Subscription::class);
         $notification = self::createMock(Notification::class);
         $request = self::createMock(RequestInterface::class);
         $response = self::createMock(ResponseInterface::class);
-        $report = new StatusReportFailure(
+        $response
+            ->expects(static::once())
+            ->method('getHeaderLine')
+            ->with('location')
+            ->willReturn('https://foo.bar')
+        ;
+        $response
+            ->expects(static::once())
+            ->method('getStatusCode')
+            ->willReturn($statusCode)
+        ;
+        $response
+            ->expects(static::once())
+            ->method('getHeader')
+            ->with('link')
+            ->willReturn(['https://link.1'])
+        ;
+        $report = new StatusReport(
             $subscription,
             $notification,
-            409,
-            'reason',
             $request,
             $response
         );
 
-        static::assertEquals($subscription, $report->getSubscription());
-        static::assertEquals($notification, $report->getNotification());
-        static::assertEquals(false, $report->isSuccess());
-        static::assertEquals(409, $report->getCode());
-        static::assertEquals('reason', $report->getReason());
+        static::assertSame($subscription, $report->getSubscription());
+        static::assertSame($notification, $report->getNotification());
         static::assertSame($request, $report->getRequest());
         static::assertSame($response, $report->getResponse());
+        static::assertEquals('https://foo.bar', $report->getLocation());
+        static::assertEquals(['https://link.1'], $report->getLinks());
+        static::assertEquals($isSuccess, $report->isSuccess());
+    }
+
+    /**
+     * @return array[]
+     */
+    public function dataReport(): array
+    {
+        return [
+            [199, false],
+            [200, true],
+            [201, true],
+            [202, true],
+            [299, true],
+            [300, false],
+            [301, false],
+        ];
     }
 }
