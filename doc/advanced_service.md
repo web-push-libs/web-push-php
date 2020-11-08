@@ -160,7 +160,7 @@ The tests perform using Github Action show that it will reduce the computation t
 *Please note that the service still depends on the speed of the Internet connection and the HTTP client.*
 
 The concerned classes implement the interface `Minishlink\WebPush\Cachable`.
-This interface has a single method `setCache` needs a PSR-6 object as unique argument.
+This interface has a single method `setCache` that requires a PSR-6 object as unique argument.
 
 ```php
 <?php
@@ -205,7 +205,7 @@ or
 ## Logging
 
 Most of the objects showed on this page implement the interface `Minishlink\WebPush\Loggable`.
-This interface has a single method `setLogger` needs a PSR-3 object as unique argument.
+This interface has a single method `setLogger` that requires a PSR-3 object as unique argument.
 
 ```php
 <?php
