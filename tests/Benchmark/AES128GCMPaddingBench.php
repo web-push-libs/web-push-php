@@ -15,6 +15,7 @@ namespace Minishlink\Tests\Benchmark;
 
 use Minishlink\WebPush\Action;
 use Minishlink\WebPush\Message;
+use Minishlink\WebPush\Payload\AbstractAESGCM;
 use Minishlink\WebPush\Payload\AES128GCM;
 use Minishlink\WebPush\Subscription;
 use Nyholm\Psr7\Request;
@@ -27,9 +28,9 @@ use PhpBench\Benchmark\Metadata\Annotations\Subject;
  */
 class AES128GCMPaddingBench
 {
-    private AES128GCM $encoder;
-    private AES128GCM $encoderWithRecommendedPadding;
-    private AES128GCM $encoderWithMaximumPadding;
+    private AbstractAESGCM $encoder;
+    private AbstractAESGCM $encoderWithRecommendedPadding;
+    private AbstractAESGCM $encoderWithMaximumPadding;
     private Subscription $subscription;
     private string $message;
     private Request $request;
