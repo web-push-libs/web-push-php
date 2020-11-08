@@ -35,6 +35,9 @@ if(!$statusReport->isSuccess()) {
 In some cases, it could be interesting to dispatch the status report through an event dispatcher.
 The `WebPush` class has a convenient method to dispatch reports using a PSR-14 (Event Dispatcher) implementation. 
 
+The `WebPush` class implements the interface `Minishlink\WebPush\Dispatchable`.
+This interface has a single method `setEventDispatcher` needs a PSR-14 object as unique argument.
+
 ```php
 <?php
 use Minishlink\WebPush\WebPush;
