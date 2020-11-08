@@ -17,11 +17,12 @@ use Lcobucci\JWT\Builder;
 use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 use Lcobucci\JWT\Signer\Key;
 use Minishlink\WebPush\Base64Url;
+use Minishlink\WebPush\Loggable;
 use Minishlink\WebPush\Utils;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-final class LcobucciProvider implements JWSProvider
+final class LcobucciProvider implements JWSProvider, Loggable
 {
     private string $publicKey;
     private LoggerInterface $logger;

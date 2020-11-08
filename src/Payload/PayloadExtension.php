@@ -15,6 +15,7 @@ namespace Minishlink\WebPush\Payload;
 
 use Assert\Assertion;
 use Minishlink\WebPush\Extension;
+use Minishlink\WebPush\Loggable;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
 use Psr\Http\Message\RequestInterface;
@@ -22,7 +23,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use function Safe\sprintf;
 
-class PayloadExtension implements Extension
+class PayloadExtension implements Extension, Loggable
 {
     /**
      * @var ContentEncoding[]

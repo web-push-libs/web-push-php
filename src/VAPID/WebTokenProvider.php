@@ -20,12 +20,13 @@ use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
 use Minishlink\WebPush\Base64Url;
+use Minishlink\WebPush\Loggable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use function Safe\hex2bin;
 use function Safe\json_encode;
 
-final class WebTokenProvider implements JWSProvider
+final class WebTokenProvider implements JWSProvider, Loggable
 {
     private const PUBLIC_KEY_SIZE = 65;
     private const COMPONENT_SIZE = 32;

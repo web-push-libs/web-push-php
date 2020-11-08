@@ -17,7 +17,7 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class UrgencyExtension implements Extension
+class UrgencyExtension implements Extension, Loggable
 {
     private LoggerInterface $logger;
 

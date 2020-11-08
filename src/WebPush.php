@@ -19,7 +19,7 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class WebPush implements WebPushService
+class WebPush implements WebPushService, Loggable, Dispatchable
 {
     private ClientInterface $client;
     private LoggerInterface $logger;

@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush\VAPID;
 
+use Minishlink\WebPush\Cachable;
 use Minishlink\WebPush\Extension;
+use Minishlink\WebPush\Loggable;
 use Minishlink\WebPush\Notification;
 use Minishlink\WebPush\Subscription;
 use Psr\Cache\CacheItemPoolInterface;
@@ -24,7 +26,7 @@ use Safe\DateTimeImmutable;
 use function Safe\parse_url;
 use function Safe\sprintf;
 
-class VAPIDExtension implements Extension
+class VAPIDExtension implements Extension, Loggable, Cachable
 {
     private JWSProvider $jwsProvider;
     private ?CacheItemPoolInterface $cache = null;

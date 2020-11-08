@@ -15,6 +15,8 @@ namespace Minishlink\WebPush\Payload;
 
 use Assert\Assertion;
 use Minishlink\WebPush\Base64Url;
+use Minishlink\WebPush\Cachable;
+use Minishlink\WebPush\Loggable;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\Utils;
 use Psr\Cache\CacheItemPoolInterface;
@@ -26,7 +28,7 @@ use function Safe\openssl_encrypt;
 use function Safe\openssl_pkey_new;
 use function Safe\sprintf;
 
-abstract class AbstractAESGCM implements ContentEncoding
+abstract class AbstractAESGCM implements ContentEncoding, Loggable, Cachable
 {
     public const WEB_PUSH_PAYLOAD_ENCRYPTION = 'WEB_PUSH_PAYLOAD_ENCRYPTION';
     protected const PADDING_NONE = 0;
