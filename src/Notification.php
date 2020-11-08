@@ -35,28 +35,28 @@ class Notification
         return new self();
     }
 
-    public function veryLow(): self
+    public function veryLowUrgency(): self
     {
         $this->urgency = self::URGENCY_VERY_LOW;
 
         return $this;
     }
 
-    public function low(): self
+    public function lowUrgency(): self
     {
         $this->urgency = self::URGENCY_LOW;
 
         return $this;
     }
 
-    public function normal(): self
+    public function normalUrgency(): self
     {
         $this->urgency = self::URGENCY_NORMAL;
 
         return $this;
     }
 
-    public function high(): self
+    public function highUrgency(): self
     {
         $this->urgency = self::URGENCY_HIGH;
 

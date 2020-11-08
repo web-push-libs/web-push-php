@@ -112,7 +112,7 @@ class WebPushTest extends TestCase
 
         $notification = Notification::create()
             ->sync()
-            ->high()
+            ->highUrgency()
             ->withTopic('topic')
             ->withPayload('Hello World')
             ->withTTL(3600)
@@ -215,7 +215,7 @@ class WebPushTest extends TestCase
 
         $notification = Notification::create()
             ->sync()
-            ->high()
+            ->highUrgency()
             ->withTopic('topic')
             ->withPayload('Hello World')
             ->withTTL(3600)

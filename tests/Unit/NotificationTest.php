@@ -28,10 +28,10 @@ final class NotificationTest extends TestCase
     public function createNotificationFluent(): void
     {
         $subscription = Notification::create()
-            ->veryLow()
-            ->low()
-            ->normal()
-            ->high()
+            ->veryLowUrgency()
+            ->lowUrgency()
+            ->normalUrgency()
+            ->highUrgency()
             ->withUrgency(Notification::URGENCY_HIGH)
             ->withTTL(0)
             ->withPayload('payload')

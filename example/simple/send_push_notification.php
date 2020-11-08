@@ -31,9 +31,9 @@ $message = Message::create('Hello World!')
 
 
 $notification = Notification::create()
-    ->withTTL(0)
+    ->withTTL(10)
     ->withTopic('test')
-    ->high()
+    ->veryLowUrgency()
     ->async()
     ->withPayload((string) $message)
 ;

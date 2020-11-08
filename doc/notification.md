@@ -3,7 +3,7 @@
 To reach the client (web browser), you need to send a Notification.
 
 It may have a payload. In this case, the payload will be encrypted on server side and decrypted by the client. 
-The payload may be a string, or a JSON object. The structure of the later is described in the next section.
+The payload may be a string, or a JSON object. The structure of the latter is described in the next section.
 
 ```php
 <?php
@@ -72,10 +72,10 @@ that the push server only forwards messages of a specific urgency.
 use Minishlink\WebPush\Notification;
 
 $notification = Notification::create()
-    ->veryLow()
-    ->low()
-    ->normal()
-    ->high()
+    ->veryLowUrgency()
+    ->lowUrgency()
+    ->normalUrgency()
+    ->highUrgency()
 ;
 ```
 
