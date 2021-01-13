@@ -306,6 +306,7 @@ The following are available:
     - [MinishlinkWebPushBundle](https://github.com/Minishlink/web-push-bundle)
     - [bentools/webpush-bundle](https://github.com/bpolaszek/webpush-bundle) (associate your Symfony users to WebPush subscriptions)
 - Laravel: [laravel-notification-channels/webpush](https://github.com/laravel-notification-channels/webpush)
+- WordPress plugin: [Perfecty Push Notifications](https://github.com/rwngallego/perfecty-push-wp/)
 
 Feel free to add your own!
 
