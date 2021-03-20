@@ -42,7 +42,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
      */
     protected function setUp(): void
     {
-        if (!(getenv('TRAVIS') || getenv('CI'))) {
+        if (getenv('TRAVIS') || getenv('CI')) {
             $this->markTestSkipped('This test does not run on Travis.');
         }
 
