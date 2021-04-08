@@ -24,37 +24,37 @@ class WebPush
     /**
      * @var Client
      */
-    private $client;
+    protected $client;
 
     /**
      * @var array
      */
-    private $auth;
+    protected $auth;
 
     /**
      * @var null|array Array of array of Notifications
      */
-    private $notifications;
+    protected $notifications;
 
     /**
      * @var array Default options : TTL, urgency, topic, batchSize
      */
-    private $defaultOptions;
+    protected $defaultOptions;
 
     /**
      * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
      */
-    private $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+    protected $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /**
      * @var bool Reuse VAPID headers in the same flush session to improve performance
      */
-    private $reuseVAPIDHeaders = false;
+    protected $reuseVAPIDHeaders = false;
 
     /**
      * @var array Dictionary for VAPID headers cache
      */
-    private $vapidHeaders = [];
+    protected $vapidHeaders = [];
 
     /**
      * WebPush constructor.
@@ -203,7 +203,7 @@ class WebPush
      *
      * @throws \ErrorException
      */
-    private function prepare(array $notifications): array
+    protected function prepare(array $notifications): array
     {
         $requests = [];
         foreach ($notifications as $notification) {
@@ -383,7 +383,7 @@ class WebPush
      * @return array
      * @throws \ErrorException
      */
-    private function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid)
+    protected function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid)
     {
         $vapidHeaders = null;
 
