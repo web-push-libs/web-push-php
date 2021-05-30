@@ -362,8 +362,12 @@ class Encryption
     {
         if (function_exists('openssl_pkey_derive')) {
             try {
-                $publicPem = ECKey::convertPublicKeyToPEM($public_key);
-                $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
+                $publicPem = openssl_pkey_get_public(ECKey::convertPublicKeyToPEM($public_key));
+                $privatePem = openssl_pkey_get_private(ECKey::convertPrivateKeyToPEM($private_key));
+
+                if ($publicPem === false || $privatePem === false) {
+                    throw new \Exception('Unable to prepare public or private key for computing agreement key');
+                }
 
                 $result = openssl_pkey_derive($publicPem, $privatePem, 256); // @phpstan-ignore-line
                 if ($result === false) {
@@ -404,7 +408,7 @@ class Encryption
     {
         $value = unpack('H*', Base64Url::decode($value));
 
-        return BigInteger::fromBase($value[1], 16);
+        return BigInteger::fromBase($value !== false ? $value[1] : '', 16);
     }
 
     /**
@@ -415,7 +419,7 @@ class Encryption
     {
         $value = unpack('H*', Base64Url::decode($value));
 
-        return gmp_init($value[1], 16);
+        return gmp_init($value !== false ? $value[1] : '', 16);
     }
 
     private static function addNullPadding(string $data): string

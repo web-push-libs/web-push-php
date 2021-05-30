@@ -3,5 +3,6 @@ parameters:
     paths:
         - src
     checkMissingIterableValueType: false
+    reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - '#Unreachable statement \- code above always terminates\.#'
