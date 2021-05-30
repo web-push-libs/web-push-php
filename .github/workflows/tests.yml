@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - add/ga-tests
     tags:
       - 'v*'
   pull_request:
