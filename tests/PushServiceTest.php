@@ -42,10 +42,6 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
      */
     protected function setUp(): void
     {
-        if (getenv('TRAVIS') || getenv('CI')) {
-            $this->markTestSkipped('This test does not run on Travis.');
-        }
-
         $startApiCurl = curl_init(self::$testServiceUrl.'/api/start-test-suite/');
         curl_setopt_array($startApiCurl, [
             CURLOPT_POST => true,
