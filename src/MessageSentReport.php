@@ -168,6 +168,7 @@ class MessageSentReport implements \JsonSerializable
     /**
      * @return array|mixed
      */
+	#[\ReturnTypeWillChange]
     public function jsonSerialize()
     {
         return [
