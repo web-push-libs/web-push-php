@@ -4,7 +4,6 @@ use Minishlink\WebPush\Subscription;
 
 class SubscriptionTest extends PHPUnit\Framework\TestCase
 {
-
     public function testCreateMinimal()
     {
         $subscriptionArray = array(

@@ -18,23 +18,11 @@ namespace Minishlink\WebPush;
  */
 interface SubscriptionInterface
 {
-    /**
-     * @return string
-     */
     public function getEndpoint(): string;
 
-    /**
-     * @return null|string
-     */
     public function getPublicKey(): ?string;
 
-    /**
-     * @return null|string
-     */
     public function getAuthToken(): ?string;
 
-    /**
-     * @return null|string
-     */
     public function getContentEncoding(): ?string;
 }

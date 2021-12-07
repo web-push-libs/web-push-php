@@ -10,7 +10,7 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 ## Requirements
 
-PHP 7.2+ and the following extensions:
+PHP 7.3+ and the following extensions:
  * gmp (optional but better for performance)
  * mbstring
  * curl
@@ -322,7 +322,7 @@ Internally, WebPush uses the [WebToken](https://github.com/web-token) framework 
 ### How do I scale?
 Here are some ideas:
 
-1. Upgrade to PHP 7.2
+1. Upgrade to PHP 7.3
 2. Make sure MultiCurl is available on your server
 3. Find the right balance for your needs between security and performance (see above)
 4. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
@@ -344,11 +344,6 @@ Make sure to require Composer's [autoloader](https://getcomposer.org/doc/01-basi
 ```php
 require __DIR__ . '/path/to/vendor/autoload.php';
 ```
-
-### I must use PHP 5.4 or 5.5. What can I do?
-You won't be able to send any payload, so you'll only be able to use `sendOneNotification($subscription)` or `queueNotification($subscription)`.
-Install the library with `composer` using `--ignore-platform-reqs`.
-The workaround for getting the payload is to fetch it in the service worker ([example](https://github.com/Minishlink/physbook/blob/2ed8b9a8a217446c9747e9191a50d6312651125d/web/service-worker.js#L75)). 
 
 ### I lost my VAPID keys!
 See [issue #58](https://github.com/web-push-libs/web-push-php/issues/58).

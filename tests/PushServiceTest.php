@@ -113,7 +113,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $subscriptionParameters['vapidPublicKey'] = self::$vapidKeys['publicKey'];
             }
 
-            $subscriptionParameters = json_encode($subscriptionParameters);
+            $subscriptionParameters = json_encode($subscriptionParameters, JSON_THROW_ON_ERROR);
 
             $getSubscriptionCurl = curl_init(self::$testServiceUrl.'/api/get-subscription/');
             curl_setopt_array($getSubscriptionCurl, [
@@ -143,7 +143,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
             foreach ($supportedContentEncodings as $contentEncoding) {
                 if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'])) {
-                    $this->expectException('ErrorException');
+                    $this->expectException(\ErrorException::class);
                     $this->expectExceptionMessage('This content encoding ('.$contentEncoding.') is not supported.');
                     $this->markTestIncomplete('Unsupported content encoding: '.$contentEncoding);
                 }
@@ -157,7 +157,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $dataString = json_encode([
                     'testSuiteId' => self::$testSuiteId,
                     'testId' => $testId,
-                ]);
+                ], JSON_THROW_ON_ERROR);
 
                 $getNotificationCurl = curl_init(self::$testServiceUrl.'/api/get-notification-status/');
                 curl_setopt_array($getNotificationCurl, [
@@ -174,11 +174,11 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $parsedResp = $this->getResponse($getNotificationCurl);
 
                 if (!property_exists($parsedResp->{'data'}, 'messages')) {
-                    throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp));
+                    throw new Exception('web-push-testing-service error, no messages: '.json_encode($parsedResp, JSON_THROW_ON_ERROR));
                 }
 
                 $messages = $parsedResp->{'data'}->{'messages'};
-                $this->assertEquals(1, count($messages));
+                $this->assertEquals(1, is_countable($messages) ? count($messages) : 0);
                 $this->assertEquals($payload, $messages[0]);
             }
         };
@@ -217,7 +217,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
             throw new Exception($error);
         }
 
-        $parsedResp = json_decode($resp);
+        $parsedResp = json_decode($resp, null, 512, JSON_THROW_ON_ERROR);
 
         if (!property_exists($parsedResp, 'data')) {
             throw new Exception('web-push-testing-service error: '.$resp);

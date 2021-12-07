@@ -14,17 +14,12 @@ use \GuzzleHttp\Psr7\Response;
 class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 
 	/**
-	 * @param MessageSentReport $report
-	 * @param bool              $expected
 	 * @dataProvider generateReportsWithExpiration
 	 */
 	public function testIsSubscriptionExpired(MessageSentReport $report, bool $expected): void {
 		$this->assertEquals($expected, $report->isSubscriptionExpired());
 	}
 
-	/**
-	 * @return array
-	 */
 	public function generateReportsWithExpiration(): array {
 	    $request = new Request('POST', 'https://example.com');
 		return [
@@ -36,17 +31,12 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	/**
-	 * @param MessageSentReport $report
-	 * @param string            $expected
 	 * @dataProvider generateReportsWithEndpoints
 	 */
 	public function testGetEndpoint(MessageSentReport $report, string $expected): void {
 		$this->assertEquals($expected, $report->getEndpoint());
 	}
 
-	/**
-	 * @return array
-	 */
 	public function generateReportsWithEndpoints(): array {
 		return [
 			[new MessageSentReport(new Request('POST', 'https://www.example.com')), 'https://www.example.com'],
@@ -56,8 +46,6 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	/**
-	 * @param MessageSentReport $report
-	 * @param Request           $expected
 	 * @dataProvider generateReportsWithRequests
 	 */
 	public function testGetRequest(MessageSentReport $report, Request $expected): void {
@@ -77,12 +65,10 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	/**
-	 * @param MessageSentReport $report
-	 * @param string            $json
 	 * @dataProvider generateReportsWithJson
 	 */
 	public function testJsonSerialize(MessageSentReport $report, string $json): void {
-		$this->assertJsonStringEqualsJsonString($json, json_encode($report));
+		$this->assertJsonStringEqualsJsonString($json, json_encode($report, JSON_THROW_ON_ERROR));
 	}
 
 	public function generateReportsWithJson(): array {
@@ -103,7 +89,7 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 					'reason'   => 'OK',
 					'endpoint' => (string) $request1->getUri(),
 					'payload'  => $request1Body,
-				])
+				], JSON_THROW_ON_ERROR)
 			],
 			[
 				new MessageSentReport($request2, $response2, false, 'Gone'),
@@ -113,23 +99,18 @@ class MessageSentReportTest extends \PHPUnit\Framework\TestCase {
 					'reason'   => 'Gone',
 					'endpoint' => (string) $request2->getUri(),
 					'payload'  => $request2Body,
-				])
+				], JSON_THROW_ON_ERROR)
 			]
 		];
 	}
 
 	/**
-	 * @param MessageSentReport $report
-	 * @param bool              $expected
 	 * @dataProvider generateReportsWithSuccess
 	 */
 	public function testIsSuccess(MessageSentReport $report, bool $expected): void {
 		$this->assertEquals($expected, $report->isSuccess());
 	}
 
-	/**
-	 * @return array
-	 */
 	public function generateReportsWithSuccess(): array {
         $request = new Request('POST', 'https://example.com');
 		return [

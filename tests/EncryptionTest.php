@@ -80,9 +80,6 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider payloadProvider
      *
-     * @param string $payload
-     * @param int $maxLengthToPad
-     * @param int $expectedResLength
      * @throws ErrorException
      */
     public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength)
@@ -93,9 +90,6 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
     }
 
-    /**
-     * @return array
-     */
     public function payloadProvider(): array
     {
         return [

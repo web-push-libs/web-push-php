@@ -62,7 +62,6 @@ class WebPush
      * @param array    $auth           Some servers needs authentication
      * @param array    $defaultOptions TTL, urgency, topic, batchSize
      * @param int|null $timeout        Timeout of POST request
-     * @param array    $clientOptions
      *
      * @throws \ErrorException
      */
@@ -101,11 +100,9 @@ class WebPush
     /**
      * Queue a notification. Will be sent when flush() is called.
      *
-     * @param SubscriptionInterface $subscription
      * @param string|null $payload If you want to send an array or object, json_encode it
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
-     *
      * @throws \ErrorException
      */
     public function queueNotification(SubscriptionInterface $subscription, ?string $payload = null, array $options = [], array $auth = []): void
@@ -131,11 +128,9 @@ class WebPush
     }
 
     /**
-     * @param SubscriptionInterface $subscription
      * @param string|null $payload If you want to send an array or object, json_encode it
      * @param array $options Array with several options tied to this notification. If not set, will use the default options that you can set in the WebPush object
      * @param array $auth Use this auth details instead of what you provided when creating WebPush
-     * @return MessageSentReport
      * @throws \ErrorException
      */
     public function sendOneNotification(SubscriptionInterface $subscription, ?string $payload = null, array $options = [], array $auth = []): MessageSentReport
@@ -154,7 +149,7 @@ class WebPush
      */
     public function flush(?int $batchSize = null): \Generator
     {
-        if (null === $this->notifications || empty($this->notifications)) {
+        if (empty($this->notifications)) {
             yield from [];
             return;
         }
@@ -202,10 +197,6 @@ class WebPush
     }
 
     /**
-     * @param array $notifications
-     *
-     * @return array
-     *
      * @throws \ErrorException
      */
     protected function prepare(array $notifications): array
@@ -289,9 +280,6 @@ class WebPush
         return $requests;
     }
 
-    /**
-     * @return bool
-     */
     public function isAutomaticPadding(): bool
     {
         return $this->automaticPadding !== 0;
@@ -307,8 +295,6 @@ class WebPush
 
     /**
      * @param int|bool $automaticPadding Max padding length
-     *
-     * @return WebPush
      *
      * @throws \Exception
      */
@@ -339,7 +325,6 @@ class WebPush
 
     /**
      * Reuse VAPID headers in the same flush session to improve performance
-     * @param bool $enabled
      *
      * @return WebPush
      */
@@ -350,9 +335,6 @@ class WebPush
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getDefaultOptions(): array
     {
         return $this->defaultOptions;
@@ -365,26 +347,20 @@ class WebPush
      */
     public function setDefaultOptions(array $defaultOptions)
     {
-        $this->defaultOptions['TTL'] = isset($defaultOptions['TTL']) ? $defaultOptions['TTL'] : 2419200;
-        $this->defaultOptions['urgency'] = isset($defaultOptions['urgency']) ? $defaultOptions['urgency'] : null;
-        $this->defaultOptions['topic'] = isset($defaultOptions['topic']) ? $defaultOptions['topic'] : null;
-        $this->defaultOptions['batchSize'] = isset($defaultOptions['batchSize']) ? $defaultOptions['batchSize'] : 1000;
+        $this->defaultOptions['TTL'] = $defaultOptions['TTL'] ?? 2419200;
+        $this->defaultOptions['urgency'] = $defaultOptions['urgency'] ?? null;
+        $this->defaultOptions['topic'] = $defaultOptions['topic'] ?? null;
+        $this->defaultOptions['batchSize'] = $defaultOptions['batchSize'] ?? 1000;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
     public function countPendingNotifications(): int
     {
         return null !== $this->notifications ? count($this->notifications) : 0;
     }
 
     /**
-     * @param string $audience
-     * @param string $contentEncoding
-     * @param array $vapid
      * @return array
      * @throws \ErrorException
      */

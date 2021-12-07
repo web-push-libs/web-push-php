@@ -16,7 +16,7 @@ use Minishlink\WebPush\VAPID;
 
 final class VAPIDTest extends PHPUnit\Framework\TestCase
 {
-    public function vapidProvider()
+    public function vapidProvider() : array
     {
         return [
             [
@@ -48,13 +48,6 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider vapidProvider
      *
-     * @param string $audience
-     * @param array $vapid
-     * @param string $contentEncoding
-     * @param int $expiration
-     * @param string $expectedAuthorization
-     * @param string $expectedCryptoKey
-     *
      * @throws ErrorException
      */
     public function testGetVapidHeaders(string $audience, array $vapid, string $contentEncoding, int $expiration, string $expectedAuthorization, ?string $expectedCryptoKey)
@@ -82,8 +75,6 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param string $auth
-     *
      * @return array|string
      */
     private function explodeAuthorization(string $auth)
