@@ -17,12 +17,12 @@ use Minishlink\WebPush\SubscriptionInterface;
 
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
-    private static $endpoints;
-    private static $keys;
-    private static $tokens;
+    private static array $endpoints;
+    private static array $keys;
+    private static array $tokens;
 
     /** @var WebPush WebPush with correct api keys */
-    private $webPush;
+    private WebPush $webPush;
 
     /**
      * {@inheritdoc}
@@ -78,7 +78,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
 
         // ignore in TravisCI
-        if (getenv('CI')) return [];
+        if (getenv('CI')) {
+            return [];
+        }
 
         return [
             [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
@@ -88,11 +90,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider notificationProvider
      *
-     * @param SubscriptionInterface $subscription
-     * @param string $payload
      * @throws ErrorException
      */
-    public function testSendOneNotification($subscription, $payload)
+    public function testSendOneNotification(SubscriptionInterface $subscription, string $payload): void
     {
         $report = $this->webPush->sendOneNotification($subscription, $payload);
         $this->assertTrue($report->isSuccess());
@@ -101,7 +101,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testSendNotificationBatch()
+    public function testSendNotificationBatch(): void
     {
         $batchSize = 10;
         $total = 50;
@@ -123,9 +123,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testSendOneNotificationWithTooBigPayload()
+    public function testSendOneNotificationWithTooBigPayload(): void
     {
-        $this->expectException(\ErrorException::class);
+        $this->expectException(ErrorException::class);
         $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
 
         $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);
@@ -138,7 +138,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testFlush() {
+    public function testFlush(): void {
 	    $subscription = new Subscription(self::$endpoints['standard']);
 
 	    $report = $this->webPush->sendOneNotification($subscription);
@@ -158,9 +158,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 	    ]);
 
 	    // test multiple requests
-	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 1]));
-	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 2]));
-	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 3]));
+	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 1], JSON_THROW_ON_ERROR));
+	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 2], JSON_THROW_ON_ERROR));
+	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 3], JSON_THROW_ON_ERROR));
 
 	    /** @var \Minishlink\WebPush\MessageSentReport $report */
 	    foreach ($this->webPush->flush() as $report) {

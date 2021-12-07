@@ -4,7 +4,7 @@ use Minishlink\WebPush\Subscription;
 
 class SubscriptionTest extends PHPUnit\Framework\TestCase
 {
-    public function testCreateMinimal()
+    public function testCreateMinimal(): void
     {
         $subscriptionArray = array(
             "endpoint" => "http://toto.com"
@@ -16,7 +16,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals(null, $subscription->getContentEncoding());
     }
 
-    public function testConstructMinimal()
+    public function testConstructMinimal(): void
     {
         $subscription = new Subscription("http://toto.com");
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
@@ -25,7 +25,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals(null, $subscription->getContentEncoding());
     }
 
-    public function testCreatePartial()
+    public function testCreatePartial(): void
     {
         $subscriptionArray = array(
             "endpoint" => "http://toto.com",
@@ -39,7 +39,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("aesgcm", $subscription->getContentEncoding());
     }
 
-    public function testConstructPartial()
+    public function testConstructPartial(): void
     {
         $subscription = new Subscription("http://toto.com", "publicKey", "authToken");
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
@@ -48,7 +48,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("aesgcm", $subscription->getContentEncoding());
     }
 
-    public function testCreateFull()
+    public function testCreateFull(): void
     {
         $subscriptionArray = array(
             "endpoint" => "http://toto.com",
@@ -63,7 +63,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
     }
 
-    public function testConstructFull()
+    public function testConstructFull(): void
     {
         $subscription = new Subscription("http://toto.com", "publicKey", "authToken", "aes128gcm");
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
@@ -72,7 +72,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
     }
 
-    public function testCreatePartialWithNewStructure()
+    public function testCreatePartialWithNewStructure(): void
     {
         $subscription = Subscription::create([
             "endpoint" => "http://toto.com",
@@ -86,7 +86,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("authToken", $subscription->getAuthToken());
     }
 
-    public function testCreatePartialWithNewStructureAndContentEncoding()
+    public function testCreatePartialWithNewStructureAndContentEncoding(): void
     {
         $subscription = Subscription::create([
             "endpoint" => "http://toto.com",

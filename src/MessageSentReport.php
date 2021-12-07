@@ -6,38 +6,25 @@
 
 namespace Minishlink\WebPush;
 
+use JsonSerializable;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use function in_array;
 
 /**
  * Standardized response from sending a message
  */
-class MessageSentReport implements \JsonSerializable
+class MessageSentReport implements JsonSerializable
 {
-    /**
-     * @var boolean
-     */
-    protected $success;
+    protected bool $success;
 
-    /**
-     * @var RequestInterface
-     */
-    protected $request;
+    protected RequestInterface $request;
 
-    /**
-     * @var ResponseInterface | null
-     */
-    protected $response;
+    protected ?ResponseInterface $response;
 
-    /**
-     * @var string
-     */
-    protected $reason;
+    protected string $reason;
 
-    /**
-     * @param string $reason
-     */
-    public function __construct(RequestInterface $request, ?ResponseInterface $response = null, bool $success = true, $reason = 'OK')
+    public function __construct(RequestInterface $request, ?ResponseInterface $response = null, bool $success = true, string $reason = 'OK')
     {
         $this->request  = $request;
         $this->response = $response;
@@ -50,7 +37,7 @@ class MessageSentReport implements \JsonSerializable
         return $this->success;
     }
 
-    public function setSuccess(bool $success): MessageSentReport
+    public function setSuccess(bool $success): self
     {
         $this->success = $success;
         return $this;
@@ -61,7 +48,7 @@ class MessageSentReport implements \JsonSerializable
         return $this->request;
     }
 
-    public function setRequest(RequestInterface $request): MessageSentReport
+    public function setRequest(RequestInterface $request): self
     {
         $this->request = $request;
         return $this;
@@ -72,7 +59,7 @@ class MessageSentReport implements \JsonSerializable
         return $this->response;
     }
 
-    public function setResponse(ResponseInterface $response): MessageSentReport
+    public function setResponse(ResponseInterface $response): self
     {
         $this->response = $response;
         return $this;
@@ -89,7 +76,7 @@ class MessageSentReport implements \JsonSerializable
             return false;
         }
 
-        return \in_array($this->response->getStatusCode(), [404, 410], true);
+        return in_array($this->response->getStatusCode(), [404, 410], true);
     }
 
     public function getReason(): string
@@ -97,7 +84,7 @@ class MessageSentReport implements \JsonSerializable
         return $this->reason;
     }
 
-    public function setReason(string $reason): MessageSentReport
+    public function setReason(string $reason): self
     {
         $this->reason = $reason;
         return $this;

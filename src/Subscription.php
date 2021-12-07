@@ -15,17 +15,13 @@ namespace Minishlink\WebPush;
 
 class Subscription implements SubscriptionInterface
 {
-    /** @var string */
-    private $endpoint;
+    private string $endpoint;
 
-    /** @var null|string */
-    private $publicKey;
+    private ?string $publicKey;
 
-    /** @var null|string */
-    private $authToken;
+    private ?string $authToken;
 
-    /** @var null|string */
-    private $contentEncoding;
+    private ?string $contentEncoding = null;
 
     /**
      * @param string|null $contentEncoding (Optional) Must be "aesgcm"

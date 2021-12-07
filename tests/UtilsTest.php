@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 final class UtilsTest extends TestCase
 {
-    public function testSerializePublicKey()
+    public function testSerializePublicKey(): void
     {
         $jwk = JWKFactory::createECKey('P-256');
         $serializedPublicKey = Utils::serializePublicKeyFromJWK($jwk);

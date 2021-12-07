@@ -11,23 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
 final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
-    private static $timeout = 30;
-    private static $portNumber = 9012;
+    private static int $timeout = 30;
+    private static int $portNumber = 9012;
     private static $testSuiteId;
-    private static $testServiceUrl;
-    private static $vapidKeys = [
+    private static string $testServiceUrl;
+    private static array $vapidKeys = [
         'subject' => 'http://test.com',
         'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
         'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
     ];
 
     /** @var WebPush WebPush with correct api keys */
-    private $webPush;
+    private ?WebPush $webPush = null;
 
     /**
      * {@inheritdoc}
@@ -58,7 +59,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         self::$testSuiteId = $parsedResp->{'data'}->{'testSuiteId'};
     }
 
-    public function browserProvider()
+    public function browserProvider(): array
     {
         return [
             ['firefox', 'stable', ['VAPID' => self::$vapidKeys]],
@@ -71,7 +72,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     /**
      * Selenium tests are flakey so add retries.
      */
-    public function retryTest($retryCount, $test)
+    public function retryTest($retryCount, $test): void
     {
         // just like above without checking the annotation
         for ($i = 0; $i < $retryCount; $i++) {
@@ -92,12 +93,12 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
      * @dataProvider browserProvider
      * Run integration tests with browsers
      */
-    public function testBrowsers($browserId, $browserVersion, $options)
+    public function testBrowsers(string $browserId, string $browserVersion, array $options): void
     {
         $this->retryTest(2, $this->createClosureTest($browserId, $browserVersion, $options));
     }
 
-    protected function createClosureTest($browserId, $browserVersion, $options)
+    protected function createClosureTest($browserId, $browserVersion, $options): callable
     {
         return function () use ($browserId, $browserVersion, $options) {
             $this->webPush = new WebPush($options);
@@ -143,15 +144,15 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
             foreach ($supportedContentEncodings as $contentEncoding) {
                 if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'])) {
-                    $this->expectException(\ErrorException::class);
+                    $this->expectException(ErrorException::class);
                     $this->expectExceptionMessage('This content encoding ('.$contentEncoding.') is not supported.');
                     $this->markTestIncomplete('Unsupported content encoding: '.$contentEncoding);
                 }
 
                 $subscription = new Subscription($endpoint, $p256dh, $auth, $contentEncoding);
                 $report = $this->webPush->sendOneNotification($subscription, $payload);
-                $this->assertInstanceOf(\Generator::class, $report);
-                $this->assertInstanceOf(\Minishlink\WebPush\MessageSentReport::class, $report);
+                $this->assertInstanceOf(Generator::class, $report);
+                $this->assertInstanceOf(MessageSentReport::class, $report);
                 $this->assertTrue($report->isSuccess());
 
                 $dataString = json_encode([
