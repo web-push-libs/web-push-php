@@ -71,7 +71,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @return array
      * @throws ErrorException
      */
     public function notificationProvider(): array
@@ -126,7 +125,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function testSendOneNotificationWithTooBigPayload()
     {
-        $this->expectException('ErrorException');
+        $this->expectException(\ErrorException::class);
         $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
 
         $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);

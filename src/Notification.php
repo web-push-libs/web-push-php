@@ -27,14 +27,6 @@ class Notification
     /** @var array Auth details : VAPID */
     private $auth;
 
-    /**
-     * Notification constructor.
-     *
-     * @param SubscriptionInterface $subscription
-     * @param null|string $payload
-     * @param array $options
-     * @param array $auth
-     */
     public function __construct(SubscriptionInterface $subscription, ?string $payload, array $options, array $auth)
     {
         $this->subscription = $subscription;
@@ -43,27 +35,16 @@ class Notification
         $this->auth = $auth;
     }
 
-    /**
-     * @return SubscriptionInterface
-     */
     public function getSubscription(): SubscriptionInterface
     {
         return $this->subscription;
     }
 
-    /**
-     * @return null|string
-     */
     public function getPayload(): ?string
     {
         return $this->payload;
     }
 
-    /**
-     * @param array $defaultOptions
-     *
-     * @return array
-     */
     public function getOptions(array $defaultOptions = []): array
     {
         $options = $this->options;
@@ -74,11 +55,6 @@ class Notification
         return $options;
     }
 
-    /**
-     * @param array $defaultAuth
-     *
-     * @return array
-     */
     public function getAuth(array $defaultAuth): array
     {
         return count($this->auth) > 0 ? $this->auth : $defaultAuth;

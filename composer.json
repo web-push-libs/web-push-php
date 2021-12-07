@@ -18,7 +18,7 @@
     "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no"
   },
   "require": {
-    "php": ">=7.2",
+    "php": ">=7.3",
     "ext-curl": "*",
     "ext-json": "*",
     "ext-mbstring": "*",
