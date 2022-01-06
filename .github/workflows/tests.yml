@@ -30,18 +30,10 @@ jobs:
           extensions: curl, mbstring, openssl, gmp
           coverage: none
 
-      - name: Setup chromedriver
-        uses: nanasess/setup-chromedriver@master
-
-      - run: |
-          export DISPLAY=:99
-          chromedriver --url-base=/wd/hub &
-          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
-
       - name: Setup node
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '16'
 
       - name: Cache Composer dependencies
         uses: actions/cache@v2
@@ -70,12 +62,12 @@ jobs:
 
       - name: Setup web-push-testing-service
         run: |
-          npm install web-push-testing-service -g
+          npm install web-push-testing -g
 
       - name: Run tests
         run: |
-          web-push-testing-service start example -p 9012
+          web-push-testing --port 9012 start
           composer test:unit
-          web-push-testing-service stop example
+          web-push-testing --port 9012 stop
           composer test:typing
           composer test:syntax
