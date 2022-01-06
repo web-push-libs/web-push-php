@@ -69,5 +69,10 @@ jobs:
           web-push-testing --port 9012 start
           composer test:unit
           web-push-testing --port 9012 stop
-          composer test:typing
-          composer test:syntax
+
+      - name: Run PHPStan
+        run: composer test:typing
+
+      - name: Run php-cs-fixer
+        if: ${{ matrix.php != '8.1' }}
+        run: composer test:syntax
