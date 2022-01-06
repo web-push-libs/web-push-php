@@ -105,9 +105,6 @@ class Encryption
         $sharedSecret = self::calculateAgreementKey($localJwk, $userJwk);
 
         $sharedSecret = str_pad($sharedSecret, 32, chr(0), STR_PAD_LEFT);
-        if (!$sharedSecret) {
-            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
-        }
 
         // section 4.3
         $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
