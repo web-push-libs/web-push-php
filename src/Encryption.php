@@ -359,18 +359,32 @@ class Encryption
         }
     }
 
+    /**
+     * @throws \ErrorException
+     */
     private static function convertBase64ToBigInteger(string $value): BigInteger
     {
         $value = unpack('H*', Base64Url::decode($value));
 
-        return BigInteger::fromBase($value !== false ? $value[1] : '', 16);
+        if ($value === false) {
+            throw new \ErrorException('Unable to unpack hex value from string');
+        }
+
+        return BigInteger::fromBase($value[1], 16);
     }
 
+    /**
+     * @throws \ErrorException
+     */
     private static function convertBase64ToGMP(string $value): \GMP
     {
         $value = unpack('H*', Base64Url::decode($value));
 
-        return gmp_init($value !== false ? $value[1] : '', 16);
+        if ($value === false) {
+            throw new \ErrorException('Unable to unpack hex value from string');
+        }
+
+        return gmp_init($value[1], 16);
     }
 
     private static function addNullPadding(string $data): string
