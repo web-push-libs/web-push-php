@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.3', '7.4', '8.0', '8.1']
+
+    name: PHP ${{ matrix.php }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, mbstring, openssl, gmp
+          coverage: none
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v2
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+      - name: Prepare composer
+        run: |
+          EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
+          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+          ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+
+          if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]
+          then
+              >&2 echo 'ERROR: Invalid installer checksum'
+              rm composer-setup.php
+              exit 1
+          fi
+
+          sudo php composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
+          RESULT=$?
+          rm composer-setup.php
+          composer config discard-changes true
+          composer install
+
+      - name: Setup web-push-testing-service
+        run: |
+          npm install web-push-testing -g
+
+      - name: Run tests
+        run: |
+          web-push-testing --port 9012 start
+          composer test:unit
+          web-push-testing --port 9012 stop
+
+      - name: Run PHPStan
+        run: composer test:typing
+
+      - name: Run php-cs-fixer
+        if: ${{ matrix.php != '8.1' }}
+        run: composer test:syntax

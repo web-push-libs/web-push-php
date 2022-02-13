@@ -105,9 +105,6 @@ class Encryption
         $sharedSecret = self::calculateAgreementKey($localJwk, $userJwk);
 
         $sharedSecret = str_pad($sharedSecret, 32, chr(0), STR_PAD_LEFT);
-        if (!$sharedSecret) {
-            throw new \ErrorException('Failed to convert shared secret from hexadecimal to binary');
-        }
 
         // section 4.3
         $ikm = self::getIKM($userAuthToken, $userPublicKey, $localPublicKey, $sharedSecret, $contentEncoding);
@@ -362,16 +359,30 @@ class Encryption
         }
     }
 
+    /**
+     * @throws \ErrorException
+     */
     private static function convertBase64ToBigInteger(string $value): BigInteger
     {
         $value = unpack('H*', Base64Url::decode($value));
 
+        if ($value === false) {
+            throw new \ErrorException('Unable to unpack hex value from string');
+        }
+
         return BigInteger::fromBase($value[1], 16);
     }
 
+    /**
+     * @throws \ErrorException
+     */
     private static function convertBase64ToGMP(string $value): \GMP
     {
         $value = unpack('H*', Base64Url::decode($value));
+
+        if ($value === false) {
+            throw new \ErrorException('Unable to unpack hex value from string');
+        }
 
         return gmp_init($value[1], 16);
     }

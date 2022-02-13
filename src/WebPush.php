@@ -236,10 +236,10 @@ class WebPush
                 $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey, $contentEncoding);
                 $content = $encryptionContentCodingHeader.$cipherText;
 
-                $headers['Content-Length'] = Utils::safeStrlen($content);
+                $headers['Content-Length'] = (string) Utils::safeStrlen($content);
             } else {
                 $headers = [
-                    'Content-Length' => 0,
+                    'Content-Length' => '0',
                 ];
 
                 $content = '';

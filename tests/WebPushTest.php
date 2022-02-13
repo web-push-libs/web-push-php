@@ -20,6 +20,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     private static $endpoints;
     private static $keys;
     private static $tokens;
+    private static $vapidKeys;
 
     /** @var WebPush WebPush with correct api keys */
     private $webPush;
@@ -40,6 +41,15 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         self::$tokens = [
             'standard' => getenv('USER_AUTH_TOKEN'),
         ];
+
+        self::$vapidKeys = [
+            'publicKey'     => getenv('VAPID_PUBLIC_KEY'),
+            'privateKey'    => getenv('VAPID_PRIVATE_KEY'),
+        ];
+
+        if (getenv('CI')) {
+            self::setCiEnvironment();;
+        }
     }
 
     /**
@@ -47,27 +57,68 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      */
     public function setUp(): void
     {
-        $envs = [
-            'STANDARD_ENDPOINT',
-            'USER_PUBLIC_KEY',
-            'USER_AUTH_TOKEN',
-            'VAPID_PUBLIC_KEY',
-            'VAPID_PRIVATE_KEY',
-        ];
-        foreach ($envs as $env) {
-            if (!getenv($env)) {
-                $this->markTestSkipped("No '$env' found in env.");
+        if (!getenv('CI')) {
+            $envs = [
+                'STANDARD_ENDPOINT',
+                'USER_PUBLIC_KEY',
+                'USER_AUTH_TOKEN',
+                'VAPID_PUBLIC_KEY',
+                'VAPID_PRIVATE_KEY',
+            ];
+            foreach ($envs as $env) {
+                if (!getenv($env)) {
+                    $this->markTestSkipped("No '$env' found in env.");
+                }
             }
         }
 
         $this->webPush = new WebPush([
             'VAPID' => [
                 'subject' => 'https://github.com/Minishlink/web-push',
-                'publicKey' => getenv('VAPID_PUBLIC_KEY'),
-                'privateKey' => getenv('VAPID_PRIVATE_KEY'),
+                'publicKey' => self::$vapidKeys['publicKey'],
+                'privateKey' => self::$vapidKeys['privateKey'],
             ],
         ]);
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
+    }
+
+    private static function setCiEnvironment(): void
+    {
+        self::$vapidKeys['publicKey'] = PushServiceTest::$vapidKeys['publicKey'];
+        self::$vapidKeys['privateKey'] = PushServiceTest::$vapidKeys['privateKey'];
+        $subscriptionParameters = [
+            'applicationServerKey' => self::$vapidKeys['publicKey'],
+        ];
+
+        $subscriptionParameters = json_encode($subscriptionParameters, JSON_THROW_ON_ERROR);
+
+        $getSubscriptionCurl = curl_init('http://localhost:9012/subscribe');
+        curl_setopt_array($getSubscriptionCurl, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $subscriptionParameters,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($subscriptionParameters),
+            ],
+        ]);
+
+        $response = curl_exec($getSubscriptionCurl);
+
+        if (!$response) {
+            $error = 'Curl error: n'.curl_errno($getSubscriptionCurl).' - '.curl_error($getSubscriptionCurl);
+            curl_close($getSubscriptionCurl);
+            throw new Exception($error);
+        }
+
+        $parsedResp = json_decode($response, null, 512, JSON_THROW_ON_ERROR);
+
+        $subscription = $parsedResp->{'data'};
+
+        self::$endpoints['standard'] = $subscription->{'endpoint'};
+        $keys = $subscription->{'keys'};
+        self::$tokens['standard'] = $keys->{'auth'};
+        self::$keys['standard'] = $keys->{'p256dh'};
     }
 
     /**
@@ -77,11 +128,8 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
 
-        // ignore in TravisCI
-        if (getenv('CI')) return [];
-
         return [
-            [new Subscription(self::$endpoints['standard'], self::$keys['standard'], self::$tokens['standard']), '{"message":"Comment ça va ?","tag":"general"}'],
+            [new Subscription(self::$endpoints['standard'] ?: '', self::$keys['standard'] ?: '', self::$tokens['standard'] ?: ''), '{"message":"Comment ça va ?","tag":"general"}'],
         ];
     }
 
