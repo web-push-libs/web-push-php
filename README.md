@@ -20,6 +20,7 @@ There is no support and maintenance for older PHP versions, however you are free
 - PHP 5.6 or HHVM: `v1.x`
 - PHP 7.0: `v2.x`
 - PHP 7.1: `v3.x-v5.x`
+- PHP 7.2: `v6.x`
 
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
