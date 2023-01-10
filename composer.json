@@ -18,7 +18,7 @@
     "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no"
   },
   "require": {
-    "php": ">=7.3",
+    "php": ">=8.0",
     "ext-curl": "*",
     "ext-json": "*",
     "ext-mbstring": "*",
@@ -30,10 +30,13 @@
     "web-token/jwt-util-ecc": "^2.0|^3.0.2",
     "spomky-labs/base64url": "^2.0"
   },
+  "suggest": {
+    "ext-gmp": "Optional for performance."
+  },
   "require-dev": {
-    "phpunit/phpunit": "^8.0|^9.0",
-    "phpstan/phpstan": "^0.11|^0.12",
-    "friendsofphp/php-cs-fixer": "^2.14"
+    "phpunit/phpunit": "^9.5.27",
+    "phpstan/phpstan": "^1.9.8",
+    "friendsofphp/php-cs-fixer": "^v3.13.2"
   },
   "autoload": {
     "psr-4" : {

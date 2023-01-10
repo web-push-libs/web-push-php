@@ -72,18 +72,11 @@ class WebPush
             'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
             'openssl' => '[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
         ];
-        $phpVersion = phpversion();
-        if ($phpVersion && version_compare($phpVersion, '7.3.0', '<')) {
-            $extensions['gmp'] = '[WebPush] gmp extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.';
-        }
+
         foreach ($extensions as $extension => $message) {
             if (!extension_loaded($extension)) {
                 trigger_error($message, E_USER_WARNING);
             }
-        }
-
-        if (ini_get('mbstring.func_overload') >= 2) {
-            trigger_error("[WebPush] mbstring.func_overload is enabled for str* functions. You must disable it if you want to send push notifications with payload or use VAPID. You can fix this in your php.ini.", E_USER_NOTICE);
         }
 
         if (isset($auth['VAPID'])) {

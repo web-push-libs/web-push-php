@@ -15,56 +15,46 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['7.3', '7.4', '8.0', '8.1']
+        php: ['8.0', '8.1', '8.2']
+        ext: ['curl, mbstring, openssl', 'curl, mbstring, openssl, gmp']
 
-    name: PHP ${{ matrix.php }}
+    name: PHP ${{ matrix.php }} (${{ matrix.ext }})
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Setup PHP
+      - name: Setup PHP ${{ matrix.php }} (${{ matrix.ext }})
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl, mbstring, openssl, gmp
+          extensions: ${{ matrix.ext }}
           coverage: none
 
-      - name: Setup node
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
-          path: /tmp/composer-cache
-          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
-      - name: Prepare composer
+      - name: Install dependencies
+        run: composer install --prefer-dist
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install web-push-testing-service
         run: |
-          EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
-          php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-          ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+          npm install -g web-push-testing
 
-          if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]
-          then
-              >&2 echo 'ERROR: Invalid installer checksum'
-              rm composer-setup.php
-              exit 1
-          fi
-
-          sudo php composer-setup.php --quiet --install-dir=/usr/local/bin --filename=composer
-          RESULT=$?
-          rm composer-setup.php
-          composer config discard-changes true
-          composer install
-
-      - name: Setup web-push-testing-service
-        run: |
-          npm install web-push-testing -g
-
-      - name: Run tests
+      - name: Run unit tests
         run: |
           web-push-testing --port 9012 start
           composer test:unit
@@ -74,5 +64,5 @@ jobs:
         run: composer test:typing
 
       - name: Run php-cs-fixer
-        if: ${{ matrix.php != '8.1' }}
+        if: ${{ matrix.php != '8.2' }} # Not supported yet.
         run: composer test:syntax
