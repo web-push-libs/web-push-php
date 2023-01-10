@@ -8,3 +8,5 @@ module.log
 .vagrant
 Vagrantfile # temp, may be?
 /.phpunit.result.cache
+.php-cs-fixer.cache
+.idea/
