@@ -2,10 +2,9 @@
 > Web Push library for PHP
 
 [![Build Status](https://github.com/web-push-libs/web-push-php/actions/workflows/tests.yml/badge.svg)](https://github.com/web-push-libs/web-push-php/actions/workflows/tests.yml)
-[![SensioLabsInsight](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf/mini.png)](https://insight.sensiolabs.com/projects/d60e8eea-aea1-4739-8ce0-a3c3c12c6ccf)
 
 WebPush can be used to send notifications to endpoints which server delivers Web Push notifications as described in 
-the [Web Push protocol](https://tools.ietf.org/html/draft-thomson-webpush-protocol-00).
+the [Web Push protocol](https://datatracker.ietf.org/doc/html/rfc8030).
 As it is standardized, you don't have to worry about what server type it relies on.
 
 ## Requirements
@@ -22,6 +21,8 @@ There is no support and maintenance for older PHP versions, however you are free
 - PHP 7.1: `v3.x-v5.x`
 - PHP 7.2: `v6.x`
 - PHP 7.3 7.4: `v7.x`
+
+This README is only compatible with the latest version. Each version of the library has a git tag where the corresponding README can be read.
 
 ## Installation
 Use [composer](https://getcomposer.org/) to download and install the library and its dependencies.
@@ -165,7 +166,7 @@ $webPush->setReuseVAPIDHeaders(true);
 
 ### Notifications and default options
 Each notification can have a specific Time To Live, urgency, and topic.
-The WebPush standard states that `urgency` is optional but some users reports that Safari throws errors when they are not specified. This might be fixed in the future.
+The WebPush standard states that `urgency` is optional but some users reports that Safari throws errors when it is not specified. This might be fixed in the future.
 You can change the default options with `setDefaultOptions()` or in the constructor:
 
 ```php
@@ -313,9 +314,6 @@ The following are available:
 
 Feel free to add your own!
 
-### Is the API stable?
-Not until the [Push API spec](http://www.w3.org/TR/push-api/) is finished.
-
 ### What about security?
 Payload is encrypted according to the [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption-01) standard,
 using the user public key and authentication secret that you can get by following the [Web Push API](http://www.w3.org/TR/push-api/) specification.
@@ -325,10 +323,9 @@ Internally, WebPush uses the [WebToken](https://github.com/web-token) framework 
 ### How do I scale?
 Here are some ideas:
 
-1. Upgrade to PHP 7.3
-2. Make sure MultiCurl is available on your server
-3. Find the right balance for your needs between security and performance (see above)
-4. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
+1. Make sure MultiCurl is available on your server
+2. Find the right balance for your needs between security and performance (see above)
+3. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 Your installation lacks some certificates.
@@ -337,9 +334,6 @@ Your installation lacks some certificates.
 2. Edit your `php.ini`: after `[curl]`, type `curl.cainfo = /path/to/cacert.pem`.
 
 You can also force using a client without peer verification.
-
-### How to solve "Bad key encryption key length" or "Unsupported key type"?
-Disable `mbstring.func_overload` in your `php.ini`.
 
 ### How to solve "Class 'Minishlink\WebPush\WebPush' not found"
 Make sure to require Composer's [autoloader](https://getcomposer.org/doc/01-basic-usage.md#autoloading).
@@ -367,6 +361,3 @@ See [CONTRIBUTING.md](https://github.com/Minishlink/web-push/blob/master/CONTRIB
 
 ## License
 [MIT](https://github.com/Minishlink/web-push/blob/master/LICENSE)
-
-## Sponsors
-Thanks to [JetBrains](https://www.jetbrains.com/) for supporting the project through sponsoring some [All Products Packs](https://www.jetbrains.com/products.html) within their [Free Open Source License](https://www.jetbrains.com/buy/opensource/) program.
