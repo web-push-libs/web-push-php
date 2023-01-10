@@ -81,7 +81,7 @@ class MessageSentReportTest extends TestCase
 
     public function generateReportsWithJson(): array
     {
-        $request1Body = json_encode(['title' => 'test', 'body' => 'blah', 'data' => []]);
+        $request1Body = json_encode(['title' => 'test', 'body' => 'blah', 'data' => []], JSON_THROW_ON_ERROR);
         $request1 = new Request('POST', 'https://www.example.com', [], $request1Body);
         $response1 = new Response(200, [], 'test');
 

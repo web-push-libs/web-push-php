@@ -127,8 +127,8 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $this->assertTrue($report->isSuccess());
 
                 $dataString = json_encode([
-                    'clientHash' => $clientHash,
-                ]);
+                                              'clientHash' => $clientHash,
+                                          ], JSON_THROW_ON_ERROR);
 
                 $getNotificationCurl = curl_init(self::$testServiceUrl.'/get-notifications');
                 curl_setopt_array($getNotificationCurl, [
@@ -145,7 +145,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $parsedResp = $this->getResponse($getNotificationCurl);
 
                 if (!property_exists($parsedResp->{'data'}, 'messages')) {
-                    throw new RuntimeException('web-push-testing error, no messages: '.json_encode($parsedResp));
+                    throw new RuntimeException('web-push-testing error, no messages: '.json_encode($parsedResp, JSON_THROW_ON_ERROR));
                 }
 
                 $messages = $parsedResp->{'data'}->{'messages'};

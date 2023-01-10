@@ -184,7 +184,8 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @throws ErrorException
+     * @throws \ErrorException
+     * @throws \JsonException
      */
     public function testFlush(): void
     {
@@ -207,9 +208,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         ]);
 
         // test multiple requests
-        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 1]));
-        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 2]));
-        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 3]));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 1], JSON_THROW_ON_ERROR));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 2], JSON_THROW_ON_ERROR));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 3], JSON_THROW_ON_ERROR));
 
         /** @var \Minishlink\WebPush\MessageSentReport $report */
         foreach ($this->webPush->flush() as $report) {
