@@ -165,6 +165,7 @@ $webPush->setReuseVAPIDHeaders(true);
 
 ### Notifications and default options
 Each notification can have a specific Time To Live, urgency, and topic.
+The WebPush standard states that `urgency` is optional but some users reports that Safari throws errors when they are not specified. This might be fixed in the future.
 You can change the default options with `setDefaultOptions()` or in the constructor:
 
 ```php
@@ -174,8 +175,8 @@ use Minishlink\WebPush\WebPush;
 
 $defaultOptions = [
     'TTL' => 300, // defaults to 4 weeks
-    'urgency' => 'normal', // protocol defaults to "normal"
-    'topic' => 'new_event', // not defined by default,
+    'urgency' => 'normal', // protocol defaults to "normal". (very-low, low, normal, or high)
+    'topic' => 'newEvent', // not defined by default. Max. 32 characters from the URL or filename-safe Base64 characters sets
     'batchSize' => 200, // defaults to 1000
 ];
 
