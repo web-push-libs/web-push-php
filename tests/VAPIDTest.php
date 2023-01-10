@@ -16,7 +16,7 @@ use Minishlink\WebPush\VAPID;
 
 final class VAPIDTest extends PHPUnit\Framework\TestCase
 {
-    public function vapidProvider() : array
+    public function vapidProvider(): array
     {
         return [
             [

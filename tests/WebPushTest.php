@@ -48,7 +48,8 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         ];
 
         if (getenv('CI')) {
-            self::setCiEnvironment();;
+            self::setCiEnvironment();
+            ;
         }
     }
 
@@ -186,55 +187,58 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testFlush() {
-	    $subscription = new Subscription(self::$endpoints['standard']);
+    public function testFlush()
+    {
+        $subscription = new Subscription(self::$endpoints['standard']);
 
-	    $report = $this->webPush->sendOneNotification($subscription);
-	    $this->assertFalse($report->isSuccess()); // it doesn't have VAPID
+        $report = $this->webPush->sendOneNotification($subscription);
+        $this->assertFalse($report->isSuccess()); // it doesn't have VAPID
 
-	    // queue has been reset
-	    $this->assertEmpty(iterator_to_array($this->webPush->flush()));
+        // queue has been reset
+        $this->assertEmpty(iterator_to_array($this->webPush->flush()));
 
         $report = $this->webPush->sendOneNotification($subscription);
         $this->assertFalse($report->isSuccess());  // it doesn't have VAPID
 
-	    $nonExistantSubscription = Subscription::create([
-		    'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
-		    'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
-		    'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
-		    'contentEncoding' => 'aes128gcm',
-	    ]);
+        $nonExistantSubscription = Subscription::create([
+            'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
+            'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
+            'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
+            'contentEncoding' => 'aes128gcm',
+        ]);
 
-	    // test multiple requests
-	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 1]));
-	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 2]));
-	    $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 3]));
+        // test multiple requests
+        $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 1]));
+        $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 2]));
+        $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 3]));
 
-	    /** @var \Minishlink\WebPush\MessageSentReport $report */
-	    foreach ($this->webPush->flush() as $report) {
-	    	$this->assertFalse($report->isSuccess());
-	    	$this->assertTrue($report->isSubscriptionExpired());
-	    	$this->assertEquals(410, $report->getResponse()->getStatusCode());
-	    	$this->assertNotEmpty($report->getReason());
-	    	$this->assertNotFalse(filter_var($report->getEndpoint(), FILTER_VALIDATE_URL));
-	    }
+        /** @var \Minishlink\WebPush\MessageSentReport $report */
+        foreach ($this->webPush->flush() as $report) {
+            $this->assertFalse($report->isSuccess());
+            $this->assertTrue($report->isSubscriptionExpired());
+            $this->assertEquals(410, $report->getResponse()->getStatusCode());
+            $this->assertNotEmpty($report->getReason());
+            $this->assertNotFalse(filter_var($report->getEndpoint(), FILTER_VALIDATE_URL));
+        }
     }
 
-	public function testFlushEmpty(): void {
+    public function testFlushEmpty(): void
+    {
         $this->assertEmpty(iterator_to_array($this->webPush->flush(300)));
     }
 
-	/**
-	 * @throws ErrorException
-	 */
-	public function testCount(): void {
-		$subscription = new Subscription(self::$endpoints['standard']);
+    /**
+     * @throws ErrorException
+     */
+    public function testCount(): void
+    {
+        $subscription = new Subscription(self::$endpoints['standard']);
 
-		$this->webPush->queueNotification($subscription);
-		$this->webPush->queueNotification($subscription);
-		$this->webPush->queueNotification($subscription);
-		$this->webPush->queueNotification($subscription);
+        $this->webPush->queueNotification($subscription);
+        $this->webPush->queueNotification($subscription);
+        $this->webPush->queueNotification($subscription);
+        $this->webPush->queueNotification($subscription);
 
-		$this->assertEquals(4, $this->webPush->countPendingNotifications());
+        $this->assertEquals(4, $this->webPush->countPendingNotifications());
     }
 }
