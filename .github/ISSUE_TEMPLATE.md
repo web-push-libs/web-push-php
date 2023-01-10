@@ -12,14 +12,14 @@ helps with diagnosing problems quicker.
 > better.
 
 * *Operating System*: <Linux | Windows | OS X>
-* *PHP Version*: <5.6 | 7.0 | ...>
-* *web-push-php Version*: <1.0.0>
+* *PHP Version*: <8.0 | 8.1 | ...>
+* *web-push-php Version*: <8.0.0>
 
 > Please check that you have installed and enabled these PHP extensions :
 
+- [ ] curl
 - [ ] gmp
 - [ ] mbstring
-- [ ] curl
 - [ ] openssl
 
 > Please select any browsers that you are experiencing problems with:
