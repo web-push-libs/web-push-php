@@ -5,13 +5,14 @@
  */
 
 use GuzzleHttp\Psr7\Request;
-use Minishlink\WebPush\MessageSentReport;
 use GuzzleHttp\Psr7\Response;
+use Minishlink\WebPush\MessageSentReport;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \Minishlink\WebPush\MessageSentReport
  */
-class MessageSentReportTest extends \PHPUnit\Framework\TestCase
+class MessageSentReportTest extends TestCase
 {
     /**
      * @dataProvider generateReportsWithExpiration

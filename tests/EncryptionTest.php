@@ -13,15 +13,12 @@ declare(strict_types=1);
 
 use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
-use Jose\Component\Core\Util\Ecc\NistCurve;
-use Jose\Component\Core\Util\Ecc\PrivateKey;
-use Jose\Component\KeyManagement\JWKFactory;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
 
 final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
-    public function testDeterministicEncrypt()
+    public function testDeterministicEncrypt(): void
     {
         $contentEncoding = "aes128gcm";
         $plaintext = 'When I grow up, I want to be a watermelon';
@@ -65,7 +62,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetContentCodingHeader()
+    public function testGetContentCodingHeader(): void
     {
         $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
         $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
@@ -82,7 +79,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
      *
      * @throws ErrorException
      */
-    public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength)
+    public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength): void
     {
         $res = Encryption::padPayload($payload, $maxLengthToPad, "aesgcm");
 

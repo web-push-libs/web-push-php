@@ -11,19 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\SubscriptionInterface;
+use Minishlink\WebPush\WebPush;
 
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
-    private static $endpoints;
-    private static $keys;
-    private static $tokens;
-    private static $vapidKeys;
+    private static array $endpoints;
+    private static array $keys;
+    private static array $tokens;
+    private static array $vapidKeys;
 
     /** @var WebPush WebPush with correct api keys */
-    private $webPush;
+    private WebPush $webPush;
 
     /**
      * {@inheritdoc}
@@ -49,7 +49,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 
         if (getenv('CI')) {
             self::setCiEnvironment();
-            ;
         }
     }
 
@@ -109,7 +108,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         if (!$response) {
             $error = 'Curl error: n'.curl_errno($getSubscriptionCurl).' - '.curl_error($getSubscriptionCurl);
             curl_close($getSubscriptionCurl);
-            throw new Exception($error);
+            throw new RuntimeException($error);
         }
 
         $parsedResp = json_decode($response, null, 512, JSON_THROW_ON_ERROR);
@@ -138,10 +137,10 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
      * @dataProvider notificationProvider
      *
      * @param SubscriptionInterface $subscription
-     * @param string $payload
+     * @param string                $payload
      * @throws ErrorException
      */
-    public function testSendOneNotification($subscription, $payload)
+    public function testSendOneNotification(SubscriptionInterface $subscription, string $payload): void
     {
         $report = $this->webPush->sendOneNotification($subscription, $payload);
         $this->assertTrue($report->isSuccess());
@@ -150,7 +149,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testSendNotificationBatch()
+    public function testSendNotificationBatch(): void
     {
         $batchSize = 10;
         $total = 50;
@@ -172,9 +171,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testSendOneNotificationWithTooBigPayload()
+    public function testSendOneNotificationWithTooBigPayload(): void
     {
-        $this->expectException(\ErrorException::class);
+        $this->expectException(ErrorException::class);
         $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
 
         $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);
@@ -187,7 +186,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function testFlush()
+    public function testFlush(): void
     {
         $subscription = new Subscription(self::$endpoints['standard']);
 
