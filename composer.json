@@ -30,6 +30,9 @@
     "web-token/jwt-util-ecc": "^2.0|^3.0.2",
     "spomky-labs/base64url": "^2.0"
   },
+  "suggest": {
+    "ext-gmp": "Optional for performance."
+  },
   "require-dev": {
     "phpunit/phpunit": "^9.5.27",
     "phpstan/phpstan": "^1.9.8",
