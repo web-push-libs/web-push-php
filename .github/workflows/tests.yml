@@ -65,4 +65,6 @@ jobs:
 
       - name: Run php-cs-fixer
         if: ${{ matrix.php != '8.2' }} # Not supported yet.
-        run: composer test:syntax
+        run: |
+          composer test:syntax
+          composer test:syntax_tests
