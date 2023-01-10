@@ -199,7 +199,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $report = $this->webPush->sendOneNotification($subscription);
         $this->assertFalse($report->isSuccess());  // it doesn't have VAPID
 
-        $nonExistantSubscription = Subscription::create([
+        $nonExistentSubscription = Subscription::create([
             'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
             'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
             'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
@@ -207,9 +207,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         ]);
 
         // test multiple requests
-        $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 1]));
-        $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 2]));
-        $this->webPush->queueNotification($nonExistantSubscription, json_encode(['test' => 3]));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 1]));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 2]));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 3]));
 
         /** @var \Minishlink\WebPush\MessageSentReport $report */
         foreach ($this->webPush->flush() as $report) {

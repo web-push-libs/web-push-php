@@ -87,7 +87,7 @@ class MessageSentReportTest extends TestCase
 
         $request2Body = '';
         $request2 = new Request('POST', 'https://www.example.com', [], $request2Body);
-        $response2 = new Response(410, [], 'Faield to do somthing', '1.1', 'Gone');
+        $response2 = new Response(410, [], 'Failed to do something', '1.1', 'Gone');
 
         return [
             [
