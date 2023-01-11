@@ -13,9 +13,12 @@
     }
   ],
   "scripts": {
+    "fix:syntax": "./vendor/bin/php-cs-fixer fix ./src --using-cache=no",
+    "fix:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --using-cache=no",
     "test:unit": "./vendor/bin/phpunit --color",
     "test:typing": "./vendor/bin/phpstan analyse",
-    "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no"
+    "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no",
+    "test:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --dry-run --stop-on-violation --using-cache=no"
   },
   "require": {
     "php": ">=8.0",
@@ -39,8 +42,8 @@
     "friendsofphp/php-cs-fixer": "^v3.13.2"
   },
   "autoload": {
-    "psr-4" : {
-      "Minishlink\\WebPush\\" : "src"
+    "psr-4": {
+      "Minishlink\\WebPush\\": "src"
     }
   }
 }
