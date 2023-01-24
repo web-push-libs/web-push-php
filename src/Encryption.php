@@ -282,9 +282,6 @@ class Encryption
         }
 
         $details = openssl_pkey_get_details($keyResource);
-        if (PHP_MAJOR_VERSION < 8) {
-            openssl_pkey_free($keyResource);
-        }
 
         if (!$details) {
             throw new \RuntimeException('Unable to get the key details');
