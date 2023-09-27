@@ -14,10 +14,15 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
+use ErrorException;
+use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
+
+use function assert;
 
 class WebPush
 {
@@ -105,12 +110,12 @@ class WebPush
     {
         if (isset($payload)) {
             if (Utils::safeStrlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
-                throw new \ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
+                throw new ErrorException('Size of payload must not be greater than '.Encryption::MAX_PAYLOAD_LENGTH.' octets.');
             }
 
             $contentEncoding = $subscription->getContentEncoding();
             if (!$contentEncoding) {
-                throw new \ErrorException('Subscription should have a content encoding');
+                throw new ErrorException('Subscription should have a content encoding');
             }
 
             $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
@@ -143,7 +148,7 @@ class WebPush
      * @return \Generator|MessageSentReport[]
      * @throws \ErrorException
      */
-    public function flush(?int $batchSize = null): \Generator
+    public function flush(?int $batchSize = null): Generator
     {
         if (empty($this->notifications)) {
             yield from [];
@@ -199,7 +204,7 @@ class WebPush
     {
         $requests = [];
         foreach ($notifications as $notification) {
-            \assert($notification instanceof Notification);
+            assert($notification instanceof Notification);
             $subscription = $notification->getSubscription();
             $endpoint = $subscription->getEndpoint();
             $userPublicKey = $subscription->getPublicKey();
@@ -211,7 +216,7 @@ class WebPush
 
             if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
                 if (!$contentEncoding) {
-                    throw new \ErrorException('Subscription should have a content encoding');
+                    throw new ErrorException('Subscription should have a content encoding');
                 }
 
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
@@ -254,7 +259,7 @@ class WebPush
             if (array_key_exists('VAPID', $auth) && $contentEncoding) {
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
                 if (!parse_url($audience)) {
-                    throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
+                    throw new ErrorException('Audience "'.$audience.'"" could not be generated.');
                 }
 
                 $vapidHeaders = $this->getVAPIDHeaders($audience, $contentEncoding, $auth['VAPID']);
@@ -297,10 +302,14 @@ class WebPush
     public function setAutomaticPadding($automaticPadding): WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
-            throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
-        } elseif ($automaticPadding < 0) {
-            throw new \Exception('Padding length should be positive or zero.');
-        } elseif ($automaticPadding === true) {
+            throw new InvalidArgumentException('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
+        }
+
+        if ($automaticPadding < 0) {
+            throw new InvalidArgumentException('Padding length should be positive or zero.');
+        }
+
+        if ($automaticPadding === true) {
             $this->automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
         } elseif ($automaticPadding === false) {
             $this->automaticPadding = 0;

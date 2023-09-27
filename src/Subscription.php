@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use ErrorException;
+
 class Subscription implements SubscriptionInterface
 {
     /** @var string */
@@ -42,7 +44,7 @@ class Subscription implements SubscriptionInterface
         if ($publicKey || $authToken || $contentEncoding) {
             $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
             if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings)) {
-                throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+                throw new ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
             }
 
             $this->publicKey = $publicKey;

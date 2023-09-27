@@ -15,10 +15,14 @@ namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
 use Brick\Math\BigInteger;
+use ErrorException;
+use Exception;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
+use RuntimeException;
+use Throwable;
 
 class Encryption
 {
@@ -39,7 +43,7 @@ class Encryption
         } elseif ($contentEncoding === "aes128gcm") {
             return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
         } else {
-            throw new \ErrorException("This content encoding is not supported");
+            throw new ErrorException("This content encoding is not supported");
         }
     }
 
@@ -88,7 +92,7 @@ class Encryption
             ]);
         }
         if (!$localPublicKey) {
-            throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
+            throw new ErrorException('Failed to convert local public key from hexadecimal to binary');
         }
 
         // get user public key object
@@ -190,12 +194,12 @@ class Encryption
         }
 
         if (Utils::safeStrlen($clientPublicKey) !== 65) {
-            throw new \ErrorException('Invalid client public key length');
+            throw new ErrorException('Invalid client public key length');
         }
 
         // This one should never happen, because it's our code that generates the key
         if (Utils::safeStrlen($serverPublicKey) !== 65) {
-            throw new \ErrorException('Invalid server public key length');
+            throw new ErrorException('Invalid server public key length');
         }
 
         $len = chr(0).'A'; // 65 as Uint16BE
@@ -217,11 +221,11 @@ class Encryption
     {
         if ($contentEncoding === "aesgcm") {
             if (!$context) {
-                throw new \ErrorException('Context must exist');
+                throw new ErrorException('Context must exist');
             }
 
             if (Utils::safeStrlen($context) !== 135) {
-                throw new \ErrorException('Context argument has invalid size');
+                throw new ErrorException('Context argument has invalid size');
             }
 
             return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
@@ -229,14 +233,14 @@ class Encryption
             return 'Content-Encoding: '.$type.chr(0);
         }
 
-        throw new \ErrorException('This content encoding is not supported.');
+        throw new ErrorException('This content encoding is not supported.');
     }
 
     private static function createLocalKeyObject(): array
     {
         try {
             return self::createLocalKeyObjectUsingOpenSSL();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return self::createLocalKeyObjectUsingPurePhpMethod();
         }
     }
@@ -278,13 +282,13 @@ class Encryption
         ]);
 
         if (!$keyResource) {
-            throw new \RuntimeException('Unable to create the key');
+            throw new RuntimeException('Unable to create the key');
         }
 
         $details = openssl_pkey_get_details($keyResource);
 
         if (!$details) {
-            throw new \RuntimeException('Unable to get the key details');
+            throw new RuntimeException('Unable to get the key details');
         }
 
         return [
@@ -309,7 +313,7 @@ class Encryption
             } elseif ($contentEncoding === "aes128gcm") {
                 $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
             } else {
-                throw new \ErrorException("This content encoding is not supported");
+                throw new ErrorException("This content encoding is not supported");
             }
 
             return self::hkdf($userAuthToken, $sharedSecret, $info, 32);
@@ -327,10 +331,10 @@ class Encryption
 
                 $result = openssl_pkey_derive($publicPem, $privatePem, 256); // @phpstan-ignore-line
                 if ($result === false) {
-                    throw new \Exception('Unable to compute the agreement key');
+                    throw new RuntimeException('Unable to compute the agreement key');
                 }
                 return $result;
-            } catch (\Throwable $throwable) {
+            } catch (Throwable $throwable) {
                 //Does nothing. Will fallback to the pure PHP function
             }
         }
@@ -345,7 +349,7 @@ class Encryption
             $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
 
             return hex2bin(str_pad($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16), 64, '0', STR_PAD_LEFT)); // @phpstan-ignore-line
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $rec_x = self::convertBase64ToGMP($public_key->get('x'));
             $rec_y = self::convertBase64ToGMP($public_key->get('y'));
             $sen_d = self::convertBase64ToGMP($private_key->get('d'));
@@ -364,7 +368,7 @@ class Encryption
         $value = unpack('H*', Base64Url::decode($value));
 
         if ($value === false) {
-            throw new \ErrorException('Unable to unpack hex value from string');
+            throw new ErrorException('Unable to unpack hex value from string');
         }
 
         return BigInteger::fromBase($value[1], 16);
@@ -378,7 +382,7 @@ class Encryption
         $value = unpack('H*', Base64Url::decode($value));
 
         if ($value === false) {
-            throw new \ErrorException('Unable to unpack hex value from string');
+            throw new ErrorException('Unable to unpack hex value from string');
         }
 
         return gmp_init($value[1], 16);

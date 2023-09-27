@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
+use ErrorException;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
@@ -32,49 +33,49 @@ class VAPID
     public static function validate(array $vapid): array
     {
         if (!isset($vapid['subject'])) {
-            throw new \ErrorException('[VAPID] You must provide a subject that is either a mailto: or a URL.');
+            throw new ErrorException('[VAPID] You must provide a subject that is either a mailto: or a URL.');
         }
 
         if (isset($vapid['pemFile'])) {
             $vapid['pem'] = file_get_contents($vapid['pemFile']);
 
             if (!$vapid['pem']) {
-                throw new \ErrorException('Error loading PEM file.');
+                throw new ErrorException('Error loading PEM file.');
             }
         }
 
         if (isset($vapid['pem'])) {
             $jwk = JWKFactory::createFromKey($vapid['pem']);
             if ($jwk->get('kty') !== 'EC' || !$jwk->has('d') || !$jwk->has('x') || !$jwk->has('y')) {
-                throw new \ErrorException('Invalid PEM data.');
+                throw new ErrorException('Invalid PEM data.');
             }
 
             $binaryPublicKey = hex2bin(Utils::serializePublicKeyFromJWK($jwk));
             if (!$binaryPublicKey) {
-                throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
+                throw new ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
             }
             $vapid['publicKey'] = base64_encode($binaryPublicKey);
             $vapid['privateKey'] = base64_encode(str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         }
 
         if (!isset($vapid['publicKey'])) {
-            throw new \ErrorException('[VAPID] You must provide a public key.');
+            throw new ErrorException('[VAPID] You must provide a public key.');
         }
 
         $publicKey = Base64Url::decode($vapid['publicKey']);
 
         if (Utils::safeStrlen($publicKey) !== self::PUBLIC_KEY_LENGTH) {
-            throw new \ErrorException('[VAPID] Public key should be 65 bytes long when decoded.');
+            throw new ErrorException('[VAPID] Public key should be 65 bytes long when decoded.');
         }
 
         if (!isset($vapid['privateKey'])) {
-            throw new \ErrorException('[VAPID] You must provide a private key.');
+            throw new ErrorException('[VAPID] You must provide a private key.');
         }
 
         $privateKey = Base64Url::decode($vapid['privateKey']);
 
         if (Utils::safeStrlen($privateKey) !== self::PRIVATE_KEY_LENGTH) {
-            throw new \ErrorException('[VAPID] Private key should be 32 bytes long when decoded.');
+            throw new ErrorException('[VAPID] Private key should be 32 bytes long when decoded.');
         }
 
         return [
@@ -115,7 +116,7 @@ class VAPID
             'sub' => $subject,
         ], JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
         if (!$jwtPayload) {
-            throw new \ErrorException('Failed to encode JWT payload in JSON');
+            throw new ErrorException('Failed to encode JWT payload in JSON');
         }
 
         [$x, $y] = Utils::unserializePublicKey($publicKey);
@@ -151,7 +152,7 @@ class VAPID
             ];
         }
 
-        throw new \ErrorException('This content encoding is not supported');
+        throw new ErrorException('This content encoding is not supported');
     }
 
     /**
@@ -166,12 +167,12 @@ class VAPID
 
         $binaryPublicKey = hex2bin(Utils::serializePublicKeyFromJWK($jwk));
         if (!$binaryPublicKey) {
-            throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
+            throw new ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
         }
 
         $binaryPrivateKey = hex2bin(str_pad(bin2hex(Base64Url::decode($jwk->get('d'))), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         if (!$binaryPrivateKey) {
-            throw new \ErrorException('Failed to convert VAPID private key from hexadecimal to binary');
+            throw new ErrorException('Failed to convert VAPID private key from hexadecimal to binary');
         }
 
         return [
