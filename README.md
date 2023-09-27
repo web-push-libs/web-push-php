@@ -205,7 +205,7 @@ Similar to the old `collapse_key` on legacy GCM servers, this string will make t
 #### batchSize
 If you send tens of thousands notifications at a time, you may get memory overflows due to how endpoints are called in Guzzle.
 In order to fix this, WebPush sends notifications in batches. The default size is 1000. Depending on your server configuration (memory), you may want
-to decrease this number. Do this while instanciating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
+to decrease this number. Do this while instantiating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
 it as a parameter : `$webPush->flush($batchSize)`.
 
 ### Server errors
