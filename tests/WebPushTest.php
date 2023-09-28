@@ -15,6 +15,11 @@ use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\SubscriptionInterface;
 use Minishlink\WebPush\WebPush;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static array $endpoints;
@@ -25,9 +30,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /** @var WebPush WebPush with correct api keys */
     private WebPush $webPush;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function setUpBeforeClass(): void
     {
         self::$endpoints = [
@@ -43,8 +45,8 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         ];
 
         self::$vapidKeys = [
-            'publicKey'     => getenv('VAPID_PUBLIC_KEY'),
-            'privateKey'    => getenv('VAPID_PRIVATE_KEY'),
+            'publicKey' => getenv('VAPID_PUBLIC_KEY'),
+            'privateKey' => getenv('VAPID_PRIVATE_KEY'),
         ];
 
         if (getenv('CI')) {
@@ -52,9 +54,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function setUp(): void
     {
         if (!getenv('CI')) {
@@ -67,7 +66,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             ];
             foreach ($envs as $env) {
                 if (!getenv($env)) {
-                    $this->markTestSkipped("No '$env' found in env.");
+                    $this->markTestSkipped("No '{$env}' found in env.");
                 }
             }
         }
@@ -80,45 +79,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             ],
         ]);
         $this->webPush->setAutomaticPadding(false); // disable automatic padding in tests to speed these up
-    }
-
-    private static function setCiEnvironment(): void
-    {
-        self::$vapidKeys['publicKey'] = PushServiceTest::$vapidKeys['publicKey'];
-        self::$vapidKeys['privateKey'] = PushServiceTest::$vapidKeys['privateKey'];
-        $subscriptionParameters = [
-            'applicationServerKey' => self::$vapidKeys['publicKey'],
-        ];
-
-        $subscriptionParameters = json_encode($subscriptionParameters, JSON_THROW_ON_ERROR);
-
-        $getSubscriptionCurl = curl_init('http://localhost:9012/subscribe');
-        curl_setopt_array($getSubscriptionCurl, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $subscriptionParameters,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($subscriptionParameters),
-            ],
-        ]);
-
-        $response = curl_exec($getSubscriptionCurl);
-
-        if (!$response) {
-            $error = 'Curl error: n'.curl_errno($getSubscriptionCurl).' - '.curl_error($getSubscriptionCurl);
-            curl_close($getSubscriptionCurl);
-            throw new RuntimeException($error);
-        }
-
-        $parsedResp = json_decode($response, null, 512, JSON_THROW_ON_ERROR);
-
-        $subscription = $parsedResp->{'data'};
-
-        self::$endpoints['standard'] = $subscription->{'endpoint'};
-        $keys = $subscription->{'keys'};
-        self::$tokens['standard'] = $keys->{'auth'};
-        self::$keys['standard'] = $keys->{'p256dh'};
     }
 
     /**
@@ -136,8 +96,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider notificationProvider
      *
-     * @param SubscriptionInterface $subscription
-     * @param string                $payload
      * @throws ErrorException
      */
     public function testSendOneNotification(SubscriptionInterface $subscription, string $payload): void
@@ -201,9 +159,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertFalse($report->isSuccess());  // it doesn't have VAPID
 
         $nonExistentSubscription = Subscription::create([
-            'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
-            'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
-            'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
+            'publicKey' => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
+            'authToken' => 'hUIGbmiypj9_EQea8AnCKA',
             'contentEncoding' => 'aes128gcm',
         ]);
 
@@ -240,5 +198,45 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $this->webPush->queueNotification($subscription);
 
         $this->assertEquals(4, $this->webPush->countPendingNotifications());
+    }
+
+    private static function setCiEnvironment(): void
+    {
+        self::$vapidKeys['publicKey'] = PushServiceTest::$vapidKeys['publicKey'];
+        self::$vapidKeys['privateKey'] = PushServiceTest::$vapidKeys['privateKey'];
+        $subscriptionParameters = [
+            'applicationServerKey' => self::$vapidKeys['publicKey'],
+        ];
+
+        $subscriptionParameters = json_encode($subscriptionParameters, JSON_THROW_ON_ERROR);
+
+        $getSubscriptionCurl = curl_init('http://localhost:9012/subscribe');
+        curl_setopt_array($getSubscriptionCurl, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $subscriptionParameters,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Content-Length: '.strlen($subscriptionParameters),
+            ],
+        ]);
+
+        $response = curl_exec($getSubscriptionCurl);
+
+        if (!$response) {
+            $error = 'Curl error: n'.curl_errno($getSubscriptionCurl).' - '.curl_error($getSubscriptionCurl);
+            curl_close($getSubscriptionCurl);
+
+            throw new RuntimeException($error);
+        }
+
+        $parsedResp = json_decode($response, null, 512, JSON_THROW_ON_ERROR);
+
+        $subscription = $parsedResp->{'data'};
+
+        self::$endpoints['standard'] = $subscription->{'endpoint'};
+        $keys = $subscription->{'keys'};
+        self::$tokens['standard'] = $keys->{'auth'};
+        self::$keys['standard'] = $keys->{'p256dh'};
     }
 }

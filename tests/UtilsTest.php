@@ -4,6 +4,11 @@ use Jose\Component\KeyManagement\JWKFactory;
 use Minishlink\WebPush\Utils;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 final class UtilsTest extends TestCase
 {
     public function testSerializePublicKey(): void

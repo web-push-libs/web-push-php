@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
+use ErrorException;
+
 class Subscription implements SubscriptionInterface
 {
     /** @var string */
@@ -28,8 +30,9 @@ class Subscription implements SubscriptionInterface
     private $contentEncoding;
 
     /**
-     * @param string|null $contentEncoding (Optional) Must be "aesgcm"
-     * @throws \ErrorException
+     * @param null|string $contentEncoding (Optional) Must be "aesgcm"
+     *
+     * @throws ErrorException
      */
     public function __construct(
         string $endpoint,
@@ -42,18 +45,19 @@ class Subscription implements SubscriptionInterface
         if ($publicKey || $authToken || $contentEncoding) {
             $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
             if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings)) {
-                throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+                throw new ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
             }
 
             $this->publicKey = $publicKey;
             $this->authToken = $authToken;
-            $this->contentEncoding = $contentEncoding ?: "aesgcm";
+            $this->contentEncoding = $contentEncoding ?: 'aesgcm';
         }
     }
 
     /**
      * @param array $associativeArray (with keys endpoint, publicKey, authToken, contentEncoding)
-     * @throws \ErrorException
+     *
+     * @throws ErrorException
      */
     public static function create(array $associativeArray): self
     {
@@ -62,7 +66,7 @@ class Subscription implements SubscriptionInterface
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? 'aesgcm'
             );
         }
 
@@ -71,7 +75,7 @@ class Subscription implements SubscriptionInterface
                 $associativeArray['endpoint'],
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? 'aesgcm'
             );
         }
 
@@ -80,33 +84,21 @@ class Subscription implements SubscriptionInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getEndpoint(): string
     {
         return $this->endpoint;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getPublicKey(): ?string
     {
         return $this->publicKey;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getAuthToken(): ?string
     {
         return $this->authToken;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public function getContentEncoding(): ?string
     {
         return $this->contentEncoding;

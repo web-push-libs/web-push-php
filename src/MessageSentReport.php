@@ -1,21 +1,25 @@
 <?php
 /**
  * @author Igor Timoshenkov [it@campoint.net]
+ *
  * @started: 03.09.2018 9:21
  */
 
 namespace Minishlink\WebPush;
 
+use JsonSerializable;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
+use function in_array;
+
 /**
- * Standardized response from sending a message
+ * Standardized response from sending a message.
  */
-class MessageSentReport implements \JsonSerializable
+class MessageSentReport implements JsonSerializable
 {
     /**
-     * @var boolean
+     * @var bool
      */
     protected $success;
 
@@ -25,7 +29,7 @@ class MessageSentReport implements \JsonSerializable
     protected $request;
 
     /**
-     * @var ResponseInterface | null
+     * @var null|ResponseInterface
      */
     protected $response;
 
@@ -39,10 +43,10 @@ class MessageSentReport implements \JsonSerializable
      */
     public function __construct(RequestInterface $request, ?ResponseInterface $response = null, bool $success = true, $reason = 'OK')
     {
-        $this->request  = $request;
+        $this->request = $request;
         $this->response = $response;
-        $this->success  = $success;
-        $this->reason   = $reason;
+        $this->success = $success;
+        $this->reason = $reason;
     }
 
     public function isSuccess(): bool
@@ -53,6 +57,7 @@ class MessageSentReport implements \JsonSerializable
     public function setSuccess(bool $success): MessageSentReport
     {
         $this->success = $success;
+
         return $this;
     }
 
@@ -64,6 +69,7 @@ class MessageSentReport implements \JsonSerializable
     public function setRequest(RequestInterface $request): MessageSentReport
     {
         $this->request = $request;
+
         return $this;
     }
 
@@ -75,6 +81,7 @@ class MessageSentReport implements \JsonSerializable
     public function setResponse(ResponseInterface $response): MessageSentReport
     {
         $this->response = $response;
+
         return $this;
     }
 
@@ -89,7 +96,7 @@ class MessageSentReport implements \JsonSerializable
             return false;
         }
 
-        return \in_array($this->response->getStatusCode(), [404, 410], true);
+        return in_array($this->response->getStatusCode(), [404, 410], true);
     }
 
     public function getReason(): string
@@ -100,6 +107,7 @@ class MessageSentReport implements \JsonSerializable
     public function setReason(string $reason): MessageSentReport
     {
         $this->reason = $reason;
+
         return $this;
     }
 
@@ -120,11 +128,11 @@ class MessageSentReport implements \JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'success'  => $this->isSuccess(),
-            'expired'  => $this->isSubscriptionExpired(),
-            'reason'   => $this->reason,
+            'success' => $this->isSuccess(),
+            'expired' => $this->isSubscriptionExpired(),
+            'reason' => $this->reason,
             'endpoint' => $this->getEndpoint(),
-            'payload'  => $this->request->getBody()->getContents(),
+            'payload' => $this->request->getBody()->getContents(),
         ];
     }
 }

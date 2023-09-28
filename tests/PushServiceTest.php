@@ -15,23 +15,25 @@ use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
-    private static int    $timeout    = 30;
-    private static int    $portNumber = 9012;
-    private static string $testServiceUrl;
-    public static array   $vapidKeys  = [
+    public static array $vapidKeys = [
         'subject' => 'http://test.com',
         'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
         'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
     ];
+    private static int $timeout = 30;
+    private static int $portNumber = 9012;
+    private static string $testServiceUrl;
 
     /** @var WebPush WebPush with correct api keys */
     private WebPush $webPush;
 
-    /**
-     * {@inheritdoc}
-     */
     public static function setUpBeforeClass(): void
     {
         self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
@@ -49,11 +51,14 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
     /**
      * Selenium tests are flakey so add retries.
+     *
+     * @param mixed $retryCount
+     * @param mixed $test
      */
     public function retryTest($retryCount, $test): void
     {
         // just like above without checking the annotation
-        for ($i = 0; $i < $retryCount; $i++) {
+        for ($i = 0; $i < $retryCount; ++$i) {
             try {
                 $test();
 
@@ -70,6 +75,9 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     /**
      * @dataProvider browserProvider
      * Run integration tests with browsers
+     *
+     * @param mixed $browserId
+     * @param mixed $options
      */
     public function testBrowsers($browserId, $options): void
     {
@@ -78,7 +86,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
     protected function createClosureTest($browserId, $options): callable
     {
-        return function () use ($browserId, $options) {
+        return function () use ($options) {
             $this->webPush = new WebPush($options);
             $this->webPush->setAutomaticPadding(false);
             $subscriptionParameters = [];
@@ -127,8 +135,8 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $this->assertTrue($report->isSuccess());
 
                 $dataString = json_encode([
-                                              'clientHash' => $clientHash,
-                                          ], JSON_THROW_ON_ERROR);
+                    'clientHash' => $clientHash,
+                ], JSON_THROW_ON_ERROR);
 
                 $getNotificationCurl = curl_init(self::$testServiceUrl.'/get-notifications');
                 curl_setopt_array($getNotificationCurl, [
@@ -162,6 +170,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         if (!$resp) {
             $error = 'Curl error: n'.curl_errno($ch).' - '.curl_error($ch);
             curl_close($ch);
+
             throw new RuntimeException($error);
         }
 

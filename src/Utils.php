@@ -15,6 +15,7 @@ namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
 use Brick\Math\BigInteger;
+use InvalidArgumentException;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PublicKey;
 
@@ -52,8 +53,8 @@ class Utils
     public static function unserializePublicKey(string $data): array
     {
         $data = bin2hex($data);
-        if (mb_substr($data, 0, 2, '8bit') !== '04') {
-            throw new \InvalidArgumentException('Invalid data: only uncompressed keys are supported.');
+        if ('04' !== mb_substr($data, 0, 2, '8bit')) {
+            throw new InvalidArgumentException('Invalid data: only uncompressed keys are supported.');
         }
         $data = mb_substr($data, 2, null, '8bit');
         $dataLength = self::safeStrlen($data);

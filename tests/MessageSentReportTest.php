@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Igor Timoshenkov [it@campoint.net]
+ *
  * @started: 2018-12-03 11:31
  */
 
@@ -11,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \Minishlink\WebPush\MessageSentReport
+ *
+ * @internal
  */
 class MessageSentReportTest extends TestCase
 {
@@ -25,11 +28,12 @@ class MessageSentReportTest extends TestCase
     public function generateReportsWithExpiration(): array
     {
         $request = new Request('POST', 'https://example.com');
+
         return [
             [new MessageSentReport($request, new Response(404)), true],
             [new MessageSentReport($request, new Response(410)), true],
             [new MessageSentReport($request, new Response(500)), false],
-            [new MessageSentReport($request, new Response(200)), false]
+            [new MessageSentReport($request, new Response(200)), false],
         ];
     }
 
@@ -93,23 +97,23 @@ class MessageSentReportTest extends TestCase
             [
                 new MessageSentReport($request1, $response1),
                 json_encode([
-                    'success'  => true,
-                    'expired'  => false,
-                    'reason'   => 'OK',
+                    'success' => true,
+                    'expired' => false,
+                    'reason' => 'OK',
                     'endpoint' => (string) $request1->getUri(),
-                    'payload'  => $request1Body,
-                ], JSON_THROW_ON_ERROR)
+                    'payload' => $request1Body,
+                ], JSON_THROW_ON_ERROR),
             ],
             [
                 new MessageSentReport($request2, $response2, false, 'Gone'),
                 json_encode([
-                    'success'  => false,
-                    'expired'  => true,
-                    'reason'   => 'Gone',
+                    'success' => false,
+                    'expired' => true,
+                    'reason' => 'Gone',
                     'endpoint' => (string) $request2->getUri(),
-                    'payload'  => $request2Body,
-                ], JSON_THROW_ON_ERROR)
-            ]
+                    'payload' => $request2Body,
+                ], JSON_THROW_ON_ERROR),
+            ],
         ];
     }
 
@@ -124,6 +128,7 @@ class MessageSentReportTest extends TestCase
     public function generateReportsWithSuccess(): array
     {
         $request = new Request('POST', 'https://example.com');
+
         return [
             [new MessageSentReport($request), true],
             [new MessageSentReport($request, null, true), true],
