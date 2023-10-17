@@ -36,9 +36,26 @@ Use [composer](https://getcomposer.org/) to download and install the library and
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
+// store the client-side `PushSubscription` object (calling `.toJSON` on it) as-is and then create a WebPush\Subscription from it
+$subscription = Subscription::create(json_decode($clientSidePushSubscriptionJSON, true));
+
 // array of notifications
 $notifications = [
     [
+        'subscription' => $subscription,
+        'payload' => '{"message":"Hello World!"}',
+    ], [
+          // current PushSubscription format (browsers might change this in the future)
+          'subscription' => Subscription::create([ 
+              "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
+              "keys" => [
+                  'p256dh' => '(stringOf88Chars)',
+                  'auth' => '(stringOf24Chars)'
+              ],
+          ]),
+          'payload' => '{"message":"Hello World!"}',
+    ], [
+        // old Firefox PushSubscription format
         'subscription' => Subscription::create([
             'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+,
             'publicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
@@ -46,28 +63,21 @@ $notifications = [
         ]),
         'payload' => 'hello !',
     ], [
+        // old Chrome PushSubscription format
         'subscription' => Subscription::create([
-            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abcdef...', // Chrome
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abcdef...',
         ]),
         'payload' => null,
     ], [
+        // old PushSubscription format
         'subscription' => Subscription::create([
             'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
             'publicKey' => '(stringOf88Chars)',
             'authToken' => '(stringOf24Chars)',
             'contentEncoding' => 'aesgcm', // one of PushManager.supportedContentEncodings
         ]),
-        'payload' => '{msg:"test"}',
-    ], [
-          'subscription' => Subscription::create([ // this is the structure for the working draft from october 2018 (https://www.w3.org/TR/2018/WD-push-api-20181026/) 
-              "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
-              "keys" => [
-                  'p256dh' => '(stringOf88Chars)',
-                  'auth' => '(stringOf24Chars)'
-              ],
-          ]),
-          'payload' => '{"msg":"Hello World!"}',
-      ],
+        'payload' => '{"message":"test"}',
+    ]
 ];
 
 $webPush = new WebPush();
