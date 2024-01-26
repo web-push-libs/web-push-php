@@ -28,7 +28,7 @@ class MessageSentReportTest extends TestCase
             [new MessageSentReport($request, new Response(404)), true],
             [new MessageSentReport($request, new Response(410)), true],
             [new MessageSentReport($request, new Response(500)), false],
-            [new MessageSentReport($request, new Response(200)), false]
+            [new MessageSentReport($request, new Response(200)), false],
         ];
     }
 
@@ -91,7 +91,7 @@ class MessageSentReportTest extends TestCase
                     'reason'   => 'OK',
                     'endpoint' => (string) $request1->getUri(),
                     'payload'  => $request1Body,
-                ], JSON_THROW_ON_ERROR)
+                ], JSON_THROW_ON_ERROR),
             ],
             [
                 new MessageSentReport($request2, $response2, false, 'Gone'),
@@ -101,8 +101,8 @@ class MessageSentReportTest extends TestCase
                     'reason'   => 'Gone',
                     'endpoint' => (string) $request2->getUri(),
                     'payload'  => $request2Body,
-                ], JSON_THROW_ON_ERROR)
-            ]
+                ], JSON_THROW_ON_ERROR),
+            ],
         ];
     }
 

@@ -9,9 +9,9 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
 {
     public function testCreateMinimal(): void
     {
-        $subscriptionArray = array(
-            "endpoint" => "http://toto.com"
-        );
+        $subscriptionArray = [
+            "endpoint" => "http://toto.com",
+        ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals(null, $subscription->getPublicKey());
@@ -30,11 +30,11 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
 
     public function testCreatePartial(): void
     {
-        $subscriptionArray = array(
+        $subscriptionArray = [
             "endpoint" => "http://toto.com",
             "publicKey" => "publicKey",
             "authToken" => "authToken",
-        );
+        ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
@@ -53,12 +53,12 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
 
     public function testCreateFull(): void
     {
-        $subscriptionArray = array(
+        $subscriptionArray = [
             "endpoint" => "http://toto.com",
             "publicKey" => "publicKey",
             "authToken" => "authToken",
             "contentEncoding" => "aes128gcm",
-        );
+        ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
@@ -81,8 +81,8 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
             "endpoint" => "http://toto.com",
             "keys" => [
                 'p256dh' => 'publicKey',
-                'auth' => 'authToken'
-            ]
+                'auth' => 'authToken',
+            ],
         ]);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
@@ -96,8 +96,8 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
             "contentEncoding" => 'aes128gcm',
             "keys" => [
                 'p256dh' => 'publicKey',
-                'auth' => 'authToken'
-            ]
+                'auth' => 'authToken',
+            ],
         ]);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());

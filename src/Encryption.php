@@ -255,7 +255,7 @@ class Encryption
                     'x' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getX()->toBytes(false))),
                     'y' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getY()->toBytes(false))),
                     'd' => Base64Url::encode(self::addNullPadding($privateKey->getSecret()->toBytes(false))),
-                ])
+                ]),
             ];
         }
 
@@ -266,7 +266,7 @@ class Encryption
                 'x' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($publicKey->getPoint()->getX(), 16)))),
                 'y' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($publicKey->getPoint()->getY(), 16)))),
                 'd' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($privateKey->getSecret(), 16)))),
-            ])
+            ]),
         ];
     }
 
@@ -294,7 +294,7 @@ class Encryption
                 'x' => Base64Url::encode(self::addNullPadding($details['ec']['x'])),
                 'y' => Base64Url::encode(self::addNullPadding($details['ec']['y'])),
                 'd' => Base64Url::encode(self::addNullPadding($details['ec']['d'])),
-            ])
+            ]),
         ];
     }
 
