@@ -26,20 +26,20 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
-    "guzzlehttp/guzzle": "^7.0.1|^6.2",
-    "web-token/jwt-signature": "^2.0|^3.0.2",
-    "web-token/jwt-key-mgmt": "^2.0|^3.0.2",
-    "web-token/jwt-signature-algorithm-ecdsa": "^2.0|^3.0.2",
-    "web-token/jwt-util-ecc": "^2.0|^3.0.2",
-    "spomky-labs/base64url": "^2.0"
+    "guzzlehttp/guzzle": "^7.4.5",
+    "web-token/jwt-signature": "^3.2.9",
+    "web-token/jwt-key-mgmt": "^3.2.9",
+    "web-token/jwt-signature-algorithm-ecdsa": "^3.2.9",
+    "web-token/jwt-util-ecc": "^3.2.9",
+    "spomky-labs/base64url": "^2.0.4"
   },
   "suggest": {
     "ext-gmp": "Optional for performance."
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.5.27",
-    "phpstan/phpstan": "^1.9.8",
-    "friendsofphp/php-cs-fixer": "^v3.13.2"
+    "phpunit/phpunit": "^9.6.16",
+    "phpstan/phpstan": "^1.10.57",
+    "friendsofphp/php-cs-fixer": "^v3.48.0"
   },
   "autoload": {
     "psr-4": {
