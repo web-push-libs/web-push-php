@@ -320,68 +320,14 @@ class Encryption
 
     private static function calculateAgreementKey(JWK $private_key, JWK $public_key): string
     {
-        if (function_exists('openssl_pkey_derive')) {
-            try {
-                $publicPem = ECKey::convertPublicKeyToPEM($public_key);
-                $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
+        $publicPem = ECKey::convertPublicKeyToPEM($public_key);
+        $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
 
-                $result = openssl_pkey_derive($publicPem, $privatePem, 256); // @phpstan-ignore-line
-                if ($result === false) {
-                    throw new \Exception('Unable to compute the agreement key');
-                }
-                return $result;
-            } catch (\Throwable $throwable) {
-                //Does nothing. Will fallback to the pure PHP function
-            }
+        $result = openssl_pkey_derive($publicPem, $privatePem, 256);
+        if ($result === false) {
+            throw new \Exception('Unable to compute the agreement key');
         }
-
-
-        $curve = NistCurve::curve256();
-        try {
-            $rec_x = self::convertBase64ToBigInteger($public_key->get('x'));
-            $rec_y = self::convertBase64ToBigInteger($public_key->get('y'));
-            $sen_d = self::convertBase64ToBigInteger($private_key->get('d'));
-            $priv_key = PrivateKey::create($sen_d);
-            $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y);
-
-            return hex2bin(str_pad($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX()->toBase(16), 64, '0', STR_PAD_LEFT)); // @phpstan-ignore-line
-        } catch (\Throwable $e) {
-            $rec_x = self::convertBase64ToGMP($public_key->get('x'));
-            $rec_y = self::convertBase64ToGMP($public_key->get('y'));
-            $sen_d = self::convertBase64ToGMP($private_key->get('d'));
-            $priv_key = PrivateKey::create($sen_d); // @phpstan-ignore-line
-            $pub_key = $curve->getPublicKeyFrom($rec_x, $rec_y); // @phpstan-ignore-line
-
-            return hex2bin(gmp_strval($curve->mul($pub_key->getPoint(), $priv_key->getSecret())->getX(), 16)); // @phpstan-ignore-line
-        }
-    }
-
-    /**
-     * @throws \ErrorException
-     */
-    private static function convertBase64ToBigInteger(string $value): BigInteger
-    {
-        $value = unpack('H*', Base64Url::decode($value));
-
-        if ($value === false) {
-            throw new \ErrorException('Unable to unpack hex value from string');
-        }
-
-        return BigInteger::fromBase($value[1], 16);
-    }
-
-    /**
-     * @throws \ErrorException
-     */
-    private static function convertBase64ToGMP(string $value): \GMP
-    {
-        $value = unpack('H*', Base64Url::decode($value));
-
-        if ($value === false) {
-            throw new \ErrorException('Unable to unpack hex value from string');
-        }
-
-        return gmp_init($value[1], 16);
+        return $result;
     }
 
     private static function addNullPadding(string $data): string
