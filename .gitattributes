@@ -3,7 +3,8 @@
 /.gitattributes export-ignore
 /.github export-ignore
 /.gitignore export-ignore
-/.travis.yml export-ignore
-/phpunit.xml.dist export-ignore
+/.php-cs-fixer.php export-ignore
 /README.md export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml.dist export-ignore
 /tests export-ignore

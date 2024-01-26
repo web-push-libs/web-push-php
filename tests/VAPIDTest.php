@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -13,10 +10,14 @@ declare(strict_types=1);
 
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
+use PHPUnit\Framework\Attributes\DataProvider;
 
+/**
+ * @covers \Minishlink\WebPush\VAPID
+ */
 final class VAPIDTest extends PHPUnit\Framework\TestCase
 {
-    public function vapidProvider(): array
+    public static function vapidProvider(): array
     {
         return [
             [
@@ -46,10 +47,9 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider vapidProvider
-     *
      * @throws ErrorException
      */
+    #[dataProvider('vapidProvider')]
     public function testGetVapidHeaders(string $audience, array $vapid, string $contentEncoding, int $expiration, string $expectedAuthorization, ?string $expectedCryptoKey): void
     {
         $vapid = VAPID::validate($vapid);

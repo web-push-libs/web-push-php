@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -15,7 +12,11 @@ use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
+use PHPUnit\Framework\Attributes\DataProvider;
 
+/**
+ * @covers \Minishlink\WebPush\Encryption
+ */
 final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
     public function testDeterministicEncrypt(): void
@@ -75,10 +76,9 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider payloadProvider
-     *
      * @throws ErrorException
      */
+    #[dataProvider('payloadProvider')]
     public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength): void
     {
         $res = Encryption::padPayload($payload, $maxLengthToPad, "aesgcm");
@@ -87,7 +87,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
     }
 
-    public function payloadProvider(): array
+    public static function payloadProvider(): array
     {
         return [
             ['testé', 0, 8],

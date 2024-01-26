@@ -15,7 +15,8 @@
   "scripts": {
     "fix:syntax": "./vendor/bin/php-cs-fixer fix ./src --using-cache=no",
     "fix:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --using-cache=no",
-    "test:unit": "./vendor/bin/phpunit --color",
+    "test:unit": "./vendor/bin/phpunit",
+    "test:unit_offline": "./vendor/bin/phpunit --exclude-group=online",
     "test:typing": "./vendor/bin/phpstan analyse",
     "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no",
     "test:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --dry-run --stop-on-violation --using-cache=no"
@@ -37,7 +38,7 @@
     "ext-gmp": "Optional for performance."
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.6.16",
+    "phpunit/phpunit": "^10.5.9",
     "phpstan/phpstan": "^1.10.57",
     "friendsofphp/php-cs-fixer": "^v3.48.0"
   },
