@@ -9,7 +9,7 @@ As it is standardized, you don't have to worry about what server type it relies 
 
 ## Requirements
 
-PHP 8.0+ and the following extensions:
+PHP 8.1+ and the following extensions:
  * gmp (optional but better for performance)
  * mbstring
  * curl
@@ -21,6 +21,7 @@ There is no support and maintenance for older PHP versions, however you are free
 - PHP 7.1: `v3.x-v5.x`
 - PHP 7.2: `v6.x`
 - PHP 7.3 7.4: `v7.x`
+- PHP 8.0: `v8.x`
 
 This README is only compatible with the latest version. Each version of the library has a git tag where the corresponding README can be read.
 
