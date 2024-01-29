@@ -176,7 +176,7 @@ class VAPID
 
         return [
             'publicKey'  => Base64Url::encode($binaryPublicKey),
-            'privateKey' => Base64Url::encode($binaryPrivateKey)
+            'privateKey' => Base64Url::encode($binaryPrivateKey),
         ];
     }
 }

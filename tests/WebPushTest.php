@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -14,7 +11,11 @@ declare(strict_types=1);
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\SubscriptionInterface;
 use Minishlink\WebPush\WebPush;
+use PHPUnit\Framework\Attributes\DataProvider;
 
+/**
+ * @covers \Minishlink\WebPush\WebPush
+ */
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static array $endpoints;
@@ -124,7 +125,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
-    public function notificationProvider(): array
+    public static function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
 
@@ -134,12 +135,11 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider notificationProvider
-     *
      * @param SubscriptionInterface $subscription
      * @param string                $payload
      * @throws ErrorException
      */
+    #[dataProvider('notificationProvider')]
     public function testSendOneNotification(SubscriptionInterface $subscription, string $payload): void
     {
         $report = $this->webPush->sendOneNotification($subscription, $payload);
@@ -154,7 +154,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $batchSize = 10;
         $total = 50;
 
-        $notifications = $this->notificationProvider();
+        $notifications = self::notificationProvider();
         $notifications = array_fill(0, $total, $notifications[0]);
 
         foreach ($notifications as $notification) {

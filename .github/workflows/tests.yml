@@ -15,8 +15,9 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        php: ['8.0', '8.1', '8.2', '8.3']
+        php: ['8.1', '8.2', '8.3']
         ext: ['curl, mbstring, openssl', 'curl, mbstring, openssl, gmp']
 
     name: PHP ${{ matrix.php }} (${{ matrix.ext }})
@@ -37,7 +38,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -49,9 +50,9 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
-      - name: Install web-push-testing-service
+      - name: Install web-push-testing server
         run: |
           npm install -g web-push-testing
 
@@ -65,7 +66,6 @@ jobs:
         run: composer test:typing
 
       - name: Run php-cs-fixer
-        if: ${{ matrix.php != '8.2' }} # Not supported yet.
         run: |
           composer test:syntax
           composer test:syntax_tests

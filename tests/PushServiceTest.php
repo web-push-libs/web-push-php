@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -14,7 +11,14 @@ declare(strict_types=1);
 use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
+/**
+ * Test with test server.
+ * @coversNothing
+ */
+#[group('online')]
 final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
     private static int    $timeout    = 30;
@@ -37,7 +41,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
     }
 
-    public function browserProvider(): array
+    public static function browserProvider(): array
     {
         return [
             ['firefox', ['VAPID' => self::$vapidKeys]],
@@ -68,9 +72,9 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @dataProvider browserProvider
      * Run integration tests with browsers
      */
+    #[dataProvider('browserProvider')]
     public function testBrowsers($browserId, $options): void
     {
         $this->retryTest(2, $this->createClosureTest($browserId, $options));
@@ -78,7 +82,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
     protected function createClosureTest($browserId, $options): callable
     {
-        return function () use ($browserId, $options) {
+        return function () use ($browserId, $options): void {
             $this->webPush = new WebPush($options);
             $this->webPush->setAutomaticPadding(false);
             $subscriptionParameters = [];

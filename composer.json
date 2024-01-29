@@ -15,31 +15,32 @@
   "scripts": {
     "fix:syntax": "./vendor/bin/php-cs-fixer fix ./src --using-cache=no",
     "fix:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --using-cache=no",
-    "test:unit": "./vendor/bin/phpunit --color",
+    "test:unit": "./vendor/bin/phpunit",
+    "test:unit_offline": "./vendor/bin/phpunit --exclude-group=online",
     "test:typing": "./vendor/bin/phpstan analyse",
     "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no",
     "test:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --dry-run --stop-on-violation --using-cache=no"
   },
   "require": {
-    "php": ">=8.0",
+    "php": ">=8.1",
     "ext-curl": "*",
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
-    "guzzlehttp/guzzle": "^7.0.1|^6.2",
-    "web-token/jwt-signature": "^2.0|^3.0.2",
-    "web-token/jwt-key-mgmt": "^2.0|^3.0.2",
-    "web-token/jwt-signature-algorithm-ecdsa": "^2.0|^3.0.2",
-    "web-token/jwt-util-ecc": "^2.0|^3.0.2",
-    "spomky-labs/base64url": "^2.0"
+    "guzzlehttp/guzzle": "^7.4.5",
+    "web-token/jwt-signature": "^3.2.9",
+    "web-token/jwt-key-mgmt": "^3.2.9",
+    "web-token/jwt-signature-algorithm-ecdsa": "^3.2.9",
+    "web-token/jwt-util-ecc": "^3.2.9",
+    "spomky-labs/base64url": "^2.0.4"
   },
   "suggest": {
     "ext-gmp": "Optional for performance."
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.5.27",
-    "phpstan/phpstan": "^1.9.8",
-    "friendsofphp/php-cs-fixer": "^v3.13.2"
+    "phpunit/phpunit": "^10.5.9",
+    "phpstan/phpstan": "^1.10.57",
+    "friendsofphp/php-cs-fixer": "^v3.48.0"
   },
   "autoload": {
     "psr-4": {

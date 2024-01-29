@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /**
  * @author Igor Timoshenkov [it@campoint.net]
  * @started: 2018-12-03 11:31
@@ -7,6 +7,7 @@
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Minishlink\WebPush\MessageSentReport;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,34 +15,30 @@ use PHPUnit\Framework\TestCase;
  */
 class MessageSentReportTest extends TestCase
 {
-    /**
-     * @dataProvider generateReportsWithExpiration
-     */
+    #[dataProvider('generateReportsWithExpiration')]
     public function testIsSubscriptionExpired(MessageSentReport $report, bool $expected): void
     {
         $this->assertEquals($expected, $report->isSubscriptionExpired());
     }
 
-    public function generateReportsWithExpiration(): array
+    public static function generateReportsWithExpiration(): array
     {
         $request = new Request('POST', 'https://example.com');
         return [
             [new MessageSentReport($request, new Response(404)), true],
             [new MessageSentReport($request, new Response(410)), true],
             [new MessageSentReport($request, new Response(500)), false],
-            [new MessageSentReport($request, new Response(200)), false]
+            [new MessageSentReport($request, new Response(200)), false],
         ];
     }
 
-    /**
-     * @dataProvider generateReportsWithEndpoints
-     */
+    #[dataProvider('generateReportsWithEndpoints')]
     public function testGetEndpoint(MessageSentReport $report, string $expected): void
     {
         $this->assertEquals($expected, $report->getEndpoint());
     }
 
-    public function generateReportsWithEndpoints(): array
+    public static function generateReportsWithEndpoints(): array
     {
         return [
             [new MessageSentReport(new Request('POST', 'https://www.example.com')), 'https://www.example.com'],
@@ -50,15 +47,13 @@ class MessageSentReportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider generateReportsWithRequests
-     */
+    #[dataProvider('generateReportsWithRequests')]
     public function testGetRequest(MessageSentReport $report, Request $expected): void
     {
         $this->assertEquals($expected, $report->getRequest());
     }
 
-    public function generateReportsWithRequests(): array
+    public static function generateReportsWithRequests(): array
     {
         $r1 = new Request('POST', 'https://www.example.com');
         $r2 = new Request('PUT', 'https://m.example.com');
@@ -71,15 +66,13 @@ class MessageSentReportTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider generateReportsWithJson
-     */
+    #[dataProvider('generateReportsWithJson')]
     public function testJsonSerialize(MessageSentReport $report, string $json): void
     {
         $this->assertJsonStringEqualsJsonString($json, json_encode($report, JSON_THROW_ON_ERROR));
     }
 
-    public function generateReportsWithJson(): array
+    public static function generateReportsWithJson(): array
     {
         $request1Body = json_encode(['title' => 'test', 'body' => 'blah', 'data' => []], JSON_THROW_ON_ERROR);
         $request1 = new Request('POST', 'https://www.example.com', [], $request1Body);
@@ -98,7 +91,7 @@ class MessageSentReportTest extends TestCase
                     'reason'   => 'OK',
                     'endpoint' => (string) $request1->getUri(),
                     'payload'  => $request1Body,
-                ], JSON_THROW_ON_ERROR)
+                ], JSON_THROW_ON_ERROR),
             ],
             [
                 new MessageSentReport($request2, $response2, false, 'Gone'),
@@ -108,20 +101,18 @@ class MessageSentReportTest extends TestCase
                     'reason'   => 'Gone',
                     'endpoint' => (string) $request2->getUri(),
                     'payload'  => $request2Body,
-                ], JSON_THROW_ON_ERROR)
-            ]
+                ], JSON_THROW_ON_ERROR),
+            ],
         ];
     }
 
-    /**
-     * @dataProvider generateReportsWithSuccess
-     */
+    #[dataProvider('generateReportsWithSuccess')]
     public function testIsSuccess(MessageSentReport $report, bool $expected): void
     {
         $this->assertEquals($expected, $report->isSuccess());
     }
 
-    public function generateReportsWithSuccess(): array
+    public static function generateReportsWithSuccess(): array
     {
         $request = new Request('POST', 'https://example.com');
         return [
