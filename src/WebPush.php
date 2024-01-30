@@ -21,45 +21,38 @@ use Psr\Http\Message\ResponseInterface;
 
 class WebPush
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * @var array
-     */
-    protected $auth;
+    protected Client $client;
+    protected array $auth;
 
     /**
      * @var null|array Array of array of Notifications
      */
-    protected $notifications;
+    protected ?array $notifications = null;
 
     /**
-     * @var array Default options : TTL, urgency, topic, batchSize
+     * @var array Default options: TTL, urgency, topic, batchSize
      */
-    protected $defaultOptions;
+    protected array $defaultOptions;
 
     /**
      * @var int Automatic padding of payloads, if disabled, trade security for bandwidth
      */
-    protected $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+    protected int $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
 
     /**
      * @var bool Reuse VAPID headers in the same flush session to improve performance
      */
-    protected $reuseVAPIDHeaders = false;
+    protected bool $reuseVAPIDHeaders = false;
 
     /**
      * @var array Dictionary for VAPID headers cache
      */
-    protected $vapidHeaders = [];
+    protected array $vapidHeaders = [];
 
     /**
      * WebPush constructor.
      *
-     * @param array    $auth           Some servers needs authentication
+     * @param array    $auth           Some servers need authentication
      * @param array    $defaultOptions TTL, urgency, topic, batchSize
      * @param int|null $timeout        Timeout of POST request
      *
@@ -281,20 +274,17 @@ class WebPush
         return $this->automaticPadding !== 0;
     }
 
-    /**
-     * @return int
-     */
-    public function getAutomaticPadding()
+    public function getAutomaticPadding(): int
     {
         return $this->automaticPadding;
     }
 
     /**
-     * @param int|bool $automaticPadding Max padding length
+     * @param bool|int $automaticPadding Max padding length
      *
      * @throws \Exception
      */
-    public function setAutomaticPadding($automaticPadding): WebPush
+    public function setAutomaticPadding(bool|int $automaticPadding): WebPush
     {
         if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
             throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
@@ -311,20 +301,15 @@ class WebPush
         return $this;
     }
 
-    /**
-     * @return bool
-     */
-    public function getReuseVAPIDHeaders()
+    public function getReuseVAPIDHeaders(): bool
     {
         return $this->reuseVAPIDHeaders;
     }
 
     /**
      * Reuse VAPID headers in the same flush session to improve performance
-     *
-     * @return WebPush
      */
-    public function setReuseVAPIDHeaders(bool $enabled)
+    public function setReuseVAPIDHeaders(bool $enabled): WebPush
     {
         $this->reuseVAPIDHeaders = $enabled;
 
@@ -338,10 +323,8 @@ class WebPush
 
     /**
      * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
-     *
-     * @return WebPush
      */
-    public function setDefaultOptions(array $defaultOptions)
+    public function setDefaultOptions(array $defaultOptions): WebPush
     {
         $this->defaultOptions['TTL'] = $defaultOptions['TTL'] ?? 2419200;
         $this->defaultOptions['urgency'] = $defaultOptions['urgency'] ?? null;
@@ -357,10 +340,9 @@ class WebPush
     }
 
     /**
-     * @return array
      * @throws \ErrorException
      */
-    protected function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid)
+    protected function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid): ?array
     {
         $vapidHeaders = null;
 
