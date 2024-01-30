@@ -119,7 +119,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
             $messageIndex = 0;
 
             foreach ($supportedContentEncodings as $contentEncoding) {
-                if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'])) {
+                if (!in_array($contentEncoding, ['aesgcm', 'aes128gcm'], true)) {
                     $this->expectException(ErrorException::class);
                     $this->expectExceptionMessage('This content encoding ('.$contentEncoding.') is not supported.');
                     $this->markTestIncomplete('Unsupported content encoding: '.$contentEncoding);

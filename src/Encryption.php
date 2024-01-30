@@ -36,11 +36,12 @@ class Encryption
 
         if ($contentEncoding === "aesgcm") {
             return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
-        } elseif ($contentEncoding === "aes128gcm") {
-            return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
-        } else {
-            throw new \ErrorException("This content encoding is not supported");
         }
+        if ($contentEncoding === "aes128gcm") {
+            return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
+        }
+
+        throw new \ErrorException("This content encoding is not supported");
     }
 
     /**
@@ -63,7 +64,7 @@ class Encryption
     }
 
     /**
-     * @throws \ErrorException
+     * @throws \RuntimeException
      */
     public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
     {
@@ -88,7 +89,7 @@ class Encryption
             ]);
         }
         if (!$localPublicKey) {
-            throw new \ErrorException('Failed to convert local public key from hexadecimal to binary');
+            throw new \RuntimeException('Failed to convert local public key from hexadecimal to binary.');
         }
 
         // get user public key object
@@ -225,7 +226,9 @@ class Encryption
             }
 
             return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
-        } elseif ($contentEncoding === "aes128gcm") {
+        }
+
+        if ($contentEncoding === "aes128gcm") {
             return 'Content-Encoding: '.$type.chr(0);
         }
 
@@ -299,23 +302,22 @@ class Encryption
     }
 
     /**
-     * @throws \ErrorException
+     * @throws \ValueError
      */
     private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, string $contentEncoding): string
     {
-        if (!empty($userAuthToken)) {
-            if ($contentEncoding === "aesgcm") {
-                $info = 'Content-Encoding: auth'.chr(0);
-            } elseif ($contentEncoding === "aes128gcm") {
-                $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
-            } else {
-                throw new \ErrorException("This content encoding is not supported");
-            }
-
-            return self::hkdf($userAuthToken, $sharedSecret, $info, 32);
+        if (empty($userAuthToken)) {
+            return $sharedSecret;
+        }
+        if($contentEncoding === "aesgcm") {
+            $info = 'Content-Encoding: auth'.chr(0);
+        } elseif($contentEncoding === "aes128gcm") {
+            $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
+        } else {
+            throw new \ValueError("This content encoding is not supported.");
         }
 
-        return $sharedSecret;
+        return self::hkdf($userAuthToken, $sharedSecret, $info, 32);
     }
 
     private static function calculateAgreementKey(JWK $private_key, JWK $public_key): string
@@ -325,7 +327,7 @@ class Encryption
 
         $result = openssl_pkey_derive($publicPem, $privatePem, 256);
         if ($result === false) {
-            throw new \Exception('Unable to compute the agreement key');
+            throw new \RuntimeException('Unable to compute the agreement key.');
         }
         return $result;
     }
