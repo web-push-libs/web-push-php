@@ -223,7 +223,7 @@ it as a parameter : `$webPush->flush($batchSize)`.
 You can see what the browser vendor's server sends back in case it encountered an error (push subscription expiration, wrong parameters...).
 
 * `sendOneNotification()` returns a [`MessageSentReport`](https://github.com/web-push-libs/web-push-php/blob/master/src/MessageSentReport.php)
-* `flush()` returns a [`\Generator`](http://php.net/manual/en/language.generators.php) with [`MessageSentReport`](https://github.com/web-push-libs/web-push-php/blob/master/src/MessageSentReport.php) objects. To loop through the results, just pass it into `foreach`. You can also use [`iterator_to_array`](http://php.net/manual/en/function.iterator-to-array.php) to check the contents while debugging.
+* `flush()` returns a [`\Generator`](https://www.php.net/manual/en/language.generators.php) with [`MessageSentReport`](https://github.com/web-push-libs/web-push-php/blob/master/src/MessageSentReport.php) objects. To loop through the results, just pass it into `foreach`. You can also use [`iterator_to_array`](https://php.net/manual/en/function.iterator-to-array.php) to check the contents while debugging.
 
 ```php
 <?php
@@ -326,8 +326,8 @@ The following are available:
 Feel free to add your own!
 
 ### What about security?
-Payload is encrypted according to the [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption-01) standard,
-using the user public key and authentication secret that you can get by following the [Web Push API](http://www.w3.org/TR/push-api/) specification.
+Payload is encrypted according to the [Message Encryption for Web Push](https://datatracker.ietf.org/doc/html/rfc8291) standard,
+using the user public key and authentication secret that you can get by following the [Web Push API](https://www.w3.org/TR/push-api/) specification.
 
 Internally, WebPush uses the [WebToken](https://github.com/web-token) framework or OpenSSL to handle encryption keys generation and encryption.
 
@@ -341,7 +341,7 @@ Here are some ideas:
 ### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 Your installation lacks some certificates.
 
-1. Download [cacert.pem](http://curl.haxx.se/ca/cacert.pem).
+1. Download [cacert.pem](https://curl.haxx.se/ca/cacert.pem).
 2. Edit your `php.ini`: after `[curl]`, type `curl.cainfo = /path/to/cacert.pem`.
 
 You can also force using a client without peer verification.
@@ -365,10 +365,7 @@ WebPush is for web apps.
 You need something like [RMSPushNotificationsBundle](https://github.com/richsage/RMSPushNotificationsBundle) (Symfony).
 
 ### This is PHP... I need Javascript!
-This library was inspired by the Node.js [marco-c/web-push](https://github.com/marco-c/web-push) library.
-
-## Contributing
-See [CONTRIBUTING.md](https://github.com/Minishlink/web-push/blob/master/CONTRIBUTING.md).
+This library was inspired by the Node.js [web-push-libs/web-push](https://github.com/web-push-libs/web-push) library.
 
 ## License
-[MIT](https://github.com/Minishlink/web-push/blob/master/LICENSE)
+[MIT](https://github.com/web-push-libs/web-push-php/blob/master/LICENSE)
