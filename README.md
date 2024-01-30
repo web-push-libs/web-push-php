@@ -260,7 +260,7 @@ Firefox errors are listed in the [autopush documentation](https://autopush.readt
 
 ### Payload length, security, and performance
 Payloads are encrypted by the library. The maximum payload length is theoretically 4078 bytes (or ASCII characters).
-For [compatibility reasons](mozilla-services/autopush/issues/748) though, your payload should be less than 3052 bytes long.
+For [compatibility reasons](https://github.com/mozilla-services/autopush/issues/748) though, your payload should be less than 3052 bytes long.
 
 The library pads the payload by default. This is more secure but it decreases performance for both your server and your user's device.
 
