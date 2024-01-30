@@ -133,7 +133,7 @@ class WebPush
      *
      * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
      *
-     * @return \Generator|MessageSentReport[]
+     * @return \Generator
      * @throws \ErrorException
      */
     public function flush(?int $batchSize = null): \Generator
@@ -186,7 +186,7 @@ class WebPush
     }
 
     /**
-     * @throws \ErrorException
+     * @throws \ErrorException|\Random\RandomException
      */
     protected function prepare(array $notifications): array
     {
@@ -282,21 +282,24 @@ class WebPush
     /**
      * @param bool|int $automaticPadding Max padding length
      *
-     * @throws \Exception
+     * @throws \ValueError
      */
     public function setAutomaticPadding(bool|int $automaticPadding): WebPush
     {
-        if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
-            throw new \Exception('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
-        } elseif ($automaticPadding < 0) {
-            throw new \Exception('Padding length should be positive or zero.');
-        } elseif ($automaticPadding === true) {
-            $this->automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
+        if ($automaticPadding === true) {
+            $automaticPadding = Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH;
         } elseif ($automaticPadding === false) {
-            $this->automaticPadding = 0;
-        } else {
-            $this->automaticPadding = $automaticPadding;
+            $automaticPadding = 0;
         }
+
+        if($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
+            throw new \ValueError('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
+        }
+        if($automaticPadding < 0) {
+            throw new \ValueError('Padding length should be positive or zero.');
+        }
+
+        $this->automaticPadding = $automaticPadding;
 
         return $this;
     }
