@@ -21,7 +21,7 @@ There is no support and maintenance for older PHP versions, however you are free
 - PHP 7.1: `v3.x-v5.x`
 - PHP 7.2: `v6.x`
 - PHP 7.3 7.4: `v7.x`
-- PHP 8.0: `v8.x`
+- PHP 8.0 / Openssl without elliptic curve support: `v8.x`
 
 This README is only compatible with the latest version. Each version of the library has a git tag where the corresponding README can be read.
 
