@@ -63,4 +63,74 @@ class Utils
             hex2bin(mb_substr($data, $dataLength / 2, null, '8bit')),
         ];
     }
+
+    /**
+     * Generates user warning/notice if some requirements are not met.
+     * Does not throw exception to allow unusual or polyfill environments.
+     */
+    public static function checkRequirement(): void
+    {
+        self::checkRequirementExtension();
+        self::checkRequirementKeyCipherHash();
+    }
+
+    public static function checkRequirementExtension(): void
+    {
+        $requiredExtensions = [
+            'curl'     => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
+            'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'openssl'  => '[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+        ];
+        foreach($requiredExtensions as $extension => $message) {
+            if(!extension_loaded($extension)) {
+                trigger_error($message, E_USER_WARNING);
+            }
+        }
+
+        // Check optional extensions.
+        if(!extension_loaded("bcmath") && !extension_loaded("gmp")) {
+            trigger_error("It is highly recommended to install the GMP or BCMath extension to speed up calculations. The fastest available calculator implementation will be automatically selected at runtime.", E_USER_NOTICE);
+        }
+    }
+
+    public static function checkRequirementKeyCipherHash(): void
+    {
+        // Print your current openssl version with: OPENSSL_VERSION_TEXT
+        // Check for outdated openssl without EC support.
+        $requiredCurves  = [
+            'prime256v1' => '[WebPush] Openssl does not support required curve prime256v1.',
+        ];
+        $availableCurves = openssl_get_curve_names();
+        if($availableCurves === false) {
+            trigger_error('[WebPush] Openssl does not support curves.', E_USER_WARNING);
+        } else {
+            foreach($requiredCurves as $curve => $message) {
+                if(!in_array($curve, $availableCurves, true)) {
+                    trigger_error($message, E_USER_WARNING);
+                }
+            }
+        }
+
+        // Check for unusual openssl without cipher support.
+        $requiredCiphers  = [
+            'aes-128-gcm' => '[WebPush] Openssl does not support required cipher aes-128-gcm.',
+        ];
+        $availableCiphers = openssl_get_cipher_methods();
+        foreach($requiredCiphers as $cipher => $message) {
+            if(!in_array($cipher, $availableCiphers, true)) {
+                trigger_error($message, E_USER_WARNING);
+            }
+        }
+
+        // Check for unusual php without hash algo support.
+        $requiredHash  = [
+            'sha256' => '[WebPush] Php does not support required hmac hash sha256.',
+        ];
+        $availableHash = hash_hmac_algos();
+        foreach($requiredHash as $hash => $message) {
+            if(!in_array($hash, $availableHash, true)) {
+                trigger_error($message, E_USER_WARNING);
+            }
+        }
+    }
 }
