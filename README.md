@@ -10,10 +10,10 @@ As it is standardized, you don't have to worry about what server type it relies 
 ## Requirements
 
 PHP 8.1+ and the following extensions:
- * gmp (optional but better for performance)
+ * bcmath and/or gmp (optional but better for performance)
  * mbstring
  * curl
- * openssl
+ * openssl (with elliptic curve support)
 
 There is no support and maintenance for older PHP versions, however you are free to use the following compatible versions:
 - PHP 5.6 or HHVM: `v1.x`

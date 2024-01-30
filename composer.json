@@ -35,6 +35,7 @@
     "spomky-labs/base64url": "^2.0.4"
   },
   "suggest": {
+    "ext-bcmath": "Optional for performance.",
     "ext-gmp": "Optional for performance."
   },
   "require-dev": {

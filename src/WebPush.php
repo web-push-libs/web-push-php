@@ -60,17 +60,7 @@ class WebPush
      */
     public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
     {
-        $extensions = [
-            'curl' => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
-            'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
-            'openssl' => '[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
-        ];
-
-        foreach ($extensions as $extension => $message) {
-            if (!extension_loaded($extension)) {
-                trigger_error($message, E_USER_WARNING);
-            }
-        }
+        Utils::checkRequirement();
 
         if (isset($auth['VAPID'])) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
