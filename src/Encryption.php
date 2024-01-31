@@ -14,9 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
-use Brick\Math\BigInteger;
 use Jose\Component\Core\JWK;
-use Jose\Component\Core\Util\Ecc\NistCurve;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
 
@@ -237,57 +235,17 @@ class Encryption
 
     private static function createLocalKeyObject(): array
     {
-        try {
-            return self::createLocalKeyObjectUsingOpenSSL();
-        } catch (\Exception $e) {
-            return self::createLocalKeyObjectUsingPurePhpMethod();
-        }
-    }
-
-    private static function createLocalKeyObjectUsingPurePhpMethod(): array
-    {
-        $curve = NistCurve::curve256();
-        $privateKey = $curve->createPrivateKey();
-        $publicKey = $curve->createPublicKey($privateKey);
-
-        if ($publicKey->getPoint()->getX() instanceof BigInteger) {
-            return [
-                new JWK([
-                    'kty' => 'EC',
-                    'crv' => 'P-256',
-                    'x' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getX()->toBytes(false))),
-                    'y' => Base64Url::encode(self::addNullPadding($publicKey->getPoint()->getY()->toBytes(false))),
-                    'd' => Base64Url::encode(self::addNullPadding($privateKey->getSecret()->toBytes(false))),
-                ]),
-            ];
-        }
-
-        return [
-            new JWK([
-                'kty' => 'EC',
-                'crv' => 'P-256',
-                'x' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($publicKey->getPoint()->getX(), 16)))),
-                'y' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($publicKey->getPoint()->getY(), 16)))),
-                'd' => Base64Url::encode(self::addNullPadding(hex2bin(gmp_strval($privateKey->getSecret(), 16)))),
-            ]),
-        ];
-    }
-
-    private static function createLocalKeyObjectUsingOpenSSL(): array
-    {
         $keyResource = openssl_pkey_new([
             'curve_name'       => 'prime256v1',
             'private_key_type' => OPENSSL_KEYTYPE_EC,
         ]);
-
         if (!$keyResource) {
-            throw new \RuntimeException('Unable to create the key');
+            throw new \RuntimeException('Unable to create the local key.');
         }
 
         $details = openssl_pkey_get_details($keyResource);
-
         if (!$details) {
-            throw new \RuntimeException('Unable to get the key details');
+            throw new \RuntimeException('Unable to get the local key details.');
         }
 
         return [

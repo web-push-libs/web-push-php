@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use Base64Url\Base64Url;
-use Brick\Math\BigInteger;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PublicKey;
 
@@ -29,13 +28,8 @@ class Utils
     {
         $hexString = '04';
         $point = $publicKey->getPoint();
-        if ($point->getX() instanceof BigInteger) {
-            $hexString .= str_pad($point->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
-            $hexString .= str_pad($point->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
-        } else { // @phpstan-ignore-line
-            $hexString .= str_pad(gmp_strval($point->getX(), 16), 64, '0', STR_PAD_LEFT);
-            $hexString .= str_pad(gmp_strval($point->getY(), 16), 64, '0', STR_PAD_LEFT); // @phpstan-ignore-line
-        }
+        $hexString .= str_pad($point->getX()->toBase(16), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad($point->getY()->toBase(16), 64, '0', STR_PAD_LEFT);
 
         return $hexString;
     }
