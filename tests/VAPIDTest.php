@@ -8,6 +8,7 @@
  * file that was distributed with this source code.
  */
 
+use Minishlink\WebPush\ContentEncoding;
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,7 +28,7 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
                     'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
                     'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
                 ],
-                "aesgcm",
+                ContentEncoding::aesgcm,
                 1475452165,
                 'WebPush eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJhdWQiOiJodHRwOi8vcHVzaC5jb20iLCJleHAiOjE0NzU0NTIxNjUsInN1YiI6Imh0dHA6Ly90ZXN0LmNvbSJ9.4F3ZKjeru4P9XM20rHPNvGBcr9zxhz8_ViyNfe11_xcuy7A9y7KfEPt6yuNikyW7eT9zYYD5mQZubDGa-5H2cA',
                 'p256ecdsa=BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
@@ -38,7 +39,7 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
                     'publicKey' => 'BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
                     'privateKey' => '-3CdhFOqjzixgAbUSa0Zv9zi-dwDVmWO7672aBxSFPQ',
                 ],
-                "aes128gcm",
+                ContentEncoding::aes128gcm,
                 1475452165,
                 'vapid t=eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJhdWQiOiJodHRwOi8vcHVzaC5jb20iLCJleHAiOjE0NzU0NTIxNjUsInN1YiI6Imh0dHA6Ly90ZXN0LmNvbSJ9.4F3ZKjeru4P9XM20rHPNvGBcr9zxhz8_ViyNfe11_xcuy7A9y7KfEPt6yuNikyW7eT9zYYD5mQZubDGa-5H2cA, k=BA6jvk34k6YjElHQ6S0oZwmrsqHdCNajxcod6KJnI77Dagikfb--O_kYXcR2eflRz6l3PcI2r8fPCH3BElLQHDk',
                 null,
@@ -50,7 +51,7 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
      * @throws ErrorException
      */
     #[dataProvider('vapidProvider')]
-    public function testGetVapidHeaders(string $audience, array $vapid, string $contentEncoding, int $expiration, string $expectedAuthorization, ?string $expectedCryptoKey): void
+    public function testGetVapidHeaders(string $audience, array $vapid, ContentEncoding $contentEncoding, int $expiration, string $expectedAuthorization, ?string $expectedCryptoKey): void
     {
         $vapid = VAPID::validate($vapid);
         $headers = VAPID::getVapidHeaders(

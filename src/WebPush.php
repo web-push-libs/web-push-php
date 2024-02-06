@@ -92,10 +92,6 @@ class WebPush
             }
 
             $contentEncoding = $subscription->getContentEncoding();
-            if (!$contentEncoding) {
-                throw new \ErrorException('Subscription should have a content encoding');
-            }
-
             $payload = Encryption::padPayload($payload, $this->automaticPadding, $contentEncoding);
         }
 
@@ -193,10 +189,6 @@ class WebPush
             $auth = $notification->getAuth($this->auth);
 
             if (!empty($payload) && !empty($userPublicKey) && !empty($userAuthToken)) {
-                if (!$contentEncoding) {
-                    throw new \ErrorException('Subscription should have a content encoding');
-                }
-
                 $encrypted = Encryption::encrypt($payload, $userPublicKey, $userAuthToken, $contentEncoding);
                 $cipherText = $encrypted['cipherText'];
                 $salt = $encrypted['salt'];
@@ -204,10 +196,10 @@ class WebPush
 
                 $headers = [
                     'Content-Type' => 'application/octet-stream',
-                    'Content-Encoding' => $contentEncoding,
+                    'Content-Encoding' => $contentEncoding->value,
                 ];
 
-                if ($contentEncoding === "aesgcm") {
+                if ($contentEncoding === ContentEncoding::aesgcm) {
                     $headers['Encryption'] = 'salt='.Base64UrlSafe::encodeUnpadded($salt);
                     $headers['Crypto-Key'] = 'dh='.Base64UrlSafe::encodeUnpadded($localPublicKey);
                 }
@@ -234,7 +226,7 @@ class WebPush
                 $headers['Topic'] = $options['topic'];
             }
 
-            if (array_key_exists('VAPID', $auth) && $contentEncoding) {
+            if (array_key_exists('VAPID', $auth)) {
                 $audience = parse_url($endpoint, PHP_URL_SCHEME).'://'.parse_url($endpoint, PHP_URL_HOST);
                 if (!parse_url($audience)) {
                     throw new \ErrorException('Audience "'.$audience.'"" could not be generated.');
@@ -244,7 +236,7 @@ class WebPush
 
                 $headers['Authorization'] = $vapidHeaders['Authorization'];
 
-                if ($contentEncoding === 'aesgcm') {
+                if ($contentEncoding === ContentEncoding::aesgcm) {
                     if (array_key_exists('Crypto-Key', $headers)) {
                         $headers['Crypto-Key'] .= ';'.$vapidHeaders['Crypto-Key'];
                     } else {
@@ -335,13 +327,13 @@ class WebPush
     /**
      * @throws \ErrorException
      */
-    protected function getVAPIDHeaders(string $audience, string $contentEncoding, array $vapid): ?array
+    protected function getVAPIDHeaders(string $audience, ContentEncoding $contentEncoding, array $vapid): ?array
     {
         $vapidHeaders = null;
 
         $cache_key = null;
         if ($this->reuseVAPIDHeaders) {
-            $cache_key = implode('#', [$audience, $contentEncoding, crc32(serialize($vapid))]);
+            $cache_key = implode('#', [$audience, $contentEncoding->value, crc32(serialize($vapid))]);
             if (array_key_exists($cache_key, $this->vapidHeaders)) {
                 $vapidHeaders = $this->vapidHeaders[$cache_key];
             }

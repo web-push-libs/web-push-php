@@ -49,10 +49,10 @@ A complete example with html+JS frontend and php backend using `web-push-php` ca
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
-// store the client-side `PushSubscription` object (calling `.toJSON` on it) as-is and then create a WebPush\Subscription from it
+// Store the client-side `PushSubscription` object (calling `.toJSON` on it) as-is and then create a WebPush\Subscription from it.
 $subscription = Subscription::create(json_decode($clientSidePushSubscriptionJSON, true));
 
-// array of notifications
+// Array of push messages.
 $notifications = [
     [
         'subscription' => $subscription,
@@ -65,6 +65,7 @@ $notifications = [
                 'p256dh' => '(stringOf88Chars)',
                 'auth' => '(stringOf24Chars)',
             ],
+            // key 'contentEncoding' is optional and defaults to ContentEncoding::aes128gcm
         ]),
         'payload' => '{"message":"Hello World!"}',
     ], [
@@ -81,7 +82,7 @@ $notifications = [
 
 $webPush = new WebPush();
 
-// send multiple notifications with payload
+// Send multiple push messages with payload.
 foreach ($notifications as $notification) {
     $webPush->queueNotification(
         $notification['subscription'],
@@ -90,7 +91,7 @@ foreach ($notifications as $notification) {
 }
 
 /**
- * Check sent results
+ * Check sent results.
  * @var MessageSentReport $report
  */
 foreach ($webPush->flush() as $report) {
@@ -104,7 +105,7 @@ foreach ($webPush->flush() as $report) {
 }
 
 /**
- * send one notification and flush directly
+ * Send one push message and flush directly.
  * @var MessageSentReport $report
  */
 $report = $webPush->sendOneNotification(

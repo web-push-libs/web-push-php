@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Minishlink\WebPush\ContentEncoding;
 use Minishlink\WebPush\Subscription;
 
 /**
@@ -64,7 +65,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
-        $this->assertEquals("aesgcm", $subscription->getContentEncoding());
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
     }
 
     public function testConstructPartial(): void
@@ -73,11 +74,24 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
-        $this->assertEquals("aesgcm", $subscription->getContentEncoding());
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
     }
 
     public function testCreateFull(): void
     {
+        $subscriptionArray = [
+            "endpoint" => "http://toto.com",
+            "publicKey" => "publicKey",
+            "authToken" => "authToken",
+            "contentEncoding" => ContentEncoding::aes128gcm,
+        ];
+        $subscription = Subscription::create($subscriptionArray);
+        $this->assertEquals("http://toto.com", $subscription->getEndpoint());
+        $this->assertEquals("publicKey", $subscription->getPublicKey());
+        $this->assertEquals("authToken", $subscription->getAuthToken());
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
+
+        // Test with type string contentEncoding
         $subscriptionArray = [
             "endpoint" => "http://toto.com",
             "publicKey" => "publicKey",
@@ -88,18 +102,24 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
-        $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
     }
 
     public function testConstructFull(): void
     {
-        $subscription = new Subscription("http://toto.com", "publicKey", "authToken", "aes128gcm");
+        $subscription = new Subscription("http://toto.com", "publicKey", "authToken", ContentEncoding::aes128gcm);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
-        $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
-    }
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
 
+        // Test with type string contentEncoding
+        $subscription = new Subscription("http://toto.com", "publicKey", "authToken", "aesgcm");
+        $this->assertEquals("http://toto.com", $subscription->getEndpoint());
+        $this->assertEquals("publicKey", $subscription->getPublicKey());
+        $this->assertEquals("authToken", $subscription->getAuthToken());
+        $this->assertEquals(ContentEncoding::aesgcm, $subscription->getContentEncoding());
+    }
     public function testCreatePartialWithNewStructure(): void
     {
         $subscription = Subscription::create([
@@ -112,6 +132,7 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
     }
 
     public function testCreatePartialWithNewStructureAndContentEncoding(): void
@@ -127,6 +148,6 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
         $this->assertEquals("publicKey", $subscription->getPublicKey());
         $this->assertEquals("authToken", $subscription->getAuthToken());
-        $this->assertEquals("aes128gcm", $subscription->getContentEncoding());
+        $this->assertEquals(ContentEncoding::aes128gcm, $subscription->getContentEncoding());
     }
 }

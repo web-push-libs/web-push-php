@@ -25,5 +25,5 @@ interface SubscriptionInterface
 
     public function getAuthToken(): string;
 
-    public function getContentEncoding(): string;
+    public function getContentEncoding(): ContentEncoding;
 }

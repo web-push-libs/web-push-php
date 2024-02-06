@@ -15,21 +15,32 @@ namespace Minishlink\WebPush;
 
 class Subscription implements SubscriptionInterface
 {
+    protected ContentEncoding $contentEncoding;
     /**
-     * @param string $contentEncoding (Optional) defaults to "aesgcm"
+     * This is a data class. No key validation is done.
+     * @param string|\Minishlink\WebPush\ContentEncoding $contentEncoding (Optional) defaults to "aes128gcm" as defined to rfc8291.
      * @throws \ErrorException
      */
     public function __construct(
-        private readonly string $endpoint,
-        private readonly string $publicKey,
-        private readonly string $authToken,
-        private readonly string $contentEncoding = "aesgcm",
+        protected readonly string $endpoint,
+        protected readonly string $publicKey,
+        protected readonly string $authToken,
+        ContentEncoding|string  $contentEncoding = ContentEncoding::aes128gcm,
     ) {
-        $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
-        if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings, true)) {
-            throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+        if(is_string($contentEncoding)) {
+            try {
+                if(empty($contentEncoding)) {
+                    $this->contentEncoding = ContentEncoding::aesgcm; // default
+                } else {
+                    $this->contentEncoding = ContentEncoding::from($contentEncoding);
+                }
+            } catch(\ValueError) {
+                throw new \ValueError('This content encoding ('.$contentEncoding.') is not supported.');
+            }
+        } else {
+            $this->contentEncoding = $contentEncoding;
         }
-        if(empty($publicKey) || empty($authToken) || empty($contentEncoding)) {
+        if(empty($publicKey) || empty($authToken)) {
             throw new \ValueError('Missing values.');
         }
     }
@@ -45,20 +56,16 @@ class Subscription implements SubscriptionInterface
                 $associativeArray['endpoint'] ?? "",
                 $associativeArray['keys']['p256dh'] ?? "",
                 $associativeArray['keys']['auth'] ?? "",
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? ContentEncoding::aes128gcm,
             );
         }
 
-        if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
-            return new self(
-                $associativeArray['endpoint'] ?? "",
-                $associativeArray['publicKey'] ?? "",
-                $associativeArray['authToken'] ?? "",
-                $associativeArray['contentEncoding'] ?? "aesgcm"
-            );
-        }
-
-        throw new \ValueError('Missing values.');
+        return new self(
+            $associativeArray['endpoint'] ?? "",
+            $associativeArray['publicKey'] ?? "",
+            $associativeArray['authToken'] ?? "",
+            $associativeArray['contentEncoding'] ?? ContentEncoding::aes128gcm,
+        );
     }
 
     public function getEndpoint(): string
@@ -76,7 +83,7 @@ class Subscription implements SubscriptionInterface
         return $this->authToken;
     }
 
-    public function getContentEncoding(): string
+    public function getContentEncoding(): ContentEncoding
     {
         return $this->contentEncoding;
     }
