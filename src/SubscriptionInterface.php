@@ -14,15 +14,16 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 /**
+ * Subscription details from user agent.
  * @author Sergii Bondarenko <sb@firstvector.org>
  */
 interface SubscriptionInterface
 {
     public function getEndpoint(): string;
 
-    public function getPublicKey(): ?string;
+    public function getPublicKey(): string;
 
-    public function getAuthToken(): ?string;
+    public function getAuthToken(): string;
 
-    public function getContentEncoding(): ?string;
+    public function getContentEncoding(): string;
 }

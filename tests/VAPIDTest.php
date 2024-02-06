@@ -74,10 +74,6 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @param string $auth
-     * @return array
-     */
     private function explodeAuthorization(string $auth): array
     {
         $auth = explode('.', $auth);

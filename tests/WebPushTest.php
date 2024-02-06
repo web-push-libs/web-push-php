@@ -12,10 +12,12 @@ use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\SubscriptionInterface;
 use Minishlink\WebPush\WebPush;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
 /**
  * @covers \Minishlink\WebPush\WebPush
  */
+#[group('online')]
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static array $endpoints;
@@ -122,23 +124,15 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         self::$keys['standard'] = $keys->{'p256dh'};
     }
 
-    /**
-     * @throws ErrorException
-     */
     public static function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
 
         return [
-            [new Subscription(self::$endpoints['standard'] ?: '', self::$keys['standard'] ?: '', self::$tokens['standard'] ?: ''), '{"message":"Comment ça va ?","tag":"general"}'],
+            [new Subscription(self::$endpoints['standard'] ?: 'endpoint', self::$keys['standard'] ?: 'publicKey', self::$tokens['standard'] ?: 'authToken'), '{"message":"Comment ça va ?","tag":"general"}'],
         ];
     }
 
-    /**
-     * @param SubscriptionInterface $subscription
-     * @param string                $payload
-     * @throws ErrorException
-     */
     #[dataProvider('notificationProvider')]
     public function testSendOneNotification(SubscriptionInterface $subscription, string $payload): void
     {
@@ -146,9 +140,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertTrue($report->isSuccess());
     }
 
-    /**
-     * @throws ErrorException
-     */
     public function testSendNotificationBatch(): void
     {
         $batchSize = 10;
@@ -168,29 +159,21 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @throws ErrorException
-     */
-    public function testSendOneNotificationWithTooBigPayload(): void
+    #[dataProvider('notificationProvider')]
+    public function testSendOneNotificationWithTooBigPayload(SubscriptionInterface $subscription): void
     {
         $this->expectException(ErrorException::class);
         $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
 
-        $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);
         $this->webPush->sendOneNotification(
             $subscription,
             str_repeat('test', 1020)
         );
     }
 
-    /**
-     * @throws \ErrorException
-     * @throws \JsonException
-     */
-    public function testFlush(): void
+    #[dataProvider('notificationProvider')]
+    public function testFlush(SubscriptionInterface $subscription): void
     {
-        $subscription = new Subscription(self::$endpoints['standard']);
-
         $report = $this->webPush->sendOneNotification($subscription);
         $this->assertFalse($report->isSuccess()); // it doesn't have VAPID
 
@@ -227,13 +210,9 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $this->assertEmpty(iterator_to_array($this->webPush->flush(300)));
     }
 
-    /**
-     * @throws ErrorException
-     */
-    public function testCount(): void
+    #[dataProvider('notificationProvider')]
+    public function testCount(SubscriptionInterface $subscription): void
     {
-        $subscription = new Subscription(self::$endpoints['standard']);
-
         $this->webPush->queueNotification($subscription);
         $this->webPush->queueNotification($subscription);
         $this->webPush->queueNotification($subscription);

@@ -7,25 +7,50 @@ use Minishlink\WebPush\Subscription;
  */
 class SubscriptionTest extends PHPUnit\Framework\TestCase
 {
+    /**
+     * Throw exception on outdated call.
+     */
     public function testCreateMinimal(): void
     {
+        $this->expectException(ValueError::class);
         $subscriptionArray = [
             "endpoint" => "http://toto.com",
         ];
-        $subscription = Subscription::create($subscriptionArray);
-        $this->assertEquals("http://toto.com", $subscription->getEndpoint());
-        $this->assertEquals(null, $subscription->getPublicKey());
-        $this->assertEquals(null, $subscription->getAuthToken());
-        $this->assertEquals(null, $subscription->getContentEncoding());
+        Subscription::create($subscriptionArray);
     }
 
+    /**
+     * Throw exception on outdated call.
+     */
     public function testConstructMinimal(): void
     {
-        $subscription = new Subscription("http://toto.com");
-        $this->assertEquals("http://toto.com", $subscription->getEndpoint());
-        $this->assertEquals(null, $subscription->getPublicKey());
-        $this->assertEquals(null, $subscription->getAuthToken());
-        $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->expectException(ArgumentCountError::class);
+        new Subscription("http://toto.com");
+    }
+    public function testExceptionEmpty(): void
+    {
+        $this->expectException(ValueError::class);
+        new Subscription("", "", "");
+    }
+    public function testExceptionEmptyKey(): void
+    {
+        $this->expectException(ValueError::class);
+        $subscriptionArray = [
+            "endpoint" => "http://toto.com",
+            "publicKey" => "",
+            "authToken" => "authToken",
+        ];
+        Subscription::create($subscriptionArray);
+    }
+    public function testExceptionEmptyToken(): void
+    {
+        $this->expectException(ValueError::class);
+        $subscriptionArray = [
+            "endpoint" => "http://toto.com",
+            "publicKey" => "publicKey",
+            "authToken" => "",
+        ];
+        Subscription::create($subscriptionArray);
     }
 
     public function testCreatePartial(): void

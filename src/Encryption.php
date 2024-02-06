@@ -39,7 +39,7 @@ class Encryption
             return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
         }
 
-        throw new \ErrorException("This content encoding is not supported");
+        throw new \ErrorException("This content encoding is not supported: ".$contentEncoding);
     }
 
     /**

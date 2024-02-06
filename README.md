@@ -46,7 +46,6 @@ A complete example with html+JS frontend and php backend using `web-push-php` ca
 
 ```php
 <?php
-
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
@@ -59,36 +58,22 @@ $notifications = [
         'subscription' => $subscription,
         'payload' => '{"message":"Hello World!"}',
     ], [
-          // current PushSubscription format (browsers might change this in the future)
-          'subscription' => Subscription::create([ 
-              "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
-              "keys" => [
-                  'p256dh' => '(stringOf88Chars)',
-                  'auth' => '(stringOf24Chars)'
-              ],
-          ]),
-          'payload' => '{"message":"Hello World!"}',
-    ], [
-        // old Firefox PushSubscription format
-        'subscription' => Subscription::create([
-            'endpoint' => 'https://updates.push.services.mozilla.com/push/abc...', // Firefox 43+,
-            'publicKey' => 'BPcMbnWQL5GOYX/5LKZXT6sLmHiMsJSiEvIFvfcDvX7IZ9qqtq68onpTPEYmyxSQNiH7UD/98AUcQ12kBoxz/0s=', // base 64 encoded, should be 88 chars
-            'authToken' => 'CxVX6QsVToEGEcjfYPqXQw==', // base 64 encoded, should be 24 chars
+        // current PushSubscription format (browsers might change this in the future)
+        'subscription' => Subscription::create([ 
+            'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
+            'keys' => [
+                'p256dh' => '(stringOf88Chars)',
+                'auth' => '(stringOf24Chars)',
+            ],
         ]),
-        'payload' => 'hello !',
-    ], [
-        // old Chrome PushSubscription format
-        'subscription' => Subscription::create([
-            'endpoint' => 'https://fcm.googleapis.com/fcm/send/abcdef...',
-        ]),
-        'payload' => null,
+        'payload' => '{"message":"Hello World!"}',
     ], [
         // old PushSubscription format
         'subscription' => Subscription::create([
             'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
             'publicKey' => '(stringOf88Chars)',
             'authToken' => '(stringOf24Chars)',
-            'contentEncoding' => 'aesgcm', // one of PushManager.supportedContentEncodings
+            'contentEncoding' => 'aesgcm', // (optional) one of PushManager.supportedContentEncodings
         ]),
         'payload' => '{"message":"test"}',
     ]
@@ -100,7 +85,7 @@ $webPush = new WebPush();
 foreach ($notifications as $notification) {
     $webPush->queueNotification(
         $notification['subscription'],
-        $notification['payload'] // optional (defaults null)
+        $notification['payload'], // optional (defaults null)
     );
 }
 
