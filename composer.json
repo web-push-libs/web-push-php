@@ -2,7 +2,13 @@
   "name": "minishlink/web-push",
   "type": "library",
   "description": "Web Push library for PHP",
-  "keywords": ["push", "notifications", "web", "WebPush", "Push API"],
+  "keywords": [
+    "push",
+    "notifications",
+    "web",
+    "WebPush",
+    "Push API"
+  ],
   "homepage": "https://github.com/web-push-libs/web-push-php",
   "license": "MIT",
   "authors": [
@@ -28,10 +34,7 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "guzzlehttp/guzzle": "^7.4.5",
-    "web-token/jwt-signature": "^3.2.9",
-    "web-token/jwt-key-mgmt": "^3.2.9",
-    "web-token/jwt-signature-algorithm-ecdsa": "^3.2.9",
-    "web-token/jwt-util-ecc": "^3.2.9",
+    "web-token/jwt-library": "^3.3.0",
     "spomky-labs/base64url": "^2.0.4"
   },
   "suggest": {
