@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
@@ -208,8 +207,8 @@ class WebPush
                 ];
 
                 if ($contentEncoding === "aesgcm") {
-                    $headers['Encryption'] = 'salt='.Base64Url::encode($salt);
-                    $headers['Crypto-Key'] = 'dh='.Base64Url::encode($localPublicKey);
+                    $headers['Encryption'] = 'salt='.Utils::base64Encode($salt);
+                    $headers['Crypto-Key'] = 'dh='.Utils::base64Encode($localPublicKey);
                 }
 
                 $encryptionContentCodingHeader = Encryption::getContentCodingHeader($salt, $localPublicKey, $contentEncoding);

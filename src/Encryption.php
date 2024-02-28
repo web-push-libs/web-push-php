@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
@@ -66,8 +65,8 @@ class Encryption
      */
     public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
     {
-        $userPublicKey = Base64Url::decode($userPublicKey);
-        $userAuthToken = Base64Url::decode($userAuthToken);
+        $userPublicKey = Utils::base64Decode($userPublicKey);
+        $userAuthToken = Utils::base64Decode($userAuthToken);
 
         // get local key pair
         if (count($localKeyObject) === 1) {
@@ -81,9 +80,9 @@ class Encryption
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => Base64Url::encode($localPrivateKeyObject->getSecret()->toBytes(false)),
-                'x' => Base64Url::encode($localPublicKeyObject[0]),
-                'y' => Base64Url::encode($localPublicKeyObject[1]),
+                'd' => Utils::base64Encode($localPrivateKeyObject->getSecret()->toBytes(false)),
+                'x' => Utils::base64Encode($localPublicKeyObject[0]),
+                'y' => Utils::base64Encode($localPublicKeyObject[1]),
             ]);
         }
         if (!$localPublicKey) {
@@ -95,8 +94,8 @@ class Encryption
         $userJwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
-            'x' => Base64Url::encode($userPublicKeyObjectX),
-            'y' => Base64Url::encode($userPublicKeyObjectY),
+            'x' => Utils::base64Encode($userPublicKeyObjectX),
+            'y' => Utils::base64Encode($userPublicKeyObjectY),
         ]);
 
         // get shared secret from user public key and local private key
@@ -252,9 +251,9 @@ class Encryption
             new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'x' => Base64Url::encode(self::addNullPadding($details['ec']['x'])),
-                'y' => Base64Url::encode(self::addNullPadding($details['ec']['y'])),
-                'd' => Base64Url::encode(self::addNullPadding($details['ec']['d'])),
+                'x' => Utils::base64Encode(self::addNullPadding($details['ec']['x'])),
+                'y' => Utils::base64Encode(self::addNullPadding($details['ec']['y'])),
+                'd' => Utils::base64Encode(self::addNullPadding($details['ec']['d'])),
             ]),
         ];
     }

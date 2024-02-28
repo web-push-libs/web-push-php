@@ -8,7 +8,6 @@
  * file that was distributed with this source code.
  */
 
-use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
@@ -23,30 +22,30 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     {
         $contentEncoding = "aes128gcm";
         $plaintext = 'When I grow up, I want to be a watermelon';
-        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24', Base64Url::encode($plaintext));
+        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24', Utils::base64Encode($plaintext));
 
         $payload = Encryption::padPayload($plaintext, 0, $contentEncoding);
-        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24C', Base64Url::encode($payload));
+        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24C', Utils::base64Encode($payload));
 
         $userPublicKey = 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4';
         $userAuthToken = 'BTBZMqHH6r4Tts7J_aSIgg';
 
-        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
-        $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
+        $localPublicKey = Utils::base64Decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $salt = Utils::base64Decode('DGv6ra1nlYgDCS1FRnbzlw');
 
         [$localPublicKeyObjectX, $localPublicKeyObjectY] = Utils::unserializePublicKey($localPublicKey);
         $localJwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
             'd' => 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw',
-            'x' => Base64Url::encode($localPublicKeyObjectX),
-            'y' => Base64Url::encode($localPublicKeyObjectY),
+            'x' => Utils::base64Encode($localPublicKeyObjectX),
+            'y' => Utils::base64Encode($localPublicKeyObjectY),
         ]);
 
         $expected = [
             'localPublicKey' => $localPublicKey,
             'salt' => $salt,
-            'cipherText' => Base64Url::decode('8pfeW0KbunFT06SuDKoJH9Ql87S1QUrd irN6GcG7sFz1y1sqLgVi1VhjVkHsUoEsbI_0LpXMuGvnzQ'),
+            'cipherText' => Utils::base64Decode('8pfeW0KbunFT06SuDKoJH9Ql87S1QUrd irN6GcG7sFz1y1sqLgVi1VhjVkHsUoEsbI_0LpXMuGvnzQ'),
         ];
 
         $result = Encryption::deterministicEncrypt(
@@ -59,17 +58,17 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         );
 
         $this->assertEquals(Utils::safeStrlen($expected['cipherText']), Utils::safeStrlen($result['cipherText']));
-        $this->assertEquals(Base64Url::encode($expected['cipherText']), Base64Url::encode($result['cipherText']));
+        $this->assertEquals(Utils::base64Encode($expected['cipherText']), Utils::base64Encode($result['cipherText']));
         $this->assertEquals($expected, $result);
     }
 
     public function testGetContentCodingHeader(): void
     {
-        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
-        $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
+        $localPublicKey = Utils::base64Decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $salt = Utils::base64Decode('DGv6ra1nlYgDCS1FRnbzlw');
 
         $result = Encryption::getContentCodingHeader($salt, $localPublicKey, "aes128gcm");
-        $expected = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $expected = Utils::base64Decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
 
         $this->assertEquals(Utils::safeStrlen($expected), Utils::safeStrlen($result));
         $this->assertEquals($expected, $result);
