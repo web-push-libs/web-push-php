@@ -16,6 +16,7 @@ namespace Minishlink\WebPush;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
+use ParagonIE\ConstantTime\Base64UrlSafe;
 
 class Encryption
 {
@@ -65,8 +66,8 @@ class Encryption
      */
     public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
     {
-        $userPublicKey = Utils::base64Decode($userPublicKey);
-        $userAuthToken = Utils::base64Decode($userAuthToken);
+        $userPublicKey = Base64UrlSafe::decodeNoPadding($userPublicKey);
+        $userAuthToken = Base64UrlSafe::decodeNoPadding($userAuthToken);
 
         // get local key pair
         if (count($localKeyObject) === 1) {
@@ -80,9 +81,9 @@ class Encryption
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => Utils::base64Encode($localPrivateKeyObject->getSecret()->toBytes(false)),
-                'x' => Utils::base64Encode($localPublicKeyObject[0]),
-                'y' => Utils::base64Encode($localPublicKeyObject[1]),
+                'd' => Base64UrlSafe::encodeUnpadded($localPrivateKeyObject->getSecret()->toBytes(false)),
+                'x' => Base64UrlSafe::encodeUnpadded($localPublicKeyObject[0]),
+                'y' => Base64UrlSafe::encodeUnpadded($localPublicKeyObject[1]),
             ]);
         }
         if (!$localPublicKey) {
@@ -94,8 +95,8 @@ class Encryption
         $userJwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
-            'x' => Utils::base64Encode($userPublicKeyObjectX),
-            'y' => Utils::base64Encode($userPublicKeyObjectY),
+            'x' => Base64UrlSafe::encodeUnpadded($userPublicKeyObjectX),
+            'y' => Base64UrlSafe::encodeUnpadded($userPublicKeyObjectY),
         ]);
 
         // get shared secret from user public key and local private key
@@ -251,9 +252,9 @@ class Encryption
             new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'x' => Utils::base64Encode(self::addNullPadding($details['ec']['x'])),
-                'y' => Utils::base64Encode(self::addNullPadding($details['ec']['y'])),
-                'd' => Utils::base64Encode(self::addNullPadding($details['ec']['d'])),
+                'x' => Base64UrlSafe::encodeUnpadded(self::addNullPadding($details['ec']['x'])),
+                'y' => Base64UrlSafe::encodeUnpadded(self::addNullPadding($details['ec']['y'])),
+                'd' => Base64UrlSafe::encodeUnpadded(self::addNullPadding($details['ec']['d'])),
             ]),
         ];
     }
