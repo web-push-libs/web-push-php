@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PublicKey;
+use ParagonIE\ConstantTime\Base64UrlSafe;
 
 class Utils
 {
@@ -37,8 +37,8 @@ class Utils
     public static function serializePublicKeyFromJWK(JWK $jwk): string
     {
         $hexString = '04';
-        $hexString .= str_pad(bin2hex(Base64Url::decode($jwk->get('x'))), 64, '0', STR_PAD_LEFT);
-        $hexString .= str_pad(bin2hex(Base64Url::decode($jwk->get('y'))), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad(bin2hex(Base64UrlSafe::decodeNoPadding($jwk->get('x'))), 64, '0', STR_PAD_LEFT);
+        $hexString .= str_pad(bin2hex(Base64UrlSafe::decodeNoPadding($jwk->get('y'))), 64, '0', STR_PAD_LEFT);
 
         return $hexString;
     }

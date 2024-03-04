@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\KeyManagement\JWKFactory;
 use Jose\Component\Signature\Algorithm\ES256;
 use Jose\Component\Signature\JWSBuilder;
 use Jose\Component\Signature\Serializer\CompactSerializer;
+use ParagonIE\ConstantTime\Base64UrlSafe;
 
 class VAPID
 {
@@ -54,14 +54,14 @@ class VAPID
                 throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
             }
             $vapid['publicKey'] = base64_encode($binaryPublicKey);
-            $vapid['privateKey'] = base64_encode(str_pad(Base64Url::decode($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
+            $vapid['privateKey'] = base64_encode(str_pad(Base64UrlSafe::decodeNoPadding($jwk->get('d')), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         }
 
         if (!isset($vapid['publicKey'])) {
             throw new \ErrorException('[VAPID] You must provide a public key.');
         }
 
-        $publicKey = Base64Url::decode($vapid['publicKey']);
+        $publicKey = Base64UrlSafe::decodeNoPadding($vapid['publicKey']);
 
         if (Utils::safeStrlen($publicKey) !== self::PUBLIC_KEY_LENGTH) {
             throw new \ErrorException('[VAPID] Public key should be 65 bytes long when decoded.');
@@ -71,7 +71,7 @@ class VAPID
             throw new \ErrorException('[VAPID] You must provide a private key.');
         }
 
-        $privateKey = Base64Url::decode($vapid['privateKey']);
+        $privateKey = Base64UrlSafe::decodeNoPadding($vapid['privateKey']);
 
         if (Utils::safeStrlen($privateKey) !== self::PRIVATE_KEY_LENGTH) {
             throw new \ErrorException('[VAPID] Private key should be 32 bytes long when decoded.');
@@ -122,9 +122,9 @@ class VAPID
         $jwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
-            'x' => Base64Url::encode($x),
-            'y' => Base64Url::encode($y),
-            'd' => Base64Url::encode($privateKey),
+            'x' => Base64UrlSafe::encodeUnpadded($x),
+            'y' => Base64UrlSafe::encodeUnpadded($y),
+            'd' => Base64UrlSafe::encodeUnpadded($privateKey),
         ]);
 
         $jwsCompactSerializer = new CompactSerializer();
@@ -136,7 +136,7 @@ class VAPID
             ->build();
 
         $jwt = $jwsCompactSerializer->serialize($jws, 0);
-        $encodedPublicKey = Base64Url::encode($publicKey);
+        $encodedPublicKey = Base64UrlSafe::encodeUnpadded($publicKey);
 
         if ($contentEncoding === "aesgcm") {
             return [
@@ -169,14 +169,14 @@ class VAPID
             throw new \ErrorException('Failed to convert VAPID public key from hexadecimal to binary');
         }
 
-        $binaryPrivateKey = hex2bin(str_pad(bin2hex(Base64Url::decode($jwk->get('d'))), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
+        $binaryPrivateKey = hex2bin(str_pad(bin2hex(Base64UrlSafe::decodeNoPadding($jwk->get('d'))), 2 * self::PRIVATE_KEY_LENGTH, '0', STR_PAD_LEFT));
         if (!$binaryPrivateKey) {
             throw new \ErrorException('Failed to convert VAPID private key from hexadecimal to binary');
         }
 
         return [
-            'publicKey'  => Base64Url::encode($binaryPublicKey),
-            'privateKey' => Base64Url::encode($binaryPrivateKey),
+            'publicKey'  => Base64UrlSafe::encodeUnpadded($binaryPublicKey),
+            'privateKey' => Base64UrlSafe::encodeUnpadded($binaryPrivateKey),
         ];
     }
 }

@@ -35,7 +35,7 @@
     "ext-openssl": "*",
     "guzzlehttp/guzzle": "^7.4.5",
     "web-token/jwt-library": "^3.3.0",
-    "spomky-labs/base64url": "^2.0.4"
+    "paragonie/constant_time_encoding": "^2.6"
   },
   "suggest": {
     "ext-bcmath": "Optional for performance.",

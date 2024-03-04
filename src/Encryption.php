@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace Minishlink\WebPush;
 
-use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
 use Jose\Component\Core\Util\Ecc\PrivateKey;
 use Jose\Component\Core\Util\ECKey;
+use ParagonIE\ConstantTime\Base64UrlSafe;
 
 class Encryption
 {
@@ -66,8 +66,8 @@ class Encryption
      */
     public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
     {
-        $userPublicKey = Base64Url::decode($userPublicKey);
-        $userAuthToken = Base64Url::decode($userAuthToken);
+        $userPublicKey = Base64UrlSafe::decodeNoPadding($userPublicKey);
+        $userAuthToken = Base64UrlSafe::decodeNoPadding($userAuthToken);
 
         // get local key pair
         if (count($localKeyObject) === 1) {
@@ -81,9 +81,9 @@ class Encryption
             $localJwk = new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'd' => Base64Url::encode($localPrivateKeyObject->getSecret()->toBytes(false)),
-                'x' => Base64Url::encode($localPublicKeyObject[0]),
-                'y' => Base64Url::encode($localPublicKeyObject[1]),
+                'd' => Base64UrlSafe::encodeUnpadded($localPrivateKeyObject->getSecret()->toBytes(false)),
+                'x' => Base64UrlSafe::encodeUnpadded($localPublicKeyObject[0]),
+                'y' => Base64UrlSafe::encodeUnpadded($localPublicKeyObject[1]),
             ]);
         }
         if (!$localPublicKey) {
@@ -95,8 +95,8 @@ class Encryption
         $userJwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
-            'x' => Base64Url::encode($userPublicKeyObjectX),
-            'y' => Base64Url::encode($userPublicKeyObjectY),
+            'x' => Base64UrlSafe::encodeUnpadded($userPublicKeyObjectX),
+            'y' => Base64UrlSafe::encodeUnpadded($userPublicKeyObjectY),
         ]);
 
         // get shared secret from user public key and local private key
@@ -252,9 +252,9 @@ class Encryption
             new JWK([
                 'kty' => 'EC',
                 'crv' => 'P-256',
-                'x' => Base64Url::encode(self::addNullPadding($details['ec']['x'])),
-                'y' => Base64Url::encode(self::addNullPadding($details['ec']['y'])),
-                'd' => Base64Url::encode(self::addNullPadding($details['ec']['d'])),
+                'x' => Base64UrlSafe::encodeUnpadded(self::addNullPadding($details['ec']['x'])),
+                'y' => Base64UrlSafe::encodeUnpadded(self::addNullPadding($details['ec']['y'])),
+                'd' => Base64UrlSafe::encodeUnpadded(self::addNullPadding($details['ec']['d'])),
             ]),
         ];
     }
