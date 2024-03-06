@@ -301,7 +301,7 @@ You can customize automatic padding in order to better fit your needs.
 
 Here are some ideas of settings:
 
-* (default) `Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH` (3052 bytes) for compatibility purposes with Firefox for Android
+* (default) `Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH` (3052 bytes) for compatibility purposes with Firefox for Android (See [#108](https://github.com/web-push-libs/web-push-php/issues/108))
 * `Encryption::MAX_PAYLOAD_LENGTH` (4078 bytes) for maximum security
 * `false` for maximum performance
 * If you know your payloads will not exceed `X` bytes, then set it to `X` for the best balance between security and performance.
@@ -381,6 +381,10 @@ Make sure to require Composer's [autoloader](https://getcomposer.org/doc/01-basi
 ```php
 require __DIR__ . '/path/to/vendor/autoload.php';
 ```
+
+### I get authentication errors when sending notifications
+
+Make sure to have database fields that are large enough for the length of the data you are storing ([#233](https://github.com/web-push-libs/web-push-php/issues/233#issuecomment-1252617883)). For the endpoint, users have reported that the URL length does not exceed 500 characters, but this can evolve so you can set it to the 2048 characters limit of most browsers.
 
 ### I lost my VAPID keys!
 
