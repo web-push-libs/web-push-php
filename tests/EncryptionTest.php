@@ -19,34 +19,50 @@ use PHPUnit\Framework\Attributes\DataProvider;
  */
 final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
+    public function testBase64Encode(): void
+    {
+        $plaintext = 'When I grow up, I want to be a watermelon';
+        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24', $this->base64Encode($plaintext));
+    }
+
+    public function testBase64Decode(): void
+    {
+        // Base64 URL-safe, no padding
+        $this->assertEquals('When I grow up, I want to be a watermelon', $this->base64Decode('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24'));
+        $this->assertEquals('<<???>>', $this->base64Decode('PDwPz8-Pg'));
+
+        // Standard Base64
+        $this->assertEquals('When I grow up, I want to be a watermelon', $this->base64Decode('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24='));
+        $this->assertEquals('<<???>>', $this->base64Decode('PDw/Pz8+Pg=='));
+    }
+
     public function testDeterministicEncrypt(): void
     {
-        $contentEncoding = "aes128gcm";
+        $contentEncoding = 'aes128gcm';
         $plaintext = 'When I grow up, I want to be a watermelon';
-        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24', Base64Url::encode($plaintext));
 
         $payload = Encryption::padPayload($plaintext, 0, $contentEncoding);
-        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24C', Base64Url::encode($payload));
+        $this->assertEquals('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24C', $this->base64Encode($payload));
 
         $userPublicKey = 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4';
         $userAuthToken = 'BTBZMqHH6r4Tts7J_aSIgg';
 
-        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
-        $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
+        $localPublicKey = $this->base64Decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $salt = $this->base64Decode('DGv6ra1nlYgDCS1FRnbzlw');
 
         [$localPublicKeyObjectX, $localPublicKeyObjectY] = Utils::unserializePublicKey($localPublicKey);
         $localJwk = new JWK([
             'kty' => 'EC',
             'crv' => 'P-256',
             'd' => 'yfWPiYE-n46HLnH0KqZOF1fJJU3MYrct3AELtAQ-oRw',
-            'x' => Base64Url::encode($localPublicKeyObjectX),
-            'y' => Base64Url::encode($localPublicKeyObjectY),
+            'x' => $this->base64Encode($localPublicKeyObjectX),
+            'y' => $this->base64Encode($localPublicKeyObjectY),
         ]);
 
         $expected = [
             'localPublicKey' => $localPublicKey,
             'salt' => $salt,
-            'cipherText' => Base64Url::decode('8pfeW0KbunFT06SuDKoJH9Ql87S1QUrd irN6GcG7sFz1y1sqLgVi1VhjVkHsUoEsbI_0LpXMuGvnzQ'),
+            'cipherText' => $this->base64Decode('8pfeW0KbunFT06SuDKoJH9Ql87S1QUrdirN6GcG7sFz1y1sqLgVi1VhjVkHsUoEsbI_0LpXMuGvnzQ'),
         ];
 
         $result = Encryption::deterministicEncrypt(
@@ -59,17 +75,17 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         );
 
         $this->assertEquals(Utils::safeStrlen($expected['cipherText']), Utils::safeStrlen($result['cipherText']));
-        $this->assertEquals(Base64Url::encode($expected['cipherText']), Base64Url::encode($result['cipherText']));
+        $this->assertEquals($this->base64Encode($expected['cipherText']), $this->base64Encode($result['cipherText']));
         $this->assertEquals($expected, $result);
     }
 
     public function testGetContentCodingHeader(): void
     {
-        $localPublicKey = Base64Url::decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
-        $salt = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlw');
+        $localPublicKey = $this->base64Decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $salt = $this->base64Decode('DGv6ra1nlYgDCS1FRnbzlw');
 
         $result = Encryption::getContentCodingHeader($salt, $localPublicKey, "aes128gcm");
-        $expected = Base64Url::decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
+        $expected = $this->base64Decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
 
         $this->assertEquals(Utils::safeStrlen($expected), Utils::safeStrlen($result));
         $this->assertEquals($expected, $result);
@@ -81,7 +97,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     #[dataProvider('payloadProvider')]
     public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength): void
     {
-        $res = Encryption::padPayload($payload, $maxLengthToPad, "aesgcm");
+        $res = Encryption::padPayload($payload, $maxLengthToPad, 'aesgcm');
 
         $this->assertStringContainsString('test', $res);
         $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
@@ -98,5 +114,15 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
             ['testé', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2],
             [str_repeat('test', 1019).'te', Encryption::MAX_PAYLOAD_LENGTH, Encryption::MAX_PAYLOAD_LENGTH + 2],
         ];
+    }
+
+    protected function base64Decode(string $value): string
+    {
+        return Base64Url::decode($value);
+    }
+
+    protected function base64Encode(string $value): string
+    {
+        return Base64Url::encode($value);
     }
 }
