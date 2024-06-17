@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use ParagonIE\ConstantTime\Base64UrlSafe;
@@ -176,6 +177,58 @@ class WebPush
     }
 
     /**
+     * Flush notifications. Triggers concurrent requests.
+     *
+     * @param callable(MessageSentReport): void $callback Callback for each notification
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     * @param null|int $concurrency Defaults the value defined in defaultOptions during instantiation (which defaults to 100).
+     */
+    public function flushPooled($callback, ?int $batchSize = null, ?int $concurrency = null): void
+    {
+        if (empty($this->notifications)) {
+            return;
+        }
+
+        if (null === $batchSize) {
+            $batchSize = $this->defaultOptions['batchSize'];
+        }
+
+        if (null === $concurrency) {
+            $concurrency = $this->defaultOptions['concurrency'];
+        }
+
+        $batches = array_chunk($this->notifications, $batchSize);
+        $this->notifications = [];
+
+        foreach ($batches as $batch) {
+            $batch = $this->prepare($batch);
+            $pool = new Pool($this->client, $batch, [
+                'concurrency' => $concurrency,
+                'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
+                    /** @var RequestInterface $request **/
+                    $request = $batch[$index];
+                    $callback(new MessageSentReport($request, $response));
+                },
+                'rejected' => function (RequestException $reason) use ($callback) {
+                    if (method_exists($reason, 'getResponse')) {
+                        $response = $reason->getResponse();
+                    } else {
+                        $response = null;
+                    }
+                    $callback(new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage()));
+                }
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
+        }
+
+        if ($this->reuseVAPIDHeaders) {
+            $this->vapidHeaders = [];
+        }
+    }
+
+    /**
      * @throws \ErrorException|\Random\RandomException
      */
     protected function prepare(array $notifications): array
@@ -315,7 +368,7 @@ class WebPush
     }
 
     /**
-     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
+     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize', 'concurrency'
      */
     public function setDefaultOptions(array $defaultOptions): WebPush
     {
@@ -323,6 +376,8 @@ class WebPush
         $this->defaultOptions['urgency'] = $defaultOptions['urgency'] ?? null;
         $this->defaultOptions['topic'] = $defaultOptions['topic'] ?? null;
         $this->defaultOptions['batchSize'] = $defaultOptions['batchSize'] ?? 1000;
+        $this->defaultOptions['concurrency'] = $defaultOptions['concurrency'] ?? 100;
+
 
         return $this;
     }
