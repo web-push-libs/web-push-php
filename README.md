@@ -301,7 +301,7 @@ You can customize automatic padding in order to better fit your needs.
 
 Here are some ideas of settings:
 
-* (default) `Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH` (3052 bytes) for compatibility purposes with Firefox for Android (See [#108](https://github.com/web-push-libs/web-push-php/issues/108))
+* (default) `Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH` (2820 bytes) for compatibility purposes with Firefox for Android (See [#108](https://github.com/web-push-libs/web-push-php/issues/108))
 * `Encryption::MAX_PAYLOAD_LENGTH` (4078 bytes) for maximum security
 * `false` for maximum performance
 * If you know your payloads will not exceed `X` bytes, then set it to `X` for the best balance between security and performance.
