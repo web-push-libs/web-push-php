@@ -60,7 +60,7 @@ $notifications = [
         'payload' => '{"message":"Hello World!"}',
     ], [
           // current PushSubscription format (browsers might change this in the future)
-          'subscription' => Subscription::create([ 
+          'subscription' => Subscription::create([
               "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
               "keys" => [
                   'p256dh' => '(stringOf88Chars)',
@@ -253,18 +253,18 @@ foreach ($webPush->flush() as $report) {
         echo "[v] Message sent successfully for subscription {$endpoint}.";
     } else {
         echo "[x] Message failed to sent for subscription {$endpoint}: {$report->getReason()}";
-        
+
         // also available (to get more info)
-        
+
         /** @var \Psr\Http\Message\RequestInterface $requestToPushService */
         $requestToPushService = $report->getRequest();
-        
+
         /** @var \Psr\Http\Message\ResponseInterface $responseOfPushService */
         $responseOfPushService = $report->getResponse();
-        
+
         /** @var string $failReason */
         $failReason = $report->getReason();
-        
+
         /** @var bool $isTheEndpointWrongOrExpired */
         $isTheEndpointWrongOrExpired = $report->isSubscriptionExpired();
     }
@@ -364,6 +364,7 @@ Here are some ideas:
 1. Make sure MultiCurl is available on your server
 2. Find the right balance for your needs between security and performance (see above)
 3. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
+4. Use `flushPooled()` instead of `flush()`. The former uses concurrent requests, accelerating the process and often doubling the speed of the requests.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 
