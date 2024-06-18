@@ -222,6 +222,46 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         }
     }
 
+    /**
+     * @throws \ErrorException
+     * @throws \JsonException
+     */
+    public function testFlushPooled(): void
+    {
+        $subscription = new Subscription(self::$endpoints['standard']);
+
+        $report = $this->webPush->sendOneNotification($subscription);
+        $this->assertFalse($report->isSuccess()); // it doesn't have VAPID
+
+        // queue has been reset
+        $this->assertEmpty(iterator_to_array($this->webPush->flush()));
+
+        $report = $this->webPush->sendOneNotification($subscription);
+        $this->assertFalse($report->isSuccess());  // it doesn't have VAPID
+
+        $nonExistentSubscription = Subscription::create([
+            'endpoint'        => 'https://fcm.googleapis.com/fcm/send/fCd2-8nXJhU:APA91bGi2uaqFXGft4qdolwyRUcUPCL1XV_jWy1tpCRqnu4sk7ojUpC5gnq1PTncbCdMq9RCVQIIFIU9BjzScvjrDqpsI7J-K_3xYW8xo1xSNCfge1RvJ6Xs8RGL_Sw7JtbCyG1_EVgWDc22on1r_jozD8vsFbB0Fg',
+            'publicKey'       => 'BME-1ZSAv2AyGjENQTzrXDj6vSnhAIdKso4n3NDY0lsd1DUgEzBw7ARMKjrYAm7JmJBPsilV5CWNH0mVPyJEt0Q',
+            'authToken'       => 'hUIGbmiypj9_EQea8AnCKA',
+            'contentEncoding' => 'aes128gcm',
+        ]);
+
+        // test multiple requests
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 1], JSON_THROW_ON_ERROR));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 2], JSON_THROW_ON_ERROR));
+        $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 3], JSON_THROW_ON_ERROR));
+
+        $callback = function ($report) {
+            $this->assertFalse($report->isSuccess());
+            $this->assertTrue($report->isSubscriptionExpired());
+            $this->assertEquals(410, $report->getResponse()->getStatusCode());
+            $this->assertNotEmpty($report->getReason());
+            $this->assertNotFalse(filter_var($report->getEndpoint(), FILTER_VALIDATE_URL));
+        };
+
+        $this->webPush->flushPooled($callback);
+    }
+
     public function testFlushEmpty(): void
     {
         $this->assertEmpty(iterator_to_array($this->webPush->flush(300)));
