@@ -2,7 +2,7 @@ parameters:
     level: 7
     paths:
         - src
-    checkMissingIterableValueType: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - '#Unreachable statement \- code above always terminates\.#'
+        - identifier: missingType.iterableValue
