@@ -31,7 +31,7 @@ class WebPush
     protected ?array $notifications = null;
 
     /**
-     * @var array Default options: TTL, urgency, topic, batchSize, concurrency
+     * @var array Default options: TTL, urgency, topic, batchSize, requestConcurrency
      */
     protected array $defaultOptions;
 
@@ -54,7 +54,7 @@ class WebPush
      * WebPush constructor.
      *
      * @param array    $auth           Some servers need authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize, concurrency
+     * @param array    $defaultOptions TTL, urgency, topic, batchSize, requestConcurrency
      * @param int|null $timeout        Timeout of POST request
      *
      * @throws \ErrorException
@@ -181,9 +181,9 @@ class WebPush
      *
      * @param callable(MessageSentReport): void $callback Callback for each notification
      * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
-     * @param null|int $concurrency Defaults the value defined in defaultOptions during instantiation (which defaults to 100).
+     * @param null|int $requestConcurrency Defaults the value defined in defaultOptions during instantiation (which defaults to 100).
      */
-    public function flushPooled($callback, ?int $batchSize = null, ?int $concurrency = null): void
+    public function flushPooled($callback, ?int $batchSize = null, ?int $requestConcurrency = null): void
     {
         if (empty($this->notifications)) {
             return;
@@ -193,8 +193,8 @@ class WebPush
             $batchSize = $this->defaultOptions['batchSize'];
         }
 
-        if (null === $concurrency) {
-            $concurrency = $this->defaultOptions['concurrency'];
+        if (null === $requestConcurrency) {
+            $requestConcurrency = $this->defaultOptions['requestConcurrency'];
         }
 
         $batches = array_chunk($this->notifications, $batchSize);
@@ -203,7 +203,7 @@ class WebPush
         foreach ($batches as $batch) {
             $batch = $this->prepare($batch);
             $pool = new Pool($this->client, $batch, [
-                'concurrency' => $concurrency,
+                'requestConcurrency' => $requestConcurrency,
                 'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
                     /** @var \Psr\Http\Message\RequestInterface $request **/
                     $request = $batch[$index];
@@ -368,7 +368,7 @@ class WebPush
     }
 
     /**
-     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize', 'concurrency'
+     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize', 'requestConcurrency'
      */
     public function setDefaultOptions(array $defaultOptions): WebPush
     {
@@ -376,7 +376,7 @@ class WebPush
         $this->defaultOptions['urgency'] = $defaultOptions['urgency'] ?? null;
         $this->defaultOptions['topic'] = $defaultOptions['topic'] ?? null;
         $this->defaultOptions['batchSize'] = $defaultOptions['batchSize'] ?? 1000;
-        $this->defaultOptions['concurrency'] = $defaultOptions['concurrency'] ?? 100;
+        $this->defaultOptions['requestConcurrency'] = $defaultOptions['requestConcurrency'] ?? 100;
 
 
         return $this;
