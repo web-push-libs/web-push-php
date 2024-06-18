@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Minishlink\WebPush;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Pool;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use ParagonIE\ConstantTime\Base64UrlSafe;
@@ -30,7 +31,7 @@ class WebPush
     protected ?array $notifications = null;
 
     /**
-     * @var array Default options: TTL, urgency, topic, batchSize
+     * @var array Default options: TTL, urgency, topic, batchSize, requestConcurrency
      */
     protected array $defaultOptions;
 
@@ -53,7 +54,7 @@ class WebPush
      * WebPush constructor.
      *
      * @param array    $auth           Some servers need authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize
+     * @param array    $defaultOptions TTL, urgency, topic, batchSize, requestConcurrency
      * @param int|null $timeout        Timeout of POST request
      *
      * @throws \ErrorException
@@ -168,6 +169,58 @@ class WebPush
             foreach ($promises as $promise) {
                 yield $promise->wait();
             }
+        }
+
+        if ($this->reuseVAPIDHeaders) {
+            $this->vapidHeaders = [];
+        }
+    }
+
+    /**
+     * Flush notifications. Triggers concurrent requests.
+     *
+     * @param callable(MessageSentReport): void $callback Callback for each notification
+     * @param null|int $batchSize Defaults the value defined in defaultOptions during instantiation (which defaults to 1000).
+     * @param null|int $requestConcurrency Defaults the value defined in defaultOptions during instantiation (which defaults to 100).
+     */
+    public function flushPooled($callback, ?int $batchSize = null, ?int $requestConcurrency = null): void
+    {
+        if (empty($this->notifications)) {
+            return;
+        }
+
+        if (null === $batchSize) {
+            $batchSize = $this->defaultOptions['batchSize'];
+        }
+
+        if (null === $requestConcurrency) {
+            $requestConcurrency = $this->defaultOptions['requestConcurrency'];
+        }
+
+        $batches = array_chunk($this->notifications, $batchSize);
+        $this->notifications = [];
+
+        foreach ($batches as $batch) {
+            $batch = $this->prepare($batch);
+            $pool = new Pool($this->client, $batch, [
+                'requestConcurrency' => $requestConcurrency,
+                'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
+                    /** @var \Psr\Http\Message\RequestInterface $request **/
+                    $request = $batch[$index];
+                    $callback(new MessageSentReport($request, $response));
+                },
+                'rejected' => function (RequestException $reason) use ($callback) {
+                    if (method_exists($reason, 'getResponse')) {
+                        $response = $reason->getResponse();
+                    } else {
+                        $response = null;
+                    }
+                    $callback(new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage()));
+                },
+            ]);
+
+            $promise = $pool->promise();
+            $promise->wait();
         }
 
         if ($this->reuseVAPIDHeaders) {
@@ -315,7 +368,7 @@ class WebPush
     }
 
     /**
-     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize'
+     * @param array $defaultOptions Keys 'TTL' (Time To Live, defaults 4 weeks), 'urgency', 'topic', 'batchSize', 'requestConcurrency'
      */
     public function setDefaultOptions(array $defaultOptions): WebPush
     {
@@ -323,6 +376,8 @@ class WebPush
         $this->defaultOptions['urgency'] = $defaultOptions['urgency'] ?? null;
         $this->defaultOptions['topic'] = $defaultOptions['topic'] ?? null;
         $this->defaultOptions['batchSize'] = $defaultOptions['batchSize'] ?? 1000;
+        $this->defaultOptions['requestConcurrency'] = $defaultOptions['requestConcurrency'] ?? 100;
+
 
         return $this;
     }
