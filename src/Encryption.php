@@ -21,7 +21,7 @@ use Jose\Component\Core\Util\ECKey;
 class Encryption
 {
     public const MAX_PAYLOAD_LENGTH = 4078;
-    public const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 3052;
+    public const MAX_COMPATIBILITY_PAYLOAD_LENGTH = 2820;
 
     /**
      * @return string padded payload (plaintext)
