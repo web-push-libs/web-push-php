@@ -216,7 +216,7 @@ class WebPush
                         $response = null;
                     }
                     $callback(new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage()));
-                }
+                },
             ]);
 
             $promise = $pool->promise();
