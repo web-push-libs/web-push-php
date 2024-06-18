@@ -29,7 +29,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     {
         // Base64 URL-safe, no padding
         $this->assertEquals('When I grow up, I want to be a watermelon', $this->base64Decode('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24'));
-        $this->assertEquals('<<???>>', $this->base64Decode('PDwPz8-Pg'));
+        $this->assertEquals('<<???>>', $this->base64Decode('PDw_Pz8-Pg'));
 
         // Standard Base64
         $this->assertEquals('When I grow up, I want to be a watermelon', $this->base64Decode('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24='));
