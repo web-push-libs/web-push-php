@@ -31,7 +31,7 @@ class WebPush
     protected ?array $notifications = null;
 
     /**
-     * @var array Default options: TTL, urgency, topic, batchSize
+     * @var array Default options: TTL, urgency, topic, batchSize, concurrency
      */
     protected array $defaultOptions;
 
@@ -54,7 +54,7 @@ class WebPush
      * WebPush constructor.
      *
      * @param array    $auth           Some servers need authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize
+     * @param array    $defaultOptions TTL, urgency, topic, batchSize, concurrency
      * @param int|null $timeout        Timeout of POST request
      *
      * @throws \ErrorException
@@ -205,7 +205,7 @@ class WebPush
             $pool = new Pool($this->client, $batch, [
                 'concurrency' => $concurrency,
                 'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
-                    /** @var RequestInterface $request **/
+                    /** @var \Psr\Http\Message\RequestInterface $request **/
                     $request = $batch[$index];
                     $callback(new MessageSentReport($request, $response));
                 },
