@@ -16,8 +16,10 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class WebPush
@@ -152,17 +154,11 @@ class WebPush
             foreach ($requests as $request) {
                 $promises[] = $this->client->sendAsync($request)
                     ->then(function ($response) use ($request) {
-                        /** @var ResponseInterface $response * */
+                        /** @var ResponseInterface $response **/
                         return new MessageSentReport($request, $response);
                     })
                     ->otherwise(function ($reason) {
-                        /** @var RequestException $reason **/
-                        if (method_exists($reason, 'getResponse')) {
-                            $response = $reason->getResponse();
-                        } else {
-                            $response = null;
-                        }
-                        return new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage());
+                        return $this->createRejectedReport($reason);
                     });
             }
 
@@ -205,17 +201,12 @@ class WebPush
             $pool = new Pool($this->client, $batch, [
                 'requestConcurrency' => $requestConcurrency,
                 'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
-                    /** @var \Psr\Http\Message\RequestInterface $request **/
+                    /** @var RequestInterface $request **/
                     $request = $batch[$index];
                     $callback(new MessageSentReport($request, $response));
                 },
-                'rejected' => function (RequestException $reason) use ($callback) {
-                    if (method_exists($reason, 'getResponse')) {
-                        $response = $reason->getResponse();
-                    } else {
-                        $response = null;
-                    }
-                    $callback(new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage()));
+                'rejected' => function ($reason) use ($callback) {
+                    $callback($this->createRejectedReport($reason));
                 },
             ]);
 
@@ -226,6 +217,21 @@ class WebPush
         if ($this->reuseVAPIDHeaders) {
             $this->vapidHeaders = [];
         }
+    }
+
+    /**
+     * @param RequestException|ConnectException $reason
+     * @return MessageSentReport
+     */
+    protected function createRejectedReport($reason): MessageSentReport
+    {
+        if ($reason instanceof RequestException) {
+            $response = $reason->getResponse();
+        } else {
+            $response = null;
+        }
+
+        return new MessageSentReport($reason->getRequest(), $response, false, $reason->getMessage());
     }
 
     /**
