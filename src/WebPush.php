@@ -341,10 +341,10 @@ class WebPush
             $automaticPadding = 0;
         }
 
-        if($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
+        if ($automaticPadding > Encryption::MAX_PAYLOAD_LENGTH) {
             throw new \ValueError('Automatic padding is too large. Max is '.Encryption::MAX_PAYLOAD_LENGTH.'. Recommended max is '.Encryption::MAX_COMPATIBILITY_PAYLOAD_LENGTH.' for compatibility reasons (see README).');
         }
-        if($automaticPadding < 0) {
+        if ($automaticPadding < 0) {
             throw new \ValueError('Padding length should be positive or zero.');
         }
 
