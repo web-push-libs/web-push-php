@@ -267,9 +267,9 @@ class Encryption
         if (empty($userAuthToken)) {
             return $sharedSecret;
         }
-        if($contentEncoding === "aesgcm") {
+        if ($contentEncoding === "aesgcm") {
             $info = 'Content-Encoding: auth'.chr(0);
-        } elseif($contentEncoding === "aes128gcm") {
+        } elseif ($contentEncoding === "aes128gcm") {
             $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
         } else {
             throw new \ValueError("This content encoding is not supported.");

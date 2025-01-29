@@ -25,7 +25,7 @@ class Subscription implements SubscriptionInterface
         private ?string $authToken = null,
         private ?string $contentEncoding = null
     ) {
-        if($publicKey || $authToken || $contentEncoding) {
+        if ($publicKey || $authToken || $contentEncoding) {
             $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
             if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings, true)) {
                 throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
