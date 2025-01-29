@@ -235,7 +235,8 @@ class WebPush
     }
 
     /**
-     * @throws \ErrorException|\Random\RandomException
+     * @throws \ErrorException
+     * add back @throws \Random\RandomException when we drop PHP 8.1 support
      */
     protected function prepare(array $notifications): array
     {
