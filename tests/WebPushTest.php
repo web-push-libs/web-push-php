@@ -11,11 +11,10 @@
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\SubscriptionInterface;
 use Minishlink\WebPush\WebPush;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * @covers \Minishlink\WebPush\WebPush
- */
+#[CoversClass(WebPush::class)]
 final class WebPushTest extends PHPUnit\Framework\TestCase
 {
     private static array $endpoints;
@@ -135,8 +134,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     }
 
     /**
-     * @param SubscriptionInterface $subscription
-     * @param string                $payload
      * @throws ErrorException
      */
     #[dataProvider('notificationProvider')]

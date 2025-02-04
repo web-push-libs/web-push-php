@@ -12,11 +12,10 @@ use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * @covers \Minishlink\WebPush\Encryption
- */
+#[CoversClass(Encryption::class)]
 final class EncryptionTest extends PHPUnit\Framework\TestCase
 {
     public function testBase64Encode(): void
