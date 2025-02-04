@@ -33,7 +33,7 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
-    "guzzlehttp/guzzle": "^7.4.5",
+    "guzzlehttp/guzzle": "^7.9.2",
     "web-token/jwt-library": "^3.3.0|^4.0.0",
     "spomky-labs/base64url": "^2.0.4"
   },
