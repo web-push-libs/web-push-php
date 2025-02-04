@@ -2,11 +2,10 @@
 
 use Jose\Component\KeyManagement\JWKFactory;
 use Minishlink\WebPush\Utils;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Minishlink\WebPush\Utils
- */
+#[CoversClass(Utils::class)]
 final class UtilsTest extends TestCase
 {
     public function testSerializePublicKey(): void

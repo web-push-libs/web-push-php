@@ -7,12 +7,11 @@
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Minishlink\WebPush\MessageSentReport;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Minishlink\WebPush\MessageSentReport
- */
+#[CoversClass(MessageSentReport::class)]
 class MessageSentReportTest extends TestCase
 {
     #[dataProvider('generateReportsWithExpiration')]

@@ -1,10 +1,9 @@
 <?php declare(strict_types=1);
 
 use Minishlink\WebPush\Subscription;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-/**
- * @covers \Minishlink\WebPush\Subscription
- */
+#[CoversClass(Subscription::class)]
 class SubscriptionTest extends PHPUnit\Framework\TestCase
 {
     public function testCreateMinimal(): void
