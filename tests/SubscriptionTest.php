@@ -14,18 +14,18 @@ class SubscriptionTest extends PHPUnit\Framework\TestCase
         ];
         $subscription = Subscription::create($subscriptionArray);
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
-        $this->assertEquals(null, $subscription->getPublicKey());
-        $this->assertEquals(null, $subscription->getAuthToken());
-        $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->assertNull($subscription->getPublicKey());
+        $this->assertNull($subscription->getAuthToken());
+        $this->assertNull($subscription->getContentEncoding());
     }
 
     public function testConstructMinimal(): void
     {
         $subscription = new Subscription("http://toto.com");
         $this->assertEquals("http://toto.com", $subscription->getEndpoint());
-        $this->assertEquals(null, $subscription->getPublicKey());
-        $this->assertEquals(null, $subscription->getAuthToken());
-        $this->assertEquals(null, $subscription->getContentEncoding());
+        $this->assertNull($subscription->getPublicKey());
+        $this->assertNull($subscription->getAuthToken());
+        $this->assertNull($subscription->getContentEncoding());
     }
 
     public function testCreatePartial(): void
