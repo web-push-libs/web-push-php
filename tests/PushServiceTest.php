@@ -11,14 +11,15 @@
 use Minishlink\WebPush\MessageSentReport;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\WebPush;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 
 /**
  * Test with test server.
- * @coversNothing
  */
 #[group('online')]
+#[CoversNothing]
 final class PushServiceTest extends PHPUnit\Framework\TestCase
 {
     private static int    $timeout    = 30;

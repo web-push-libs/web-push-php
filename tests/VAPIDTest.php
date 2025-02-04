@@ -10,11 +10,10 @@
 
 use Minishlink\WebPush\Utils;
 use Minishlink\WebPush\VAPID;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-/**
- * @covers \Minishlink\WebPush\VAPID
- */
+#[CoversClass(VAPID::class)]
 final class VAPIDTest extends PHPUnit\Framework\TestCase
 {
     public static function vapidProvider(): array
@@ -74,10 +73,6 @@ final class VAPIDTest extends PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * @param string $auth
-     * @return array
-     */
     private function explodeAuthorization(string $auth): array
     {
         $auth = explode('.', $auth);
