@@ -7,6 +7,7 @@ $rules  = [
     '@PHP81Migration'                     => true, // Must be the same as the min PHP version.
     'blank_line_after_opening_tag'        => false, // Do not waste space between <?php and declare.
     'global_namespace_import'             => ['import_classes' => false, 'import_constants' => false, 'import_functions' => false],
+    'php_unit_construct'                  => true,
     'php_unit_attributes'                 => true,
     'php_unit_method_casing'              => true,
     'php_unit_test_class_requires_covers' => true,
