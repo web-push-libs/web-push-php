@@ -10,6 +10,7 @@
 
 use Base64Url\Base64Url;
 use Jose\Component\Core\JWK;
+use Minishlink\WebPush\ContentEncoding;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Utils;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -37,7 +38,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
 
     public function testDeterministicEncrypt(): void
     {
-        $contentEncoding = 'aes128gcm';
+        $contentEncoding = ContentEncoding::aes128gcm;
         $plaintext = 'When I grow up, I want to be a watermelon';
 
         $payload = Encryption::padPayload($plaintext, 0, $contentEncoding);
@@ -83,7 +84,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         $localPublicKey = $this->base64Decode('BP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
         $salt = $this->base64Decode('DGv6ra1nlYgDCS1FRnbzlw');
 
-        $result = Encryption::getContentCodingHeader($salt, $localPublicKey, "aes128gcm");
+        $result = Encryption::getContentCodingHeader($salt, $localPublicKey, ContentEncoding::aes128gcm);
         $expected = $this->base64Decode('DGv6ra1nlYgDCS1FRnbzlwAAEABBBP4z9KsN6nGRTbVYI_c7VJSPQTBtkgcy27mlmlMoZIIgDll6e3vCYLocInmYWAmS6TlzAC8wEqKK6PBru3jl7A8');
 
         $this->assertEquals(Utils::safeStrlen($expected), Utils::safeStrlen($result));
@@ -96,7 +97,7 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
     #[dataProvider('payloadProvider')]
     public function testPadPayload(string $payload, int $maxLengthToPad, int $expectedResLength): void
     {
-        $res = Encryption::padPayload($payload, $maxLengthToPad, 'aesgcm');
+        $res = Encryption::padPayload($payload, $maxLengthToPad, ContentEncoding::aesgcm);
 
         $this->assertStringContainsString('test', $res);
         $this->assertEquals($expectedResLength, Utils::safeStrlen($res));
