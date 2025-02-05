@@ -199,7 +199,7 @@ class WebPush
         foreach ($batches as $batch) {
             $batch = $this->prepare($batch);
             $pool = new Pool($this->client, $batch, [
-                'requestConcurrency' => $requestConcurrency,
+                'concurrency' => $requestConcurrency,
                 'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
                     /** @var RequestInterface $request **/
                     $request = $batch[$index];
