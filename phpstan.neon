@@ -5,3 +5,9 @@ parameters:
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - identifier: missingType.iterableValue
+    strictRules:
+        booleansInConditions: false
+        disallowedEmpty: false
+
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon

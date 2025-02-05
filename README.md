@@ -67,6 +67,7 @@ $notifications = [
                   'p256dh' => '(stringOf88Chars)',
                   'auth' => '(stringOf24Chars)'
               ],
+              // key 'contentEncoding' is optional and defaults to Subscription::defaultContentEncoding
           ]),
           'payload' => '{"message":"Hello World!"}',
     ], [

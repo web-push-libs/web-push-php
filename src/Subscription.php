@@ -15,22 +15,34 @@ namespace Minishlink\WebPush;
 
 class Subscription implements SubscriptionInterface
 {
+    public const defaultContentEncoding = ContentEncoding::aesgcm; // Default for legacy input. The next mayor will use "aes128gcm" as defined to rfc8291.
+    protected ?ContentEncoding $contentEncoding = null;
+
     /**
-     * @param string|null $contentEncoding (Optional) Must be "aesgcm"
-     * @throws \ErrorException
+     * This is a data class. No key validation is done.
+     * @param string|\Minishlink\WebPush\ContentEncoding|null $contentEncoding (Optional) defaults to "aesgcm". The next mayor will use "aes128gcm" as defined to rfc8291.
      */
     public function __construct(
         private string  $endpoint,
         private ?string $publicKey = null,
         private ?string $authToken = null,
-        private ?string $contentEncoding = null
+        ContentEncoding|string|null $contentEncoding = null,
     ) {
         if ($publicKey || $authToken || $contentEncoding) {
-            $supportedContentEncodings = ['aesgcm', 'aes128gcm'];
-            if ($contentEncoding && !in_array($contentEncoding, $supportedContentEncodings, true)) {
-                throw new \ErrorException('This content encoding ('.$contentEncoding.') is not supported.');
+            if (is_string($contentEncoding)) {
+                try {
+                    if (empty($contentEncoding)) {
+                        $contentEncoding = self::defaultContentEncoding;
+                    } else {
+                        $contentEncoding = ContentEncoding::from($contentEncoding);
+                    }
+                } catch (\ValueError) {
+                    throw new \ValueError('This content encoding ('.$contentEncoding.') is not supported.');
+                }
+            } elseif ($contentEncoding === null) {
+                $contentEncoding =  self::defaultContentEncoding;
             }
-            $this->contentEncoding = $contentEncoding ?: "aesgcm";
+            $this->contentEncoding = $contentEncoding;
         }
     }
 
@@ -45,7 +57,7 @@ class Subscription implements SubscriptionInterface
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? ContentEncoding::aesgcm,
             );
         }
 
@@ -54,7 +66,7 @@ class Subscription implements SubscriptionInterface
                 $associativeArray['endpoint'],
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
-                $associativeArray['contentEncoding'] ?? "aesgcm"
+                $associativeArray['contentEncoding'] ?? ContentEncoding::aesgcm,
             );
         }
 
@@ -91,6 +103,11 @@ class Subscription implements SubscriptionInterface
      * {@inheritDoc}
      */
     public function getContentEncoding(): ?string
+    {
+        return $this->contentEncoding?->value;
+    }
+
+    public function getContentEncodingTyped(): ?ContentEncoding
     {
         return $this->contentEncoding;
     }
