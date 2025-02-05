@@ -34,8 +34,9 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "guzzlehttp/guzzle": "^7.4.5",
-    "web-token/jwt-library": "^3.3.0|^4.0.0",
-    "spomky-labs/base64url": "^2.0.4"
+    "spomky-labs/base64url": "^2.0.4",
+    "symfony/polyfill-php82": "^v1.31.0",
+    "web-token/jwt-library": "^3.3.0|^4.0.0"
   },
   "suggest": {
     "ext-bcmath": "Optional for performance.",

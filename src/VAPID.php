@@ -97,8 +97,15 @@ class VAPID
      * @return array Returns an array with the 'Authorization' and 'Crypto-Key' values to be used as headers
      * @throws \ErrorException
      */
-    public static function getVapidHeaders(string $audience, string $subject, string $publicKey, string $privateKey, string $contentEncoding, ?int $expiration = null): array
-    {
+    public static function getVapidHeaders(
+        string $audience,
+        string $subject,
+        string $publicKey,
+        #[\SensitiveParameter]
+        string $privateKey,
+        string $contentEncoding,
+        ?int $expiration = null,
+    ): array {
         $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
         if (null === $expiration || $expiration > $expirationLimit) {
             $expiration = $expirationLimit;

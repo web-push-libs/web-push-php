@@ -47,10 +47,16 @@ class Encryption
      * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
      * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
      *
-     * @throws \ErrorException
+     * @throws \ErrorException Thrown on php 8.1
+     * @throws \Random\RandomException Thrown on php 8.2 and higher
      */
-    public static function encrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding): array
-    {
+    public static function encrypt(
+        string $payload,
+        string $userPublicKey,
+        #[\SensitiveParameter]
+        string $userAuthToken,
+        string $contentEncoding,
+    ): array {
         return self::deterministicEncrypt(
             $payload,
             $userPublicKey,
@@ -64,8 +70,15 @@ class Encryption
     /**
      * @throws \RuntimeException
      */
-    public static function deterministicEncrypt(string $payload, string $userPublicKey, string $userAuthToken, string $contentEncoding, array $localKeyObject, string $salt): array
-    {
+    public static function deterministicEncrypt(
+        string $payload,
+        string $userPublicKey,
+        #[\SensitiveParameter]
+        string $userAuthToken,
+        string $contentEncoding,
+        array $localKeyObject,
+        string $salt
+    ): array {
         $userPublicKey = Base64Url::decode($userPublicKey);
         $userAuthToken = Base64Url::decode($userAuthToken);
 
