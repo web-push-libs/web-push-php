@@ -263,7 +263,7 @@ class WebPush
                 $localPublicKey = $encrypted['localPublicKey'];
 
                 $headers = [
-                    'Content-Type' => 'application/octet-stream',
+                    'Content-Type' => $options['contentType'],
                     'Content-Encoding' => $contentEncoding,
                 ];
 
@@ -384,6 +384,7 @@ class WebPush
         $this->defaultOptions['topic'] = $defaultOptions['topic'] ?? null;
         $this->defaultOptions['batchSize'] = $defaultOptions['batchSize'] ?? 1000;
         $this->defaultOptions['requestConcurrency'] = $defaultOptions['requestConcurrency'] ?? 100;
+        $this->defaultOptions['contentType'] = $defaultOptions['contentType'] ?? 'application/octet-stream';
 
 
         return $this;
