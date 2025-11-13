@@ -202,6 +202,7 @@ $defaultOptions = [
     'urgency' => 'normal', // protocol defaults to "normal". (very-low, low, normal, or high)
     'topic' => 'newEvent', // not defined by default. Max. 32 characters from the URL or filename-safe Base64 characters sets
     'batchSize' => 200, // defaults to 1000
+    'contentType' => 'application/json', // defaults to "application/octet-stream"
 ];
 
 // for every notification
@@ -234,6 +235,11 @@ If you send tens of thousands notifications at a time, you may get memory overfl
 In order to fix this, WebPush sends notifications in batches. The default size is 1000. Depending on your server configuration (memory), you may want
 to decrease this number. Do this while instantiating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
 it as a parameter : `$webPush->flush($batchSize)`.
+
+#### contentType
+
+Sets the "Content-Type" header for HTTP requests with a non-empty payload sent to the push service. 
+Especially newer [Declarative push messages](https://www.w3.org/TR/push-api/#declarative-push-message) require a specific JSON payload, so this should be set to "application/json" in such cases.
 
 ### Server errors
 
