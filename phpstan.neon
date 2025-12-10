@@ -4,5 +4,4 @@ parameters:
         - src
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
-        - '#Unreachable statement \- code above always terminates\.#'
         - identifier: missingType.iterableValue
