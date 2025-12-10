@@ -103,7 +103,7 @@ class VAPID
         string $publicKey,
         #[\SensitiveParameter]
         string $privateKey,
-        string $contentEncoding,
+        ContentEncoding $contentEncoding,
         ?int $expiration = null,
     ): array {
         $expirationLimit = time() + 43200; // equal margin of error between 0 and 24h
@@ -145,14 +145,14 @@ class VAPID
         $jwt = $jwsCompactSerializer->serialize($jws, 0);
         $encodedPublicKey = Base64Url::encode($publicKey);
 
-        if ($contentEncoding === "aesgcm") {
+        if ($contentEncoding === ContentEncoding::aesgcm) {
             return [
                 'Authorization' => 'WebPush '.$jwt,
                 'Crypto-Key' => 'p256ecdsa='.$encodedPublicKey,
             ];
         }
 
-        if ($contentEncoding === 'aes128gcm') {
+        if ($contentEncoding === ContentEncoding::aes128gcm) {
             return [
                 'Authorization' => 'vapid t='.$jwt.', k='.$encodedPublicKey,
             ];
