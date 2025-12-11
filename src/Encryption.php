@@ -296,7 +296,7 @@ class Encryption
         $publicPem = ECKey::convertPublicKeyToPEM($public_key);
         $privatePem = ECKey::convertPrivateKeyToPEM($private_key);
 
-        $result = openssl_pkey_derive($publicPem, $privatePem, 256);
+        $result = openssl_pkey_derive($publicPem, $privatePem);
         if ($result === false) {
             throw new \RuntimeException('Unable to compute the agreement key.');
         }

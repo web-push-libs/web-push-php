@@ -166,7 +166,6 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
         if (!$resp) {
             $error = 'Curl error: n'.curl_errno($ch).' - '.curl_error($ch);
-            curl_close($ch);
             throw new RuntimeException($error);
         }
 
@@ -175,9 +174,6 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         if (!property_exists($parsedResp, 'data')) {
             throw new RuntimeException('web-push-testing-service error: '.$resp);
         }
-
-        // Close request to clear up some resources
-        curl_close($ch);
 
         return $parsedResp;
     }

@@ -107,7 +107,6 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
 
         if (!$response) {
             $error = 'Curl error: n'.curl_errno($getSubscriptionCurl).' - '.curl_error($getSubscriptionCurl);
-            curl_close($getSubscriptionCurl);
             throw new RuntimeException($error);
         }
 
