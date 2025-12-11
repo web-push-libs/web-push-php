@@ -157,9 +157,7 @@ class WebPush
                         /** @var ResponseInterface $response **/
                         return new MessageSentReport($request, $response);
                     })
-                    ->otherwise(function ($reason) {
-                        return $this->createRejectedReport($reason);
-                    });
+                    ->otherwise(fn ($reason) => $this->createRejectedReport($reason));
             }
 
             foreach ($promises as $promise) {
@@ -200,12 +198,12 @@ class WebPush
             $batch = $this->prepare($batch);
             $pool = new Pool($this->client, $batch, [
                 'concurrency' => $requestConcurrency,
-                'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch) {
+                'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch): void {
                     /** @var RequestInterface $request **/
                     $request = $batch[$index];
                     $callback(new MessageSentReport($request, $response));
                 },
-                'rejected' => function ($reason) use ($callback) {
+                'rejected' => function ($reason) use ($callback): void {
                     $callback($this->createRejectedReport($reason));
                 },
             ]);

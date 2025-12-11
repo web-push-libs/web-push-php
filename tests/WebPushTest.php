@@ -248,7 +248,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 2], JSON_THROW_ON_ERROR));
         $this->webPush->queueNotification($nonExistentSubscription, json_encode(['test' => 3], JSON_THROW_ON_ERROR));
 
-        $callback = function ($report) {
+        $callback = function ($report): void {
             $this->assertFalse($report->isSuccess());
             $this->assertTrue($report->isSubscriptionExpired());
             $this->assertEquals(410, $report->getResponse()->getStatusCode());
