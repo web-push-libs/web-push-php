@@ -10,7 +10,7 @@ This push message is then received by the browser, which can then create a notif
 
 ## Requirements
 
-PHP 8.1+ and the following extensions:
+PHP 8.2+ and the following extensions:
 
 - bcmath and/or gmp (optional but better for performance)
 - mbstring
@@ -25,6 +25,7 @@ There is no support and maintenance for older PHP versions, however you are free
 - PHP 7.2: `v6.x`
 - PHP 7.3 7.4: `v7.x`
 - PHP 8.0 / Openssl without elliptic curve support: `v8.x`
+- PHP 8.1: `v9.x`
 
 This README is only compatible with the latest version. Each version of the library has a git tag where the corresponding README can be read.
 
