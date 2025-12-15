@@ -15,12 +15,12 @@ namespace Minishlink\WebPush;
 
 class Subscription implements SubscriptionInterface
 {
-    public const defaultContentEncoding = ContentEncoding::aesgcm; // Default for legacy input. The next mayor will use "aes128gcm" as defined to rfc8291.
+    public const defaultContentEncoding = ContentEncoding::aesgcm; // Default for legacy input. The next major will use "aes128gcm" as defined to rfc8291.
     protected ?ContentEncoding $contentEncoding = null;
 
     /**
      * This is a data class. No key validation is done.
-     * @param string|\Minishlink\WebPush\ContentEncoding|null $contentEncoding (Optional) defaults to "aesgcm". The next mayor will use "aes128gcm" as defined to rfc8291.
+     * @param string|\Minishlink\WebPush\ContentEncoding|null $contentEncoding (Optional) defaults to "aesgcm". The next major will use "aes128gcm" as defined to rfc8291.
      */
     public function __construct(
         private string  $endpoint,
