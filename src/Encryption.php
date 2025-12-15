@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 /*
  * This file is part of the WebPush library.
@@ -27,19 +25,20 @@ class Encryption
      * @return string padded payload (plaintext)
      * @throws \ErrorException
      */
-    public static function padPayload(string $payload, int $maxLengthToPad, string $contentEncoding): string
+    public static function padPayload(string $payload, int $maxLengthToPad, ContentEncoding $contentEncoding): string
     {
         $payloadLen = Utils::safeStrlen($payload);
         $padLen = $maxLengthToPad ? $maxLengthToPad - $payloadLen : 0;
 
-        if ($contentEncoding === "aesgcm") {
+        if ($contentEncoding === ContentEncoding::aesgcm) {
             return pack('n*', $padLen).str_pad($payload, $padLen + $payloadLen, chr(0), STR_PAD_LEFT);
         }
-        if ($contentEncoding === "aes128gcm") {
+        if ($contentEncoding === ContentEncoding::aes128gcm) {
             return str_pad($payload.chr(2), $padLen + $payloadLen, chr(0), STR_PAD_RIGHT);
         }
 
-        throw new \ErrorException("This content encoding is not supported");
+        // @phpstan-ignore deadCode.unreachable
+        throw new \ErrorException("This content encoding is not implemented.");
     }
 
     /**
@@ -47,7 +46,6 @@ class Encryption
      * @param string $userPublicKey Base 64 encoded (MIME or URL-safe)
      * @param string $userAuthToken Base 64 encoded (MIME or URL-safe)
      *
-     * @throws \ErrorException Thrown on php 8.1
      * @throws \Random\RandomException Thrown on php 8.2 and higher
      */
     public static function encrypt(
@@ -55,7 +53,7 @@ class Encryption
         string $userPublicKey,
         #[\SensitiveParameter]
         string $userAuthToken,
-        string $contentEncoding,
+        ContentEncoding $contentEncoding,
     ): array {
         return self::deterministicEncrypt(
             $payload,
@@ -68,14 +66,14 @@ class Encryption
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws \RuntimeException|\ErrorException
      */
     public static function deterministicEncrypt(
         string $payload,
         string $userPublicKey,
         #[\SensitiveParameter]
         string $userAuthToken,
-        string $contentEncoding,
+        ContentEncoding $contentEncoding,
         array $localKeyObject,
         string $salt
     ): array {
@@ -125,7 +123,7 @@ class Encryption
         $context = self::createContext($userPublicKey, $localPublicKey, $contentEncoding);
 
         // derive the Content Encryption Key
-        $contentEncryptionKeyInfo = self::createInfo($contentEncoding, $context, $contentEncoding);
+        $contentEncryptionKeyInfo = self::createInfo($contentEncoding->value, $context, $contentEncoding);
         $contentEncryptionKey = self::hkdf($salt, $ikm, $contentEncryptionKeyInfo, 16);
 
         // section 3.3, derive the nonce
@@ -145,16 +143,20 @@ class Encryption
         ];
     }
 
-    public static function getContentCodingHeader(string $salt, string $localPublicKey, string $contentEncoding): string
+    public static function getContentCodingHeader(string $salt, string $localPublicKey, ContentEncoding $contentEncoding): string
     {
-        if ($contentEncoding === "aes128gcm") {
+        if ($contentEncoding === ContentEncoding::aesgcm) {
+            return "";
+        }
+        if ($contentEncoding === ContentEncoding::aes128gcm) {
             return $salt
                 .pack('N*', 4096)
                 .pack('C*', Utils::safeStrlen($localPublicKey))
                 .$localPublicKey;
         }
 
-        return "";
+        // @phpstan-ignore deadCode.unreachable
+        throw new \ValueError("This content encoding is not implemented.");
     }
 
     /**
@@ -195,19 +197,19 @@ class Encryption
      *
      * @throws \ErrorException
      */
-    private static function createContext(string $clientPublicKey, string $serverPublicKey, string $contentEncoding): ?string
+    private static function createContext(string $clientPublicKey, string $serverPublicKey, ContentEncoding $contentEncoding): ?string
     {
-        if ($contentEncoding === "aes128gcm") {
+        if ($contentEncoding === ContentEncoding::aes128gcm) {
             return null;
         }
 
         if (Utils::safeStrlen($clientPublicKey) !== 65) {
-            throw new \ErrorException('Invalid client public key length');
+            throw new \ErrorException('Invalid client public key length.');
         }
 
         // This one should never happen, because it's our code that generates the key
         if (Utils::safeStrlen($serverPublicKey) !== 65) {
-            throw new \ErrorException('Invalid server public key length');
+            throw new \ErrorException('Invalid server public key length.');
         }
 
         $len = chr(0).'A'; // 65 as Uint16BE
@@ -225,25 +227,26 @@ class Encryption
      *
      * @throws \ErrorException
      */
-    private static function createInfo(string $type, ?string $context, string $contentEncoding): string
+    private static function createInfo(string $type, ?string $context, ContentEncoding $contentEncoding): string
     {
-        if ($contentEncoding === "aesgcm") {
+        if ($contentEncoding === ContentEncoding::aesgcm) {
             if (!$context) {
-                throw new \ErrorException('Context must exist');
+                throw new \ValueError('Context must exist.');
             }
 
             if (Utils::safeStrlen($context) !== 135) {
-                throw new \ErrorException('Context argument has invalid size');
+                throw new \ValueError('Context argument has invalid size.');
             }
 
             return 'Content-Encoding: '.$type.chr(0).'P-256'.$context;
         }
 
-        if ($contentEncoding === "aes128gcm") {
+        if ($contentEncoding === ContentEncoding::aes128gcm) {
             return 'Content-Encoding: '.$type.chr(0);
         }
 
-        throw new \ErrorException('This content encoding is not supported.');
+        // @phpstan-ignore deadCode.unreachable
+        throw new \ErrorException('This content encoding is not implemented.');
     }
 
     private static function createLocalKeyObject(): array
@@ -275,17 +278,17 @@ class Encryption
     /**
      * @throws \ValueError
      */
-    private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, string $contentEncoding): string
+    private static function getIKM(string $userAuthToken, string $userPublicKey, string $localPublicKey, string $sharedSecret, ContentEncoding $contentEncoding): string
     {
         if (empty($userAuthToken)) {
             return $sharedSecret;
         }
-        if ($contentEncoding === "aesgcm") {
+        if ($contentEncoding === ContentEncoding::aesgcm) {
             $info = 'Content-Encoding: auth'.chr(0);
-        } elseif ($contentEncoding === "aes128gcm") {
+        } elseif ($contentEncoding === ContentEncoding::aes128gcm) {
             $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
         } else {
-            throw new \ValueError("This content encoding is not supported.");
+            throw new \ValueError("This content encoding is not implemented.");
         }
 
         return self::hkdf($userAuthToken, $sharedSecret, $info, 32);
