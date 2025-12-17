@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -82,8 +79,8 @@ class Utils
         }
 
         // Check optional extensions.
-        if (!extension_loaded("bcmath") && !extension_loaded("gmp")) {
-            trigger_error("It is highly recommended to install the GMP or BCMath extension to speed up calculations. The fastest available calculator implementation will be automatically selected at runtime.", E_USER_NOTICE);
+        if (!extension_loaded('bcmath') && !extension_loaded('gmp')) {
+            trigger_error('It is highly recommended to install the GMP or BCMath extension to speed up calculations. The fastest available calculator implementation will be automatically selected at runtime.', E_USER_NOTICE);
         }
     }
 

@@ -19,13 +19,13 @@
     }
   ],
   "scripts": {
-    "fix:syntax": "./vendor/bin/php-cs-fixer fix ./src --using-cache=no",
-    "fix:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --using-cache=no",
+    "fix:syntax": "./vendor/bin/php-cs-fixer fix ./src",
+    "fix:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests",
     "test:unit": "./vendor/bin/phpunit",
     "test:unit_offline": "./vendor/bin/phpunit --exclude-group=online",
     "test:typing": "./vendor/bin/phpstan analyse",
-    "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation --using-cache=no",
-    "test:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --dry-run --stop-on-violation --using-cache=no"
+    "test:syntax": "./vendor/bin/php-cs-fixer fix ./src --dry-run --stop-on-violation",
+    "test:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --dry-run --stop-on-violation"
   },
   "require": {
     "php": ">=8.2",
@@ -44,7 +44,7 @@
   "require-dev": {
     "phpunit/phpunit": "^11.5.46|^12.5.2",
     "phpstan/phpstan": "^2.1.33",
-    "friendsofphp/php-cs-fixer": "^v3.91.3",
+    "friendsofphp/php-cs-fixer": "^v3.92.2",
     "symfony/polyfill-iconv": "^1.33",
     "phpstan/phpstan-strict-rules": "^2.0"
   },

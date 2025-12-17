@@ -99,7 +99,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
-                'Content-Length: ' . strlen($subscriptionParameters),
+                'Content-Length: '.strlen($subscriptionParameters),
             ],
         ]);
 

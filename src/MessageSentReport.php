@@ -1,7 +1,11 @@
 <?php declare(strict_types=1);
-/**
+/*
+ * This file is part of the WebPush library.
+ *
  * @author Igor Timoshenkov [it@campoint.net]
- * @started: 03.09.2018 9:21
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  */
 
 namespace Minishlink\WebPush;
@@ -19,8 +23,7 @@ class MessageSentReport implements \JsonSerializable
         protected ?ResponseInterface $response = null,
         protected bool $success = true,
         protected string $reason = 'OK'
-    ) {
-    }
+    ) {}
 
     public function isSuccess(): bool
     {
