@@ -132,8 +132,8 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
                 $this->assertTrue($report->isSuccess());
 
                 $dataString = json_encode([
-                                              'clientHash' => $clientHash,
-                                          ], JSON_THROW_ON_ERROR);
+                    'clientHash' => $clientHash,
+                ], JSON_THROW_ON_ERROR);
 
                 $getNotificationCurl = curl_init(self::$testServiceUrl.'/get-notifications');
                 curl_setopt_array($getNotificationCurl, [

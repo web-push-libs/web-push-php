@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -158,7 +155,7 @@ class WebPush
                         /** @var ResponseInterface $response **/
                         return new MessageSentReport($request, $response);
                     })
-                    ->otherwise(fn ($reason) => $this->createRejectedReport($reason));
+                    ->otherwise(fn($reason) => $this->createRejectedReport($reason));
             }
 
             foreach ($promises as $promise) {

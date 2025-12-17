@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 /*
  * This file is part of the WebPush library.
  *
@@ -38,7 +37,7 @@ class Encryption
         }
 
         // @phpstan-ignore deadCode.unreachable
-        throw new \ErrorException("This content encoding is not implemented.");
+        throw new \ErrorException('This content encoding is not implemented.');
     }
 
     /**
@@ -146,7 +145,7 @@ class Encryption
     public static function getContentCodingHeader(string $salt, string $localPublicKey, ContentEncoding $contentEncoding): string
     {
         if ($contentEncoding === ContentEncoding::aesgcm) {
-            return "";
+            return '';
         }
         if ($contentEncoding === ContentEncoding::aes128gcm) {
             return $salt
@@ -156,7 +155,7 @@ class Encryption
         }
 
         // @phpstan-ignore deadCode.unreachable
-        throw new \ValueError("This content encoding is not implemented.");
+        throw new \ValueError('This content encoding is not implemented.');
     }
 
     /**
@@ -286,9 +285,9 @@ class Encryption
         if ($contentEncoding === ContentEncoding::aesgcm) {
             $info = 'Content-Encoding: auth'.chr(0);
         } elseif ($contentEncoding === ContentEncoding::aes128gcm) {
-            $info = "WebPush: info".chr(0).$userPublicKey.$localPublicKey;
+            $info = 'WebPush: info'.chr(0).$userPublicKey.$localPublicKey;
         } else {
-            throw new \ValueError("This content encoding is not implemented.");
+            throw new \ValueError('This content encoding is not implemented.');
         }
 
         return self::hkdf($userAuthToken, $sharedSecret, $info, 32);

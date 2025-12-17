@@ -1,7 +1,4 @@
-<?php
-
-declare(strict_types=1);
-
+<?php declare(strict_types=1);
 /*
  * This file is part of the WebPush library.
  *
@@ -24,8 +21,7 @@ class Notification
         private ?string               $payload,
         private array                 $options,
         private array                 $auth
-    ) {
-    }
+    ) {}
 
     public function getSubscription(): SubscriptionInterface
     {
