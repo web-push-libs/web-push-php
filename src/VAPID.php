@@ -113,13 +113,18 @@ class VAPID
             'alg' => 'ES256',
         ];
 
-        $jwtPayload = json_encode([
-            'aud' => $audience,
-            'exp' => $expiration,
-            'sub' => $subject,
-        ], JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK);
-        if (!$jwtPayload) {
-            throw new \ErrorException('Failed to encode JWT payload in JSON');
+
+        try {
+            $jwtPayload = json_encode(
+                [
+                    'aud' => $audience,
+                    'exp' => $expiration,
+                    'sub' => $subject,
+                ],
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
+            );
+        } catch (\JsonException $e) {
+            throw new \ErrorException('Failed to encode JWT payload in JSON: '.$e->getMessage());
         }
 
         [$x, $y] = Utils::unserializePublicKey($publicKey);
