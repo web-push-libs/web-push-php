@@ -20,7 +20,7 @@ jobs:
         php: [ '8.2', '8.3', '8.4', '8.5' ]
         ext_base: [ 'none, dom, tokenizer, xml, xmlwriter,' ]
         ext_lib: [ 'curl, mbstring, openssl,' ]
-        ext_optional: [ '', 'bcmath', 'gmp' ]
+        ext_optional: [ '', 'bcmath', 'gmp', 'sodium' ]
 
     name: PHP ${{ matrix.php }} (${{ matrix.ext_optional }})
 

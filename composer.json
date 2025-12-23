@@ -34,7 +34,6 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "guzzlehttp/guzzle": "^7.9.2",
-    "spomky-labs/base64url": "^2.0.4",
     "web-token/jwt-library": "^3.4.9|^4.0.6"
   },
   "suggest": {
@@ -42,9 +41,10 @@
     "ext-gmp": "Optional for performance."
   },
   "require-dev": {
-    "phpunit/phpunit": "^11.5.46|^12.5.2",
+    "friendsofphp/php-cs-fixer": "^v3.92.3",
     "phpstan/phpstan": "^2.1.33",
-    "friendsofphp/php-cs-fixer": "^v3.92.2",
+    "phpunit/phpunit": "^11.5.46|^12.5.2",
+    "spomky-labs/base64url": "^2.0.4",
     "symfony/polyfill-iconv": "^1.33",
     "phpstan/phpstan-strict-rules": "^2.0"
   },
