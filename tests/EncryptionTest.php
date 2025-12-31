@@ -116,6 +116,9 @@ final class EncryptionTest extends PHPUnit\Framework\TestCase
         ];
     }
 
+    /**
+     * `web-push-php` uses internal base64 functions from `web-token/jwt-library`. For cross testing use `spomky-labs/base64url`.
+     */
     protected function base64Decode(string $value): string
     {
         return Base64Url::decode($value);
