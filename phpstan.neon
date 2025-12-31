@@ -3,6 +3,8 @@ parameters:
     paths:
         - src
     reportUnmatchedIgnoredErrors: false
+    checkMissingOverrideMethodAttribute: true
+    tipsOfTheDay: false
     ignoreErrors:
         - identifier: missingType.iterableValue
     strictRules:

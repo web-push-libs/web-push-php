@@ -25,9 +25,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /** @var WebPush WebPush with correct api keys */
     private WebPush $webPush;
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public static function setUpBeforeClass(): void
     {
         self::$endpoints = [
@@ -52,9 +50,7 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public function setUp(): void
     {
         if (!getenv('CI')) {

@@ -34,9 +34,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     /** @var WebPush WebPush with correct api keys */
     private WebPush $webPush;
 
-    /**
-     * {@inheritdoc}
-     */
+    #[\Override]
     public static function setUpBeforeClass(): void
     {
         self::$testServiceUrl = 'http://localhost:'.self::$portNumber;
