@@ -120,15 +120,15 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
         self::$keys['standard'] = $keys->{'p256dh'};
     }
 
-    /**
-     * @throws ErrorException
-     */
     public static function notificationProvider(): array
     {
         self::setUpBeforeClass(); // dirty hack of PHPUnit limitation
 
         return [
-            [new Subscription(self::$endpoints['standard'] ?: '', self::$keys['standard'] ?: '', self::$tokens['standard'] ?: ''), '{"message":"Comment ça va ?","tag":"general"}'],
+            [
+                new Subscription(self::$endpoints['standard'] ?? '', self::$keys['standard'] ?? '', self::$tokens['standard'] ?? ''),
+                '{"message":"Comment ça va ?","tag":"general"}',
+            ],
         ];
     }
 

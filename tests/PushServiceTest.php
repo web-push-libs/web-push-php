@@ -55,7 +55,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
     /**
      * Selenium tests are flakey so add retries.
      */
-    public function retryTest($retryCount, $test): void
+    public function retryTest(int $retryCount, callable $test): void
     {
         // just like above without checking the annotation
         for ($i = 0; $i < $retryCount; $i++) {
@@ -76,12 +76,12 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
      * Run integration tests with browsers
      */
     #[dataProvider('browserProvider')]
-    public function testBrowsers($browserId, $options): void
+    public function testBrowsers(string $browserId, array $options): void
     {
         $this->retryTest(2, $this->createClosureTest($browserId, $options));
     }
 
-    protected function createClosureTest($browserId, $options): callable
+    protected function createClosureTest(string $browserId, array $options): callable
     {
         return function () use ($browserId, $options): void {
             $this->webPush = new WebPush($options);
@@ -128,7 +128,6 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
 
                 $subscription = new Subscription($endpoint, $p256dh, $auth, $contentEncoding);
                 $report = $this->webPush->sendOneNotification($subscription, $payload);
-                $this->assertInstanceOf(MessageSentReport::class, $report);
                 $this->assertTrue($report->isSuccess());
 
                 $dataString = json_encode([
@@ -160,7 +159,7 @@ final class PushServiceTest extends PHPUnit\Framework\TestCase
         };
     }
 
-    private function getResponse($ch)
+    private function getResponse(CurlHandle $ch): mixed
     {
         $resp = curl_exec($ch);
 

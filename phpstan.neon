@@ -2,12 +2,32 @@ parameters:
     level: 7
     paths:
         - src
+        - tests
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         - identifier: missingType.iterableValue
+          paths:
+              - src/Encryption.php
+              - src/MessageSentReport.php
+              - src/Notification.php
+              - src/Subscription.php
+              - src/Utils.php
+              - src/VAPID.php
+              - src/WebPush.php
+        - path: tests/
+          identifiers:
+            - argument.type
+            - closure.unusedUse
+            - foreach.valueOverwrite
+            - missingType.iterableValue
+            - property.dynamicName
+            - staticMethod.dynamicCall
     strictRules:
         booleansInConditions: false
         disallowedEmpty: false
 
 includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
     - vendor/phpstan/phpstan-strict-rules/rules.neon
