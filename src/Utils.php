@@ -69,8 +69,8 @@ class Utils
     {
         $requiredExtensions = [
             'curl'     => '[WebPush] curl extension is not loaded but is required. You can fix this in your php.ini.',
-            'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
-            'openssl'  => '[WebPush] openssl extension is not loaded but is required for sending push notifications with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'mbstring' => '[WebPush] mbstring extension is not loaded but is required for sending push messages with payload or for VAPID authentication. You can fix this in your php.ini.',
+            'openssl'  => '[WebPush] openssl extension is not loaded but is required for sending push messages with payload or for VAPID authentication. You can fix this in your php.ini.',
         ];
         foreach ($requiredExtensions as $extension => $message) {
             if (!extension_loaded($extension)) {
