@@ -5,6 +5,7 @@ parameters:
     reportUnmatchedIgnoredErrors: false
     checkMissingOverrideMethodAttribute: true
     tipsOfTheDay: false
+    treatPhpDocTypesAsCertain: false
     ignoreErrors:
         - identifier: missingType.iterableValue
     strictRules:
