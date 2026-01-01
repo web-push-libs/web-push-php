@@ -132,7 +132,12 @@ $report = $webPush->sendOneNotification(
 
 ### Authentication (VAPID)
 
-Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers. You'll need to create and provide a public and private key for your server. These keys must be safely stored and should not change.
+Browsers need to verify your identity. A standard called VAPID can authenticate you for all browsers based on [RFC8292](https://www.rfc-editor.org/rfc/rfc8292).
+You'll need to create and provide a public and private key for your server. These keys must be safely stored and should not change.
+
+According to the standard it is optional to provide contact details by the `subject` property.
+In practice all browsers require a valid `subject` which can contain an email address or an available https website. It should not change.
+Please note that browser manufacturers may use additional verification methods to prevent abuse of the push service.
 
 You can specify your authentication details when instantiating WebPush. The keys can be passed directly (recommended), or you can load a PEM file or its content:
 
@@ -144,18 +149,26 @@ use Minishlink\WebPush\WebPush;
 $endpoint = 'https://fcm.googleapis.com/fcm/send/abcdef...'; // Chrome
 
 $auth = [
-    'VAPID' => [
-        'subject' => 'mailto:me@website.com', // can be a mailto: or your website address
-        'publicKey' => '~88 chars', // (recommended) uncompressed public key P-256 encoded in Base64-URL
-        'privateKey' => '~44 chars', // (recommended) in fact the secret multiplier of the private key encoded in Base64-URL
-        'pemFile' => 'path/to/pem', // if you have a PEM file and can link to it on your filesystem
-        'pem' => 'pemFileContent', // if you have a PEM file and want to hardcode its content
+    'VAPID' => [ // Recommended.
+        'subject' => 'mailto:me@website.com', // Must be an email beginning with mailto: or available https website address.
+        'publicKey' => '~88 chars', // Uncompressed public key P-256 encoded in Base64-URL.
+        'privateKey' => '~44 chars', // In fact the secret multiplier of the private key encoded in Base64-URL.
+    ],
+    'VAPID' => [ // Alternative 1.
+        'subject' => 'mailto:me@website.com', // Must be an email beginning with mailto: or available https website address.
+        'pemFile' => 'path/to/pem', // If you have a PEM file and can link to it on your filesystem.
+    ],
+    'VAPID' => [ // Alternative 2.
+        'subject' => 'mailto:me@website.com', // Must be an email beginning with mailto: or available https website address.
+        'pem' => 'pemFileContent', // If you have a PEM file and want to hardcode its content.
     ],
 ];
 
 $webPush = new WebPush($auth);
 $webPush->queueNotification(...);
 ```
+
+#### Create VAPID keys
 
 In order to generate the uncompressed public and secret key, encoded in Base64, enter the following in your Linux bash:
 
