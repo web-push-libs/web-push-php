@@ -93,6 +93,7 @@ class MessageSentReport implements \JsonSerializable
         return $this->response?->getBody()->getContents();
     }
 
+    #[\Override]
     public function jsonSerialize(): array
     {
         return [

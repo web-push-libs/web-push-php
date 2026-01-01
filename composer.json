@@ -35,6 +35,7 @@
     "ext-openssl": "*",
     "guzzlehttp/guzzle": "^7.9.2",
     "spomky-labs/base64url": "^2.0.4",
+    "symfony/polyfill-php83": "^1.33",
     "web-token/jwt-library": "^3.4.9|^4.0.6"
   },
   "suggest": {

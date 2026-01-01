@@ -72,33 +72,25 @@ class Subscription implements SubscriptionInterface
         );
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    #[\Override]
     public function getEndpoint(): string
     {
         return $this->endpoint;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    #[\Override]
     public function getPublicKey(): ?string
     {
         return $this->publicKey;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    #[\Override]
     public function getAuthToken(): ?string
     {
         return $this->authToken;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    #[\Override]
     public function getContentEncoding(): ?string
     {
         return $this->contentEncoding?->value;
