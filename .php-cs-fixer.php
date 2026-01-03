@@ -9,6 +9,7 @@ $rules  = [
     'concat_space'                        => ['spacing' => 'none'], // Custom library style.
     'declare_strict_types'                => true, // Enforce strict code.
     'global_namespace_import'             => ['import_classes' => false, 'import_constants' => false, 'import_functions' => false],
+    'ordered_imports'                     => ['imports_order' => ['class', 'function', 'const'], 'sort_algorithm' => 'alpha'],
     'php_unit_attributes'                 => true,
     'php_unit_construct'                  => true,
     'php_unit_method_casing'              => true,

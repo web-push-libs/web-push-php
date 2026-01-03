@@ -34,7 +34,6 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "guzzlehttp/guzzle": "^7.9.2",
-    "spomky-labs/base64url": "^2.0.4",
     "symfony/polyfill-php83": "^1.33",
     "web-token/jwt-library": "^3.4.9|^4.0.6"
   },
@@ -49,6 +48,7 @@
     "phpstan/phpstan-phpunit": "^2.0",
     "phpstan/phpstan-strict-rules": "^2.0",
     "phpunit/phpunit": "^11.5.46|^12.5.2",
+    "spomky-labs/base64url": "^2.0.4",
     "symfony/polyfill-iconv": "^1.33"
   },
   "autoload": {
