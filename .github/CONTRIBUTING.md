@@ -4,7 +4,7 @@ Feel free to contribute by submitting a pull request or creating (and solving) i
 
 ## Requirements before submitting a pull request
 
-The CI used to check that push notifications can still be sent after the proposed code changes thanks to [web-push testing service](https://www.npmjs.com/package/web-push-testing-service). Unfortunately, this package doesn't work anymore and I don't have the available time to fix it. We can't accept new PR without being sure that the code changes doesn't break anything. So, for a PR to be accepted, it is now requested to have one of these 3 solutions :
+The CI used to check that push messages can still be sent after the proposed code changes thanks to [web-push testing service](https://www.npmjs.com/package/web-push-testing-service). Unfortunately, this package doesn't work anymore and I don't have the available time to fix it. We can't accept new PR without being sure that the code changes doesn't break anything. So, for a PR to be accepted, it is now requested to have one of these 3 solutions :
 
 1. You fix web-push-testing-service completely, but it's very time consuming
 2. You fix web-push-testing-service but only for stable version of Chrome, looks a bit more promising but still you'll need some time
@@ -28,9 +28,7 @@ NOTE: You might need to make sure command `web-push-testing-service` runs OK on 
 alias web-push-testing-service='/usr/local/Cellar/node/7.4.0/bin/web-push-testing-service'
 ```
 
-After that, please create your own configuration file by copying
-`phpunit.dist.xml` to phpunit.xml and filling in the fields you need for
-testing (i.e. STANDARD_ENDPOINT, etc.).
+After that, please create your own configuration file by copying `phpunit.dist.xml` to phpunit.xml and filling in the fields you need for testing (i.e. STANDARD_ENDPOINT, etc.).
 
 ## Running Tests
 
