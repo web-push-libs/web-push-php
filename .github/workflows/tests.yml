@@ -47,7 +47,9 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-php${{ matrix.php }}-${{ matrix.ext_optional }}
 
       - name: Install dependencies
-        run: composer install --prefer-dist
+        run: |
+          openssl version
+          composer install --prefer-dist
 
       - name: Setup node
         uses: actions/setup-node@v6
