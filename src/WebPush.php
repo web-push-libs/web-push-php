@@ -18,11 +18,13 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 class WebPush
 {
     protected Client $client;
     protected array $auth;
+    protected ?LoggerInterface $logger;
 
     /**
      * @var null|array Array of array of Notifications
@@ -52,15 +54,23 @@ class WebPush
     /**
      * WebPush constructor.
      *
-     * @param array    $auth           Some servers need authentication
-     * @param array    $defaultOptions TTL, urgency, topic, batchSize, requestConcurrency
-     * @param int|null $timeout        Timeout of POST request
+     * @param array           $auth           Some servers need authentication
+     * @param array           $defaultOptions TTL, urgency, topic, batchSize, requestConcurrency
+     * @param int|null        $timeout        Timeout of POST request
+     * @param LoggerInterface|null $logger    Optional PSR-3 logger; if provided, replaces trigger_error() calls
      *
      * @throws \ErrorException
      */
-    public function __construct(array $auth = [], array $defaultOptions = [], ?int $timeout = 30, array $clientOptions = [])
-    {
-        Utils::checkRequirement();
+    public function __construct(
+        array $auth = [],
+        array $defaultOptions = [],
+        ?int $timeout = 30,
+        array $clientOptions = [],
+        ?LoggerInterface $logger = null
+    ) {
+        $this->logger = $logger;
+
+        Utils::checkRequirement($this->logger);
 
         if (isset($auth['VAPID'])) {
             $auth['VAPID'] = VAPID::validate($auth['VAPID']);
