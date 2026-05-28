@@ -10,6 +10,10 @@
 
 namespace Minishlink\WebPush;
 
+/**
+ * @phpstan-consistent-constructor
+ * @psalm-consistent-constructor
+ */
 class Subscription implements SubscriptionInterface
 {
     public const defaultContentEncoding = ContentEncoding::aesgcm; // Default for legacy input. The next major will use "aes128gcm" as defined to rfc8291.
@@ -47,10 +51,10 @@ class Subscription implements SubscriptionInterface
      * @param array $associativeArray (with keys endpoint, publicKey, authToken, contentEncoding)
      * @throws \ErrorException
      */
-    public static function create(array $associativeArray): self
+    public static function create(array $associativeArray): static
     {
         if (array_key_exists('keys', $associativeArray) && is_array($associativeArray['keys'])) {
-            return new self(
+            return new static(
                 $associativeArray['endpoint'],
                 $associativeArray['keys']['p256dh'] ?? null,
                 $associativeArray['keys']['auth'] ?? null,
@@ -59,7 +63,7 @@ class Subscription implements SubscriptionInterface
         }
 
         if (array_key_exists('publicKey', $associativeArray) || array_key_exists('authToken', $associativeArray) || array_key_exists('contentEncoding', $associativeArray)) {
-            return new self(
+            return new static(
                 $associativeArray['endpoint'],
                 $associativeArray['publicKey'] ?? null,
                 $associativeArray['authToken'] ?? null,
@@ -67,7 +71,7 @@ class Subscription implements SubscriptionInterface
             );
         }
 
-        return new self(
+        return new static(
             $associativeArray['endpoint']
         );
     }
