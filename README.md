@@ -41,7 +41,7 @@ composer require minishlink/web-push
 
 ### Example
 
-A complete example with html+JS frontend and php backend using `web-push-php` can be found here: [Minishlink/web-push-php-example](https://github.com/Minishlink/web-push-php-example)
+A complete example with HTML+JS frontend and php backend using `web-push-php` can be found here: [Minishlink/web-push-php-example](https://github.com/Minishlink/web-push-php-example)
 
 ### Send Push Message
 
@@ -51,16 +51,16 @@ A complete example with html+JS frontend and php backend using `web-push-php` ca
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
 
-// store the client-side `PushSubscription` object (calling `.toJSON` on it) as-is and then create a WebPush\Subscription from it
+// Store the client-side `PushSubscription` object (calling `.toJSON` on it) as-is and then create a WebPush\Subscription from it.
 $subscription = Subscription::create(json_decode($clientSidePushSubscriptionJSON, true));
 
-// array of notifications
-$notifications = [
+// Array of push messages.
+$messages = [
     [
         'subscription' => $subscription,
         'payload' => '{"message":"Hello World!"}',
     ], [
-          // current PushSubscription format (browsers might change this in the future)
+          // Current PushSubscription format (browsers might change this in the future).
           'subscription' => Subscription::create([
               "endpoint" => "https://example.com/other/endpoint/of/another/vendor/abcdef...",
               "keys" => [
@@ -98,16 +98,16 @@ $notifications = [
 
 $webPush = new WebPush();
 
-// send multiple notifications with payload
-foreach ($notifications as $notification) {
+// Queue multiple push messages with payload.
+foreach ($messages as $message) {
     $webPush->queueNotification(
-        $notification['subscription'],
-        $notification['payload'] // optional (defaults null)
+        $message['subscription'],
+        $message['payload'] // optional (defaults null)
     );
 }
 
 /**
- * Check sent results
+ * Send all queued push messages and then check sent results.
  * @var MessageSentReport $report
  */
 foreach ($webPush->flush() as $report) {
@@ -121,12 +121,12 @@ foreach ($webPush->flush() as $report) {
 }
 
 /**
- * send one notification and flush directly
+ * Send one push message and flush directly.
  * @var MessageSentReport $report
  */
 $report = $webPush->sendOneNotification(
-    $notifications[0]['subscription'],
-    $notifications[0]['payload'], // optional (defaults null)
+    $messages[0]['subscription'],
+    $messages[0]['payload'], // optional (defaults null)
 );
 ```
 
@@ -181,7 +181,7 @@ $ openssl ec -in private_key.pem -outform DER|tail -c +8|head -c 32|base64|tr -d
 If you can't access a Linux bash, you can print the output of the `createVapidKeys` function:
 
 ```php
-var_dump(VAPID::createVapidKeys()); // store the keys afterwards
+var_dump(VAPID::createVapidKeys()); // Store the keys afterwards.
 ```
 
 On the client-side, don't forget to subscribe with the VAPID public key as the `applicationServerKey`: (`urlBase64ToUint8Array` source [here](https://github.com/Minishlink/physbook/blob/02a0d5d7ca0d5d2cc6d308a3a9b81244c63b3f14/app/Resources/public/js/app.js#L177))
@@ -195,15 +195,15 @@ serviceWorkerRegistration.pushManager.subscribe({
 
 #### Reusing VAPID headers
 
-VAPID headers make use of a JSON Web Token (JWT) to verify your identity. That token payload includes the protocol and hostname of the endpoint included in the subscription and an expiration timestamp (usually between 12-24h), and it's signed using your public and private key. Given that, two notifications sent to the same push service will use the same token, so you can reuse them for the same flush session to boost performance using:
+VAPID headers make use of a JSON Web Token (JWT) to verify your identity. That token payload includes the protocol and hostname of the endpoint included in the subscription and an expiration timestamp (usually between 12-24h), and it's signed using your public and private key. Given that, two push messages sent to the same push service will use the same token, so you can reuse them for the same flush session to boost performance using:
 
 ```php
 $webPush->setReuseVAPIDHeaders(true);
 ```
 
-### Notifications and default options
+### Push message and default options
 
-Each notification can have a specific Time To Live, urgency, and topic.
+Each push message can have a specific Time To Live, urgency, and topic.
 The WebPush standard states that `urgency` is optional but some users reports that Safari throws errors when it is not specified. This might be fixed in the future.
 You can change the default options with `setDefaultOptions()` or in the constructor:
 
@@ -220,19 +220,19 @@ $defaultOptions = [
     'contentType' => 'application/json', // defaults to "application/octet-stream"
 ];
 
-// for every notification
+// for every push messages
 $webPush = new WebPush([], $defaultOptions);
 $webPush->setDefaultOptions($defaultOptions);
 
-// or for one notification
 $webPush->sendOneNotification($subscription, $payload, ['TTL' => 5000]);
+// or for one push message
 ```
 
 #### TTL
 
 Time To Live (TTL, in seconds) is how long a push message is retained by the push service (eg. Mozilla) in case the user browser
-is not yet accessible (eg. is not connected). You may want to use a very long time for important notifications. The default TTL is 4 weeks.
-However, if you send multiple nonessential notifications, set a TTL of 0: the push notification will be delivered only
+is not yet accessible (eg. is not connected). You may want to use a very long time for important push messages. The default TTL is 4 weeks.
+However, if you send multiple nonessential push messages, set a TTL of 0: the push message will be delivered only
 if the user is currently connected. For other cases, you should use a minimum of one day if your users have multiple time
 zones, and if they don't several hours will suffice.
 
@@ -242,12 +242,12 @@ Urgency can be either "very-low", "low", "normal", or "high". If the browser ven
 
 #### topic
 
-This string will make the vendor show to the user only the last notification of this topic (cf. [protocol](https://datatracker.ietf.org/doc/html/rfc8030#section-5.4)).
+This string will make the vendor show to the user only the last message of this topic (cf. [protocol](https://datatracker.ietf.org/doc/html/rfc8030#section-5.4)).
 
 #### batchSize
 
-If you send tens of thousands notifications at a time, you may get memory overflows due to how endpoints are called in Guzzle.
-In order to fix this, WebPush sends notifications in batches. The default size is 1000. Depending on your server configuration (memory), you may want
+If you send tens of thousands push messages at a time, you may get memory overflows due to how endpoints are called in Guzzle.
+In order to fix this, WebPush sends push messages in batches. The default size is 1000. Depending on your server configuration (memory), you may want
 to decrease this number. Do this while instantiating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
 it as a parameter : `$webPush->flush($batchSize)`.
 
@@ -341,7 +341,7 @@ $webPush->setAutomaticPadding(true); // enable automatic padding to default maxi
 ### Customizing the HTTP client
 
 WebPush uses [Guzzle](https://github.com/guzzle/guzzle). It will use the most appropriate client it finds,
-and most of the time it will be `MultiCurl`, which allows to send multiple notifications in parallel.
+and most of the time it will be `MultiCurl`, which allows to send multiple push messages in parallel.
 
 You can customize the default request options and timeout when instantiating WebPush:
 
@@ -404,7 +404,7 @@ Make sure to require Composer's [autoloader](https://getcomposer.org/doc/01-basi
 require __DIR__ . '/path/to/vendor/autoload.php';
 ```
 
-### I get authentication errors when sending notifications
+### I get authentication errors when sending push messages
 
 Make sure to have database fields that are large enough for the length of the data you are storing ([#233](https://github.com/web-push-libs/web-push-php/issues/233#issuecomment-1252617883)). For the endpoint, users have reported that the URL length does not exceed 500 characters, but this can evolve so you can set it to the 2048 characters limit of most browsers.
 
@@ -440,7 +440,7 @@ Use some alternative APIs like WebSocket/WebTransport or Background Synchronizat
 WebPush is for web apps.
 You need something like [RMSPushNotificationsBundle](https://github.com/richsage/RMSPushNotificationsBundle) (Symfony).
 
-### This is PHP... I need Javascript!
+### This is PHP... I need JavaScript!
 
 This library was inspired by the Node.js [web-push-libs/web-push](https://github.com/web-push-libs/web-push) library.
 
@@ -463,6 +463,10 @@ This library was inspired by the Node.js [web-push-libs/web-push](https://github
 ### W3C
 
 - Working Draft [Push API](https://www.w3.org/TR/push-api/)
+
+### WHATWG
+
+- Living Standard [Notifications API](https://notifications.spec.whatwg.org/)
 
 ## License
 

@@ -3,11 +3,14 @@
   "type": "library",
   "description": "Web Push library for PHP",
   "keywords": [
-    "push",
     "notifications",
+    "push",
+    "Push API",
+    "RFC8030",
+    "RFC8291",
+    "RFC8292",
     "web",
-    "WebPush",
-    "Push API"
+    "WebPush"
   ],
   "homepage": "https://github.com/web-push-libs/web-push-php",
   "license": "MIT",
