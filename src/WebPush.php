@@ -13,9 +13,9 @@ namespace Minishlink\WebPush;
 use Base64Url\Base64Url;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
+use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Client\RequestExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -206,7 +206,7 @@ class WebPush
             $batch = $this->prepare($batch);
             $pool = new Pool($this->client, $batch, [
                 'concurrency' => $requestConcurrency,
-                'fulfilled' => function (ResponseInterface $response, int $index) use ($callback, $batch): void {
+                'fulfilled' => function (ResponseInterface $response, int|string $index) use ($callback, $batch): void {
                     /** @var RequestInterface $request **/
                     $request = $batch[$index];
                     $callback(new MessageSentReport($request, $response));
@@ -225,11 +225,13 @@ class WebPush
         }
     }
 
-    protected function createRejectedReport(RequestException|ConnectException $reason): MessageSentReport
+    protected function createRejectedReport(NetworkExceptionInterface|RequestExceptionInterface $reason): MessageSentReport
     {
-        if ($reason instanceof RequestException) {
-            $response = $reason->getResponse();
-        } else {
+        // Guzzle 7's RequestException and Guzzle 8's ResponseException expose the
+        // response; Guzzle 8's RequestException and the network exceptions do not.
+        $response = is_callable([$reason, 'getResponse']) ? $reason->getResponse() : null;
+
+        if (!$response instanceof ResponseInterface) {
             $response = null;
         }
 
@@ -286,7 +288,7 @@ class WebPush
                 $content = '';
             }
 
-            $headers['TTL'] = $options['TTL'];
+            $headers['TTL'] = (string) $options['TTL'];
 
             if (isset($options['urgency'])) {
                 $headers['Urgency'] = $options['urgency'];
