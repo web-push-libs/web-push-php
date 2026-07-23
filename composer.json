@@ -33,7 +33,11 @@
     "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
-    "guzzlehttp/guzzle": "^7.9.2",
+    "php-http/discovery": "^1.19",
+    "php-http/httplug": "^2.4",
+    "psr/http-client": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.1|^2.0",
     "psr/log": "^2.0|^3.0",
     "spomky-labs/base64url": "^2.0.4",
     "symfony/polyfill-php83": "^1.33",
@@ -41,10 +45,14 @@
   },
   "suggest": {
     "ext-bcmath": "Optional for performance.",
-    "ext-gmp": "Optional for performance."
+    "ext-gmp": "Optional for performance.",
+    "php-http/guzzle7-adapter": "Enables concurrent sending via WebPush::flushPooled() if you use Guzzle."
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^v3.92.2",
+    "guzzlehttp/guzzle": "^7.9.2",
+    "guzzlehttp/psr7": "^2.7",
+    "php-http/guzzle7-adapter": "^1.1",
     "phpstan/phpstan": "^2.1.33",
     "phpstan/phpstan-deprecation-rules": "^2.0",
     "phpstan/phpstan-phpunit": "^2.0",
@@ -55,6 +63,11 @@
   "autoload": {
     "psr-4": {
       "Minishlink\\WebPush\\": "src"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
     }
   }
 }

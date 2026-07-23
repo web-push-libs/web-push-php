@@ -246,7 +246,7 @@ This string will make the vendor show to the user only the last notification of 
 
 #### batchSize
 
-If you send tens of thousands notifications at a time, you may get memory overflows due to how endpoints are called in Guzzle.
+If you send tens of thousands notifications at a time, you may get memory overflows depending on your HTTP client.
 In order to fix this, WebPush sends notifications in batches. The default size is 1000. Depending on your server configuration (memory), you may want
 to decrease this number. Do this while instantiating WebPush or calling `setDefaultOptions`. Or, if you want to customize this for a specific flush, give
 it as a parameter : `$webPush->flush($batchSize)`.
@@ -340,22 +340,39 @@ $webPush->setAutomaticPadding(true); // enable automatic padding to default maxi
 
 ### Customizing the HTTP client
 
-WebPush uses [Guzzle](https://github.com/guzzle/guzzle). It will use the most appropriate client it finds,
-and most of the time it will be `MultiCurl`, which allows to send multiple notifications in parallel.
+WebPush is HTTP-client-agnostic: it depends only on [PSR-18](https://www.php-fig.org/psr/psr-18/) (`psr/http-client`)
+and [PSR-17](https://www.php-fig.org/psr/psr-17/) (`psr/http-factory`) interfaces, not on any specific implementation.
 
-You can customize the default request options and timeout when instantiating WebPush:
+If you don't inject one explicitly, WebPush uses [php-http/discovery](https://github.com/php-http/discovery) to
+auto-detect a suitable client/factories among your installed dependencies (Guzzle, Symfony HttpClient, Nyholm PSR-7,
+etc).
+
+To customize the client (timeout, redirects, proxy, etc.), configure your PSR-18 client instance directly and inject
+it into WebPush:
 
 ```php
 <?php
 
 use Minishlink\WebPush\WebPush;
 
-$timeout = 20; // seconds
-$clientOptions = [
+$client = new \GuzzleHttp\Client([
+    'timeout' => 20,
     \GuzzleHttp\RequestOptions::ALLOW_REDIRECTS => false,
-]; // see \GuzzleHttp\RequestOptions
-$webPush = new WebPush([], [], $timeout, $clientOptions);
+]); // see \GuzzleHttp\RequestOptions, or use any other PSR-18 client
+$webPush = new WebPush([], [], $client);
 ```
+
+#### Concurrent sending (`flushPooled()`)
+
+`flushPooled()` requires an [HTTPlug](https://github.com/php-http/httplug) async client (`Http\Client\HttpAsyncClient`)
+to send notifications concurrently as PSR-18 itself is strictly synchronous. Install an HTTPlug adapter, e.g. for Guzzle:
+
+```bash
+composer require php-http/guzzle7-adapter
+```
+
+It will be auto-discovered, same as the PSR-18 client. If none is available, `flushPooled()` throws a `\LogicException`.
+Use `flush()` if you don't need concurrency.
 
 ## Common questions (FAQ)
 
@@ -383,9 +400,10 @@ Internally, WebPush uses the [WebToken](https://github.com/web-token) framework 
 Here are some ideas:
 
 1. Make sure MultiCurl is available on your server
-2. Find the right balance for your needs between security and performance (see above)
-3. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
-4. Use `flushPooled()` instead of `flush()`. The former uses concurrent requests, accelerating the process and often doubling the speed of the requests.
+2. Install an HTTPlug async adapter, e.g. `php-http/guzzle7-adapter` (see "Customizing the HTTP client" above)
+3. Find the right balance for your needs between security and performance (see above)
+4. Find the right batch size (set it in `defaultOptions` or as parameter to `flush()`)
+5. Use `flushPooled()` instead of `flush()`. The former uses concurrent requests, accelerating the process and often doubling the speed of the requests.
 
 ### How to solve "SSL certificate problem: unable to get local issuer certificate"?
 
