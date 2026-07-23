@@ -286,7 +286,7 @@ class WebPush
                 $content = '';
             }
 
-            $headers['TTL'] = $options['TTL'];
+            $headers['TTL'] = (string) $options['TTL'];
 
             if (isset($options['urgency'])) {
                 $headers['Urgency'] = $options['urgency'];
