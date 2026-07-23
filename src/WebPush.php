@@ -181,7 +181,7 @@ class WebPush
             foreach ($requests as $request) {
                 try {
                     $response = $this->client->sendRequest($request);
-                    yield new MessageSentReport($request, $response);
+                    yield $this->createReport($request, $response);
                 } catch (ClientExceptionInterface $reason) {
                     yield $this->createRejectedReport($request, $reason);
                 }
@@ -230,7 +230,7 @@ class WebPush
                 $promises[] = $this->asyncClient->sendAsyncRequest($request)
                     ->then(
                         function (ResponseInterface $response) use ($callback, $request): void {
-                            $callback(new MessageSentReport($request, $response));
+                            $callback($this->createReport($request, $response));
                         },
                         function (\Throwable $reason) use ($callback, $request): void {
                             $callback($this->createRejectedReport($request, $reason));
@@ -246,6 +246,24 @@ class WebPush
         if ($this->reuseVAPIDHeaders) {
             $this->vapidHeaders = [];
         }
+    }
+
+    /**
+     * PSR-18 clients only throw for transport-level failures (DNS, connection refused, ...);
+     * HTTP error status codes (4xx, 5xx) are returned as a normal response and must be
+     * classified here.
+     */
+    protected function createReport(RequestInterface $request, ResponseInterface $response): MessageSentReport
+    {
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 400) {
+            $reasonPhrase = $response->getReasonPhrase();
+            $reason = '' !== $reasonPhrase ? $reasonPhrase : 'Push service responded with status code '.$statusCode;
+
+            return new MessageSentReport($request, $response, false, $reason);
+        }
+
+        return new MessageSentReport($request, $response);
     }
 
     protected function createRejectedReport(RequestInterface $request, \Throwable $reason): MessageSentReport
