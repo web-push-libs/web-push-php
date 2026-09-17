@@ -90,7 +90,7 @@ $notifications = [
             'endpoint' => 'https://example.com/other/endpoint/of/another/vendor/abcdef...',
             'publicKey' => '(stringOf88Chars)',
             'authToken' => '(stringOf24Chars)',
-            'contentEncoding' => 'aesgcm', // one of PushManager.supportedContentEncodings
+            'contentEncoding' => 'aesgcm', // encoding supported by both the browser and this library
         ]),
         'payload' => '{"message":"test"}',
     ]
@@ -129,6 +129,21 @@ $report = $webPush->sendOneNotification(
     $notifications[0]['payload'], // optional (defaults null)
 );
 ```
+
+#### Content encoding negotiation
+
+Browsers can expose supported content encodings through `PushManager.supportedContentEncodings`. The library exposes its supported encodings through the public `ContentEncoding` enum, so applications can negotiate without duplicating a hard-coded list:
+
+```php
+use Minishlink\WebPush\ContentEncoding;
+
+$librarySupportedContentEncodings = array_map(
+    static fn (ContentEncoding $encoding): string => $encoding->value,
+    ContentEncoding::cases(),
+);
+```
+
+Use this list to validate or negotiate the browser-provided encodings before creating the `Subscription`, then pass the selected value as `contentEncoding`. If there is no overlap, treat the subscription as unsupported instead of guessing an encoding.
 
 ### Authentication (VAPID)
 
