@@ -1,0 +1,13 @@
+version: '3.7'
+# https://github.com/c4tom/web-push-php
+
+services:
+  web_push_php:
+    image: cahato/web-push-php:latest
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    container_name: alpine_php_webpush_php
+    hostname: web_push_php
+    ports:
+      - "8000:8000"
