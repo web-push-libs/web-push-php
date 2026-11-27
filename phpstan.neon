@@ -25,6 +25,9 @@ parameters:
             - missingType.iterableValue
             - property.dynamicName
             - staticMethod.dynamicCall
+        - path: tests/WebPushTest.php
+          identifier: method.notFound
+          message: '#Call to an undefined method WebPushTest::expectExceptionMessageIsOrContains\(\)#'
     strictRules:
         booleansInConditions: false
         disallowedEmpty: false
