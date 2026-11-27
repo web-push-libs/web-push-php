@@ -8,11 +8,13 @@
  * file that was distributed with this source code.
  */
 
+use Composer\InstalledVersions;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\SubscriptionInterface;
 use Minishlink\WebPush\WebPush;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresPhpunit;
 
 #[CoversClass(WebPush::class)]
 final class WebPushTest extends PHPUnit\Framework\TestCase
@@ -163,10 +165,11 @@ final class WebPushTest extends PHPUnit\Framework\TestCase
     /**
      * @throws ErrorException
      */
+    #[RequiresPhpunit('>= 13.4.8')]
     public function testSendOneNotificationWithTooBigPayload(): void
     {
         $this->expectException(ErrorException::class);
-        $this->expectExceptionMessage('Size of payload must not be greater than 4078 octets.');
+        $this->expectExceptionMessageIsOrContains('Size of payload must not be greater than 4078 octets.');
 
         $subscription = new Subscription(self::$endpoints['standard'], self::$keys['standard']);
         $this->webPush->sendOneNotification(

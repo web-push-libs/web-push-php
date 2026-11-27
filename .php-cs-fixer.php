@@ -21,6 +21,7 @@ $rules  = [
 $config->setRules($rules);
 $config->setHideProgress(true);
 $config->setRiskyAllowed(true);
+$config->setUnsupportedPhpVersionAllowed(true);
 $config->setUsingCache(false);
 $config->setParallelConfig(PhpCsFixer\Runner\Parallel\ParallelConfigFactory::detect());
 

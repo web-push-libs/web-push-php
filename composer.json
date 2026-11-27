@@ -28,7 +28,7 @@
     "test:syntax_tests": "./vendor/bin/php-cs-fixer fix ./tests --dry-run --stop-on-violation"
   },
   "require": {
-    "php": ">=8.2",
+    "php": ">=8.3",
     "ext-curl": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
@@ -48,16 +48,16 @@
     "php-http/guzzle7-adapter": "Enables concurrent sending via WebPush::flushPooled() if you use Guzzle."
   },
   "require-dev": {
-    "friendsofphp/php-cs-fixer": "^v3.92.2",
-    "guzzlehttp/guzzle": "^7.9.2",
-    "guzzlehttp/psr7": "^2.7",
+    "friendsofphp/php-cs-fixer": "^v3.95.32",
+    "guzzlehttp/guzzle": "^7.17.0",
+    "guzzlehttp/psr7": "^2.13.6",
     "php-http/guzzle7-adapter": "^1.1",
-    "phpstan/phpstan": "^2.1.33",
+    "phpstan/phpstan": "^2.3.7",
     "phpstan/phpstan-deprecation-rules": "^2.0",
-    "phpstan/phpstan-phpunit": "^2.0",
-    "phpstan/phpstan-strict-rules": "^2.0",
-    "phpunit/phpunit": "^11.5.46|^12.5.2",
-    "symfony/polyfill-iconv": "^1.33"
+    "phpstan/phpstan-phpunit": "^2.1",
+    "phpstan/phpstan-strict-rules": "^2.1",
+    "phpunit/phpunit": "^12.5.45|^13.4.8",
+    "symfony/polyfill-iconv": "^1.43"
   },
   "autoload": {
     "psr-4": {
